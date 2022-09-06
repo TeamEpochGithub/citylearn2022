@@ -2,7 +2,7 @@ import sys
 
 import numpy as np
 
-def rbc_policy(observation, action_space):
+def rbc_optimized_policy(observation, action_space):
     """
     Simple rule based policy based on day or night time
     """
@@ -42,12 +42,23 @@ def rbc_policy(observation, action_space):
     assert action_space.contains(action)
     return action
 
+def rbc_policy(observation, action_space):
+    """
+    Simple rule based policy based on day or night time
+    """
+    hour = observation[2] # Hour index is 2 for all observations
 
+    action = 0.0 # Default value
+    if 9 <= hour <= 21:
+        # Daytime: release stored energy
+        action = -0.08
+    elif (1 <= hour <= 8) or (22 <= hour <= 24):
+        # Early nightime: store DHW and/or cooling energy
+        action = 0.091
 
-    #
-    # self.actions = actions
-    # self.next_time_step()
-    # return actions
+    action = np.array([action], dtype=action_space.dtype)
+    assert action_space.contains(action)
+    return action
 
 class BasicRBCAgent:
     """
@@ -62,4 +73,4 @@ class BasicRBCAgent:
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
-        return rbc_policy(observation, self.action_space[agent_id])
+        return rbc_optimized_policy(observation, self.action_space[agent_id])
