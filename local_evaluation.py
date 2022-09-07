@@ -59,6 +59,7 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
+    average_cost = 2
     try:
         while True:
 
@@ -102,10 +103,36 @@ def evaluate():
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print("Average cost", np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
-                                       np.mean([e['emmision_cost'] for e in episode_metrics])]))
+        average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
+                                       np.mean([e['emmision_cost'] for e in episode_metrics])])
+        print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+    return average_cost
 
 
 if __name__ == '__main__':
     evaluate()
+
+    # minimum_cost = 2
+    # best_indices = []
+    # vals = list(range(0, 3))
+    # for v in vals:
+    #     average_cost = evaluate(v)
+    #     if average_cost < minimum_cost:
+    #         best_indices = v
+    #         minimum_cost = average_cost
+
+    # vals = list(range(0, 6))
+    # import itertools
+    #
+    # minimum_cost = 2
+    # best_indices = []
+    #
+    # for indices in itertools.combinations(vals, 3):
+    #     average_cost = evaluate(indices)
+    #     if average_cost < minimum_cost:
+    #         best_indices = indices
+    #         minimum_cost = average_cost
+    #     print(indices)
+    #
+    # print("best indices", best_indices, " with score ", minimum_cost)

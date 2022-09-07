@@ -21,41 +21,21 @@ def weather_policy(observation, action_space):
     carbon_intensity = observation[19]
     # print(carbon_intensity)
 
-    # cooling_storage_soc = observation[25]
-    # heating_storage_soc = observation[26]
-    # dhw_storage_soc = observation[27]
     electrical_storage_soc = observation[22]
     net_electricity_consumption = observation[23]
+    electricity_pricing = observation[24]
 
-    print("STORAGE", electrical_storage_soc)
+    # print((carbon_intensity + electricity_pricing)*-1)
+
+    # print("STORAGE", electrical_storage_soc)
     # print("CONSUMPTION", net_electricity_consumption)
+
+    action_vals = [-0.3, -0.2, -0.15, -0.1, -0.05, -0.02, 0, 0.02, 0.05, 0.1, 0.2]
 
     if global_solar_irradiance < sixhour_global_solar_irradiance:
         action = 0.15
     else:
         action = -0.1
-
-    # action = 0.0
-    # if 1 <= hour <= 6:
-    #     action = 0.05532
-    #
-    # elif 7 <= hour <= 15:
-    #     action = -0.02
-    #
-    # elif 16 <= hour <= 18:
-    #     action = -0.0044
-    #
-    # elif 19 <= hour <= 22:
-    #     action = -0.024
-    #
-    # elif 23 <= hour <= 24:
-    #     action = 0.034
-    #
-    # else:
-    #     action = 0.0
-
-    # print(((0.05532 * 6) + (0.034 * 1)))
-    # print(((-0.02 * 8) + (-0.0044 * 4) + (-0.024 * 3)))
 
     action = np.array([action], dtype=action_space.dtype)
     assert action_space.contains(action)

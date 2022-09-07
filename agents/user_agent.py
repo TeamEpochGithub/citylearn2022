@@ -1,5 +1,6 @@
 from agents.random_agent import RandomAgent
 from agents.rbc_agent import BasicRBCAgent
+from agents.basic_reward_agent import BasicRewardAgent
 from agents.weather_agent import BasicWeatherAgent
 
 ###################################################################
@@ -9,4 +10,4 @@ from agents.weather_agent import BasicWeatherAgent
 # UserAgent = RandomAgent
 # UserAgent = BasicRBCAgent
 
-UserAgent = BasicWeatherAgent
+UserAgent = BasicRewardAgent
