@@ -1,6 +1,20 @@
 import numpy as np
 import random
 
+
+class Encoder:
+    def __init__(self):
+        r"""Initialize base `Encoder` class.
+        Use to transform observation values in the replay buffer.
+        """
+
+        pass
+
+    def __mul__(self, x):
+        raise NotImplementedError
+
+    def __rmul__(self, x):
+        raise NotImplementedError
 class no_normalization:
     def __init__(self):
         pass

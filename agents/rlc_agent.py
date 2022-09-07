@@ -1,4 +1,8 @@
+from typing import List
+
 import numpy as np
+from common.preprocessing import *
+from gym import spaces
 
 try:
     import torch
@@ -12,23 +16,65 @@ class RLCAgent:
 
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        r"""Initialize `RLC`.
+        Base reinforcement learning controller class.
+        Parameters
+        ----------
+        *args : tuple
+            `Agent` positional arguments.
+        encoders : List[Encoder]
+            Observation value transformers/encoders.
+        observation_space : spaces.Box
+            Format of valid observations.
+        hidden_dimension : List[float]
+            Hidden dimension.
+        discount : float
+            Discount factor.
+        tau : float
+            Decay rate.
+        lr : float
+            Learning rate.
+        batch_size : int
+            Batch size.
+        replay_buffer_capacity : int
+            Replay buffer capacity.
+        start_training_time_step : int
+            Time step to begin training regression model.
+        end_exploration_time_step : int
+            Time step to stop exploration.
+        deterministic_start_time_step : int
+            Time step to begin taking deterministic actions.
+        action_scaling_coefficient : float
+            Action scaling coefficient.
+        reward_scaling : float
+            Reward scaling.
+        update_per_time_step : int
+            Number of updates per time step.
+        seed : int
+            Pseudorandom number generator seed for repeatable results.
+
+        Other Parameters
+        ----------------
+        **kwargs : dict
+            Other keyword arguments used to initialize super class.
+        """
         self.action_space = {}
-        self.observation_space = observation_space
-        self.encoders = encoders
-        self.hidden_dimension = hidden_dimension
-        self.discount = discount
-        self.tau = tau
-        self.lr = lr
-        self.batch_size = batch_size
-        self.replay_buffer_capacity = replay_buffer_capacity
-        self.start_training_time_step = start_training_time_step
-        self.end_exploration_time_step = end_exploration_time_step
-        self.deterministic_start_time_step = deterministic_start_time_step
-        self.action_scaling_coefficient = action_scaling_coefficienct
-        self.reward_scaling = reward_scaling
-        self.update_per_time_step = update_per_time_step
-        self.seed = seed
+        self.encoders = List[Encoder]
+        self.observation_space = spaces.Box
+        self.hidden_dimension = None
+        self.discount = None
+        self.tau = None
+        self.lr = None
+        self.batch_size = None
+        self.replay_buffer_capacity = None
+        self.start_training_time_step = None
+        self.end_exploration_time_step = None
+        self.deterministic_start_time_step = None
+        self.action_scaling_coefficient = None
+        self.reward_scaling = None
+        self.update_per_time_step = None
+        self.seed = None
 
     @property
     def encoders(self) -> List[Encoder]:
@@ -128,7 +174,7 @@ class RLCAgent:
 
     @encoders.setter
     def encoders(self, encoders: List[Encoder]):
-        self.__encoders = [NoNormalization() for _ in
+        self.__encoders = [no_normalization() for _ in
                            range(self.observation_space.shape[0])] if encoders is None else encoders
 
     @observation_space.setter
@@ -191,10 +237,3 @@ class RLCAgent:
         self.__seed = 0 if seed is None else seed
         torch.manual_seed(self.seed)
         np.random.seed(self.seed)
-
-    def set_action_space(self, agent_id, action_space):
-        self.action_space[agent_id] = action_space
-
-    def compute_action(self, observation, agent_id):
-        """Get observation return action"""
-        return battery_rbc_policy(observation, self.action_space[agent_id])
