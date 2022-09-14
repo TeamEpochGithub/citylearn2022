@@ -4,14 +4,24 @@
 #SBATCH --time=20:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=8G
+#SBATCH --mem=32G
 #SBATCH --mail-type=END
 
 module load 2022r2
+module load python/3.8.12
 
-python3 -m venv venv/
-source venv/bin/activate
-pip install gym
-pip install stable-baselines3[extra]
+module load miniconda3
+unset CONDA_SHLVL
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda create -n mypython
+conda info --envs
+conda activate mypython
+conda update gym
+conda install -c conda-forge stable-baselines3
+conda install -c conda-forge pip
+conda install -c conda-forge git
+pip install git+https://github.com/intelligent-environments-lab/CityLearn.git@citylearn_2022
+conda list
 
 python evaluating_baselines3.py
+conda deactivate

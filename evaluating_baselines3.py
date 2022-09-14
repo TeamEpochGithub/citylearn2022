@@ -304,7 +304,7 @@ def evaluate_print_results(model, print_substeps=False):
 if __name__ == "__main__":
     t1_start = time.perf_counter()
 
-    timesteps = 500000
+    timesteps = 20000
     train_ppo(timesteps)
     train_ddpg(timesteps)
     train_a2c(timesteps)
