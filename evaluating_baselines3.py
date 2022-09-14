@@ -191,7 +191,7 @@ def train_ppo(train_timesteps):
     # try:
     #     model = PPO.load("ppo_citylearn")
     # except:
-    model = PPO('MlpPolicy', env, verbose=2, gamma=0.99)
+    model = PPO('MlpPolicy', env, verbose=0, gamma=0.99)
 
     # Train the agent
     model.learn(total_timesteps=train_timesteps)
@@ -215,7 +215,7 @@ def train_ddpg(train_timesteps):
     # try:
     #     model = DDPG.load("ddpg_citylearn")
     # except:
-    model = DDPG('MlpPolicy', env, verbose=2, gamma=0.99)
+    model = DDPG('MlpPolicy', env, verbose=0, gamma=0.99)
 
     # Train the agent
     model.learn(total_timesteps=train_timesteps)
@@ -239,7 +239,7 @@ def train_a2c(train_timesteps):
     # try:
     #     model = A2C.load("a2c_citylearn")
     # except:
-    model = A2C('MlpPolicy', env, verbose=2, gamma=0.99)
+    model = A2C('MlpPolicy', env, verbose=0, gamma=0.99)
 
     # Train the agent
     model.learn(total_timesteps=train_timesteps)
@@ -263,7 +263,7 @@ def train_td3(train_timesteps):
     # try:
     #     model = TD3.load("td3_citylearn")
     # except:
-    model = TD3('MlpPolicy', env, verbose=2, gamma=0.99)
+    model = TD3('MlpPolicy', env, verbose=0, gamma=0.99)
 
     # Train the agent
     model.learn(total_timesteps=train_timesteps)
@@ -305,6 +305,8 @@ if __name__ == "__main__":
     t1_start = time.perf_counter()
 
     timesteps = 20000
+
+    print("Training... (might take minutes/hours)")
     train_ppo(timesteps)
     train_ddpg(timesteps)
     train_a2c(timesteps)
