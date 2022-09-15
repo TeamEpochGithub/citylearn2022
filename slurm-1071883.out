@@ -1,0 +1,41 @@
+Requirement already satisfied: gym in ./venv/lib/python3.6/site-packages
+Requirement already satisfied: numpy>=1.18.0 in ./venv/lib/python3.6/site-packages (from gym)
+Requirement already satisfied: cloudpickle>=1.2.0 in ./venv/lib/python3.6/site-packages (from gym)
+Requirement already satisfied: gym_notices>=0.0.4 in ./venv/lib/python3.6/site-packages (from gym)
+Requirement already satisfied: importlib_metadata>=4.8.0 in ./venv/lib/python3.6/site-packages (from gym)
+Requirement already satisfied: dataclasses==0.8 in ./venv/lib/python3.6/site-packages (from gym)
+Requirement already satisfied: typing-extensions>=3.6.4; python_version < "3.8" in ./venv/lib/python3.6/site-packages (from importlib_metadata>=4.8.0->gym)
+Requirement already satisfied: zipp>=0.5 in ./venv/lib/python3.6/site-packages (from importlib_metadata>=4.8.0->gym)
+You are using pip version 9.0.3, however version 22.2.2 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+Collecting stable-baselines3[extra]
+  Using cached https://files.pythonhosted.org/packages/ea/c1/bdf01c4753ca3b4a99248a179446c5f42109f4485c606fd7e96e7090d4b9/stable_baselines3-1.3.0-py3-none-any.whl
+Collecting torch>=1.8.1 (from stable-baselines3[extra])
+  Downloading https://files.pythonhosted.org/packages/a4/54/81b1c3c574a1ffde54b0c82ed2a37d81395709cdd5f50e59970aeed5d95e/torch-1.10.2-cp36-cp36m-manylinux1_x86_64.whl (881.9MB)
+Exception:
+Traceback (most recent call last):
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/basecommand.py", line 215, in main
+    status = self.run(options, args)
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/commands/install.py", line 346, in run
+    requirement_set.prepare_files(finder)
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/req/req_set.py", line 381, in prepare_files
+    ignore_dependencies=self.ignore_dependencies))
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/req/req_set.py", line 623, in _prepare_file
+    session=self.session, hashes=hashes)
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/download.py", line 822, in unpack_url
+    hashes=hashes
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/download.py", line 664, in unpack_http_url
+    unpack_file(from_path, location, content_type, link)
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/utils/__init__.py", line 609, in unpack_file
+    flatten=not filename.endswith('.whl')
+  File "/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/pip/utils/__init__.py", line 511, in unzip_file
+    fp.write(data)
+OSError: [Errno 28] No space left on device
+You are using pip version 9.0.3, however version 22.2.2 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+/home/ptempelman/project/citylearn-2022-starter-kit/venv/lib64/python3.6/site-packages/gym/core.py:27: UserWarning: [33mWARN: Gym minimally supports python 3.6 as the python foundation not longer supports the version, please update your version to 3.7+[0m
+  "Gym minimally supports python 3.6 as the python foundation not longer supports the version, please update your version to 3.7+"
+Traceback (most recent call last):
+  File "evaluating_baselines3.py", line 23, in <module>
+    from stable_baselines3 import PPO, A2C, DDPG, TD3
+ModuleNotFoundError: No module named 'stable_baselines3'
