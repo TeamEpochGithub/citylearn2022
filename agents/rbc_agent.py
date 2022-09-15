@@ -1,11 +1,11 @@
 import numpy as np
+import sys
 
 def rbc_policy(observation, action_space):
     """
     Simple rule based policy based on day or night time
     """
     hour = observation[2] # Hour index is 2 for all observations
-    
     action = 0.0 # Default value
     if 9 <= hour <= 21:
         # Daytime: release stored energy

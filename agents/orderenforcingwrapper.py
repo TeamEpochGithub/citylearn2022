@@ -1,3 +1,5 @@
+import sys
+
 from gym.spaces import Box
 from agents.user_agent import UserAgent
 from rewards.user_reward import UserReward
@@ -30,11 +32,17 @@ class OrderEnforcingAgent:
         for agent_id in range(self.num_buildings):
             action_space = self.action_space[agent_id]
             self.agent.set_action_space(agent_id, action_space)
-        
+            self.agent.set_q_tables(agent_id)
+
         return self.compute_action(obs)
     
     def raise_aicrowd_error(self, msg):
         raise NameError(msg)
+
+    def save_q_tables(self):
+
+        for agent_id in range(self.num_buildings):
+            self.agent.save_q_table(agent_id)
 
     def compute_action(self, observation):
         """
@@ -56,7 +64,7 @@ class OrderEnforcingAgent:
         actions = []
         
         for agent_id in range(self.num_buildings):
-            # reward = rewards[agent_id]
+            reward = rewards[agent_id]
             actions.append(self.agent.compute_action(observation[agent_id], agent_id))
 
         # If you want a single central agent setup, change this function as needed

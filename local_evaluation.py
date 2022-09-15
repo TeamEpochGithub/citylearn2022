@@ -12,7 +12,7 @@ from agents.orderenforcingwrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 
 class Constants:
-    episodes = 3
+    episodes = 20
     schema_path = './data/citylearn_challenge_2022_phase_1/schema.json'
 
 def action_space_to_dict(aspace):
@@ -87,6 +87,7 @@ def evaluate():
                 print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
+                agent.save_q_tables()
                 break
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")
@@ -98,6 +99,7 @@ def evaluate():
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+        print("Average Total Cost:", (np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean([e['price_cost'] for e in episode_metrics]) / 2)))
     print(f"Total time taken by agent: {agent_time_elapsed}s")
     
 
