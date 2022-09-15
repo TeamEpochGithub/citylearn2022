@@ -9,14 +9,16 @@
 
 module load 2022r2
 module load python/3.8.12
-
+module load py-pip
 module load miniconda3
+
 unset CONDA_SHLVL
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda info --envs
 
 # Comment out next line after first run
 conda create -n mypython
+conda info --envs
 
 conda activate mypython
 
