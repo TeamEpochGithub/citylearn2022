@@ -57,6 +57,7 @@ env = CityLearnEnv(schema=Constants.schema_path)
 # we divide observation that are specific to buildings (index_particular)
 # and observation that are the same for all the buildings (index_commun)
 
+# Month, # Hour, # Carbon Intensity, # ,
 index_commun = [0, 2, 19, 4, 8, 24]
 index_particular = [20, 21, 22, 23]
 
@@ -87,6 +88,9 @@ class EnvCityGym(gym.Env):
                                                 dtype=np.float32)
 
         # TO THINK : normalize the observation space
+
+        self.counter = 0
+
 
     def reset(self):
         obs_dict = env_reset(self.env)
@@ -127,6 +131,10 @@ class EnvCityGym(gym.Env):
         obs, reward, done, info = self.env.step(action)
 
         observation = self.get_observation(obs)
+        self.counter += 1
+
+        if self.counter % 8759 == 0:
+            print(sum(self.env.evaluate()) / 2, str(self.counter / 8759) + " episodes")
 
         return observation, sum(reward), done, info
 
@@ -304,45 +312,41 @@ def evaluate_print_results(model, print_substeps=False):
 if __name__ == "__main__":
     t1_start = time.perf_counter()
 
-    timesteps = 20000
+    timesteps = 100000
 
-    print("Training... (might take minutes/hours)")
-    train_ppo(timesteps)
-    train_ddpg(timesteps)
-    train_a2c(timesteps)
-    train_td3(timesteps)
+    print(f"Training for {timesteps} steps... (might take minutes/hours)")
 
     print("######PPO#######")
-
     ppo_start = time.perf_counter()
+    train_ppo(timesteps)
     model = PPO.load("ppo_citylearn")
     evaluate_print_results(model)
     ppo_stop = time.perf_counter()
-    print("Elapsed time:", ppo_stop - ppo_start)
+    print("PPO time:", ppo_stop - ppo_start)
 
-    print("######DDPG#######")
+    # print("######DDPG#######")
+    # ddpg_start = time.perf_counter()
+    # train_ddpg(timesteps)
+    # model = DDPG.load("ddpg_citylearn")
+    # evaluate_print_results(model)
+    # ddpg_stop = time.perf_counter()
+    # print("DDPG time:", ddpg_stop - ddpg_start)
 
-    ddpg_start = time.perf_counter()
-    model = DDPG.load("ddpg_citylearn")
-    evaluate_print_results(model)
-    ddpg_stop = time.perf_counter()
-    print("Elapsed time:", ddpg_stop - ddpg_start)
-
-    print("######A2C#######")
-
-    a2c_start = time.perf_counter()
-    model = A2C.load("a2c_citylearn")
-    evaluate_print_results(model)
-    a2c_stop = time.perf_counter()
-    print("Elapsed time:", a2c_stop - a2c_start)
-
-    print("######TD3#######")
-
-    td3_start = time.perf_counter()
-    model = TD3.load("td3_citylearn")
-    evaluate_print_results(model)
-    td3_stop = time.perf_counter()
-    print("Elapsed time:", td3_stop - td3_start)
+    # print("######A2C#######")
+    # a2c_start = time.perf_counter()
+    # train_a2c(timesteps)
+    # model = A2C.load("a2c_citylearn")
+    # evaluate_print_results(model)
+    # a2c_stop = time.perf_counter()
+    # print("A2C time:", a2c_stop - a2c_start)
+    #
+    # print("######TD3#######")
+    # td3_start = time.perf_counter()
+    # train_td3(timesteps)
+    # model = TD3.load("td3_citylearn")
+    # evaluate_print_results(model)
+    # td3_stop = time.perf_counter()
+    # print("TD3 time:", td3_stop - td3_start)
 
     t1_stop = time.perf_counter()
     print("Total elapsed time:", t1_stop - t1_start)

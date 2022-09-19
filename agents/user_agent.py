@@ -10,7 +10,7 @@ from agents.rlc_agent import RLCAgent
 ###################################################################
 
 # UserAgent = RandomAgent
-# UserAgent = BasicRBCAgent
+UserAgent = BasicRBCAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
-UserAgent = BasicWeatherAgent
+# UserAgent = BasicWeatherAgent
