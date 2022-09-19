@@ -27,7 +27,7 @@ conda activate mypython
 #conda install -c conda-forge stable-baselines3
 #conda install -c conda-forge pip
 #conda install -c conda-forge git
-#pip install git+https://github.com/intelligent-environments-lab/CityLearn.git@citylearn_2022
+#pip install git+https://github.com/intelligent-environments-lab/CityLearn.git@v1.3.6
 #conda list
 ###
 

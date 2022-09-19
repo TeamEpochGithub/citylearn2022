@@ -312,7 +312,7 @@ def evaluate_print_results(model, print_substeps=False):
 if __name__ == "__main__":
     t1_start = time.perf_counter()
 
-    timesteps = 1000000
+    timesteps = 10000000
 
     print(f"Training for {timesteps} steps... (might take minutes/hours)")
 
