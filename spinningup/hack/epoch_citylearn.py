@@ -7,22 +7,27 @@ import sys
 import time
 import json
 import itertools
+import os.path as osp
 from citylearn.citylearn import CityLearnEnv
+
 
 class EnvCityGym(gym.Env):
     """
     Env wrapper coming from the gym library.
     """
-    def __init__(self):
 
+    def __init__(self):
         self.index_com = [0, 2, 19, 4, 8, 24]
         self.index_part = [20, 21, 22, 23]
         self.normalization_value_com = [12, 24, 2, 100, 100, 1]
         self.normalization_value_part = [5, 5, 5, 5]
         self.len_tot_index = len(self.index_com) + len(self.index_part) * 5
 
-        #self.env = CityLearnEnv(schema=f"{os.path.dirname(os.path.realpath(__file__))}/data/citylearn_challenge_2022_phase_1/schema.json")
-        self.env = CityLearnEnv(schema=r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\schema.json")
+        # self.env = CityLearnEnv(schema=f"{os.path.dirname(os.path.realpath(__file__))}/data/citylearn_challenge_2022_phase_1/schema.json")
+        # self.env = CityLearnEnv(schema=f"{os.path.dirname(os.path.realpath(__file__))}\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\schema.json")
+        self.env = CityLearnEnv(schema=osp.join(osp.abspath(
+            osp.dirname(osp.dirname((osp.dirname(osp.dirname(osp.dirname(osp.dirname(osp.dirname((__file__)))))))))),
+                                                r'data\\citylearn_challenge_2022_phase_1\\schema.json'))
 
         # get the number of buildings
         self.num_buildings = len(self.env.action_space)
@@ -48,7 +53,7 @@ class EnvCityGym(gym.Env):
         observation = self.get_observation(obs)
 
         return (np.array(observation, dtype=np.float32))
-        #return np.array(observation)
+        # return np.array(observation)
 
     def action_space_to_dict(self, aspace):
         """ Only for box space """
@@ -84,7 +89,8 @@ class EnvCityGym(gym.Env):
 
         # we get the observation common for each building (index_common)
         observation_common = [obs[0][i] / n for i, n in zip(self.index_com, self.normalization_value_com)]
-        observation_particular = [[o[i] / n for i, n in zip(self.index_part, self.normalization_value_part)] for o in obs]
+        observation_particular = [[o[i] / n for i, n in zip(self.index_part, self.normalization_value_part)] for o in
+                                  obs]
 
         observation_particular = list(itertools.chain(*observation_particular))
         # we concatenate the observation
@@ -104,10 +110,9 @@ class EnvCityGym(gym.Env):
 
         observation = self.get_observation(obs)
 
-        #return observation, sum(reward), done, info
-        #sys.exit()
+        # return observation, sum(reward), done, info
+        # sys.exit()
         return np.array(observation, dtype=np.float32), sum(reward), done, info
-
 
     def render(self, mode='human'):
         return self.env.render(mode)
