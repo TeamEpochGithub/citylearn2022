@@ -8,7 +8,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.orderenforcingwrapper import OrderEnforcingAgent
+from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
 from citylearn.citylearn import CityLearnEnv
 
 
@@ -45,7 +45,7 @@ def evaluate():
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingAgent()
+    agent = OrderEnforcingSpinningUpAgent()
 
     obs_dict = env_reset(env)
 
