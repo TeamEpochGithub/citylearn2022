@@ -13,8 +13,6 @@ from spinningup.utils.logx import EpochLogger
 from spinningup.utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
 from spinningup.utils.mpi_tools import mpi_fork, mpi_avg, proc_id, mpi_statistics_scalar, num_procs
 
-import sys
-
 
 class PPOBuffer:
     """

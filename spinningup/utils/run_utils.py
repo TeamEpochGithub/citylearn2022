@@ -1,9 +1,8 @@
 from spinningup.user_config import DEFAULT_DATA_DIR, FORCE_DATESTAMP, DEFAULT_SHORTHAND, WAIT_BEFORE_LAUNCH
 from spinningup.utils.logx import colorize
-from spinningup.utils.mpi_tools import mpi_fork, msg
+from spinningup.utils.mpi_tools import mpi_fork
 from spinningup.utils.serialization_utils import convert_json
 import base64
-from copy import deepcopy
 import cloudpickle
 import json
 import numpy as np
@@ -167,7 +166,7 @@ def call_experiment(exp_name, thunk, seed=0, num_cpu=1, data_dir=None,
     pickled_thunk = cloudpickle.dumps(thunk_plus)
     encoded_thunk = base64.b64encode(zlib.compress(pickled_thunk)).decode('utf-8')
 
-    entrypoint = osp.join(osp.abspath(osp.dirname(__file__)),'run_entrypoint.py')
+    entrypoint = osp.join(osp.abspath(osp.dirname(__file__)), 'run_entrypoint.py')
     cmd = [sys.executable if sys.executable else 'python', entrypoint, encoded_thunk]
     try:
         subprocess.check_call(cmd, env=os.environ)
