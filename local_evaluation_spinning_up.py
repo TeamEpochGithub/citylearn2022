@@ -98,7 +98,8 @@ def evaluate():
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print("Average Total Cost:", (np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean([e['price_cost'] for e in episode_metrics]) / 2)))
+        print("Average Total Cost:", (
+                    np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean([e['price_cost'] for e in episode_metrics])) / 2))
     print(f"Total time taken by agent: {agent_time_elapsed}s")
     
 
