@@ -26,9 +26,8 @@ class BasicPPOAgent:
     def __init__(self):
         self.action_space = {}
         self.directory = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        print(osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))),r'training\spinningup\data\ppo\ppo_s0\pyt_save\model.pt'))
+
         self.ac = torch.load(osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))),r'spinningup\data\ppo\ppo_s0\pyt_save\model.pt'))
-        # self.ac = torch.load(r"C:\Users\philip\Storage\Epoch\citylearn-2022-starter-kit\training\spinningup\data\ppo\ppo_s0\pyt_save\model.pt")
 
         self.index_com = [0, 2, 19, 4, 8, 24]
         self.index_part = [20, 21, 22, 23]
