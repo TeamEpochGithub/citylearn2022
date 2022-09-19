@@ -158,6 +158,9 @@ def call_experiment(exp_name, thunk, seed=0, num_cpu=1, data_dir=None,
         mpi_fork(num_cpu)
 
         # Run thunk
+        print(kwargs)
+        sys.exit()
+
         thunk(**kwargs)
 
     # Prepare to launch a script to run the experiment

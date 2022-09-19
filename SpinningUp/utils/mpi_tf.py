@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 from mpi4py import MPI
 from SpinningUp.utils.mpi_tools import broadcast
 

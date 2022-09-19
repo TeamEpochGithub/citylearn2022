@@ -1,12 +1,19 @@
+from warnings import simplefilter
+simplefilter(action='ignore', category=DeprecationWarning)
+
 import numpy as np
 import torch
 from torch.optim import Adam
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import gym
 import time
 import SpinningUp.ppo.core as core
 from SpinningUp.utils.logx import EpochLogger
 from SpinningUp.utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
 from SpinningUp.utils.mpi_tools import mpi_fork, mpi_avg, proc_id, mpi_statistics_scalar, num_procs
+
+import sys
 
 
 class PPOBuffer:
@@ -326,17 +333,28 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
 
 if __name__ == '__main__':
+
+    try:
+        import logging
+        import tensorflow as tf
+        tf.get_logger().setLevel(logging.ERROR)
+    except:
+        import sys
+        sys.exit()
+        pass
+
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='HalfCheetah-v2')
+    parser.add_argument('--env', type=str, default='Epoch-Citylearn-v0')
+    #parser.add_argument('--env', type=str, default='CartPole-v1')
     parser.add_argument('--hid', type=int, default=64)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--steps', type=int, default=4000)
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--exp_name', type=str, default='ppo')
     args = parser.parse_args()
 

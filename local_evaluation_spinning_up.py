@@ -8,11 +8,11 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.orderenforcingwrapper import OrderEnforcingAgent
+from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
 from citylearn.citylearn import CityLearnEnv
 
 class Constants:
-    episodes = 20
+    episodes = 3
     schema_path = './data/citylearn_challenge_2022_phase_1/schema.json'
 
 def action_space_to_dict(aspace):
@@ -41,7 +41,7 @@ def evaluate():
     print("Starting local evaluation")
     
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingAgent()
+    agent = OrderEnforcingSpinningUpAgent()
 
     obs_dict = env_reset(env)
 
@@ -87,7 +87,6 @@ def evaluate():
                 print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
-                agent.save_q_tables()
                 break
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")

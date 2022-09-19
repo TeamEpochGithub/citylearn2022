@@ -12,7 +12,7 @@ def dict_to_action_space(aspace_dict):
               )
 
 
-class OrderEnforcingAgent:
+class OrderEnforcingSpinningUpAgent:
     """
     Emulates order enforcing wrapper in Pettingzoo for easy integration
     Calls each agent step with agent in a loop and returns the action
@@ -29,10 +29,12 @@ class OrderEnforcingAgent:
         obs = observation["observation"]
         self.num_buildings = len(obs)
 
-        for agent_id in range(self.num_buildings):
-            action_space = self.action_space[agent_id]
-            self.agent.set_action_space(agent_id, action_space)
-            self.agent.set_q_tables(agent_id)
+        self.agent.set_action_space(action_space)
+
+        # for agent_id in range(self.num_buildings):
+        #     action_space = self.action_space[agent_id]
+        #     self.agent.set_action_space(agent_id, action_space)
+        #     self.agent.set_q_tables(agent_id)
 
         return self.compute_action(obs)
     
@@ -62,12 +64,11 @@ class OrderEnforcingAgent:
         rewards = UserReward(agent_count=len(observation),observation=observation).calculate()
 
         actions = []
-        
-        for agent_id in range(self.num_buildings):
-            reward = rewards[agent_id]
-            actions.append(self.agent.compute_action(observation[agent_id], agent_id))
 
-        # If you want a single central agent setup, change this function as needed
+        # for Sequential observations / actions
+        # for agent_id in range(self.num_buildings):
+        #     reward = rewards[agent_id]
+        #     actions.append(self.agent.compute_action(observation[agent_id], agent_id))
 
-        
-        return actions
+        # for Single observation / action
+        return self.agent.compute_action(observation, self.num_buildings)

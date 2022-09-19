@@ -1,8 +1,9 @@
 import time
 import joblib
-import os
 import os.path as osp
+import os
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 import torch
 from SpinningUp.utils.logx import EpochLogger
 from SpinningUp.utils.logx import restore_tf_graph
