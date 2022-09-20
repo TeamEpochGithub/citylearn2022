@@ -1,13 +1,8 @@
-import gym
-import numpy as np
-import random
-import re
-import os
-import sys
-import time
-import json
 import itertools
 import os.path as osp
+
+import gym
+import numpy as np
 from citylearn.citylearn import CityLearnEnv
 
 

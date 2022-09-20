@@ -7,21 +7,21 @@
     },
     "actor_critic":	"MLPActorCritic",
     "clip_ratio":	0.2,
-    "env_fn":	"<function <lambda> at 0x000001F0255BFE50>",
-    "epochs":	50,
+    "env_fn":	"<function <lambda> at 0x0000015DE4D23310>",
+    "epochs":	10000,
     "exp_name":	"ppo",
     "gamma":	0.99,
     "lam":	0.97,
     "logger":	{
-        "<spinningup.utils.logx.EpochLogger object at 0x000001F0255AB190>":	{
+        "<spinningup.utils.logx.EpochLogger object at 0x0000015DE4D27250>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo",
             "first_row":	true,
             "log_current_row":	{},
             "log_headers":	[],
-            "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\spinningup/data\\ppo\\ppo_s0",
+            "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\spinningup/data\\ppo\\ppo_s0",
             "output_file":	{
-                "<_io.TextIOWrapper name='C:\\\\Users\\\\Lars\\\\Documents\\\\Epoch\\\\CityLearn\\\\citylearn-2022-starter-kit\\\\spinningup/data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
+                "<_io.TextIOWrapper name='C:\\\\Users\\\\philip\\\\Storage\\\\Epoch\\\\citylearn-2022-starter-kit\\\\spinningup/data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
                     "mode":	"w"
                 }
             }
@@ -29,7 +29,7 @@
     },
     "logger_kwargs":	{
         "exp_name":	"ppo",
-        "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\spinningup/data\\ppo\\ppo_s0"
+        "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\spinningup/data\\ppo\\ppo_s0"
     },
     "max_ep_len":	1000,
     "pi_lr":	0.0003,
