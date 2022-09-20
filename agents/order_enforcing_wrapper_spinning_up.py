@@ -41,11 +41,6 @@ class OrderEnforcingSpinningUpAgent:
     def raise_aicrowd_error(self, msg):
         raise NameError(msg)
 
-    def save_q_tables(self):
-
-        for agent_id in range(self.num_buildings):
-            self.agent.save_q_table(agent_id)
-
     def compute_action(self, observation):
         """
         Inputs: 
