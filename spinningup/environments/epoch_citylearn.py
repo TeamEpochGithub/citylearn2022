@@ -23,10 +23,7 @@ class EnvCityGym(gym.Env):
         self.normalization_value_part = [5, 5, 5, 5]
         self.len_tot_index = len(self.index_com) + len(self.index_part) * 5
 
-        # self.env = CityLearnEnv(schema=f"{os.path.dirname(os.path.realpath(__file__))}/data/citylearn_challenge_2022_phase_1/schema.json")
-        # self.env = CityLearnEnv(schema=f"{os.path.dirname(os.path.realpath(__file__))}\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\schema.json")
-        self.env = CityLearnEnv(schema=osp.join(osp.abspath(
-            osp.dirname(osp.dirname((osp.dirname(osp.dirname(osp.dirname(osp.dirname(osp.dirname((__file__)))))))))),
+        self.env = CityLearnEnv(schema=osp.join(osp.abspath(osp.dirname(osp.dirname(osp.dirname((__file__))))),
                                                 r'data\\citylearn_challenge_2022_phase_1\\schema.json'))
 
         # get the number of buildings
