@@ -1,13 +1,8 @@
-import random
 import numpy as np
-import pandas as pd
-import os
-from bisect import bisect_left
-import sys
 import torch
 import os.path as osp
 import itertools
-from evaluation import current_model as current_model
+from train_eval.evaluation import current_model as current_model
 
 # Split action space into discrete regions.
 # Split environment space into discrete regions.
