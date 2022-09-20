@@ -7,15 +7,13 @@ import sys
 import torch
 import os.path as osp
 import itertools
+from evaluation import current_model as current_model
 
 # Split action space into discrete regions.
 # Split environment space into discrete regions.
 
 # Environment space: Electricity cost, Carbon cost, Hour, Total solar energy
 # Array values: EC: 24, CC: 19, H: 2, TSE: 11 + 15,
-
-
-
 
 
 class BasicPPOAgent:
@@ -25,9 +23,7 @@ class BasicPPOAgent:
     """
     def __init__(self):
         self.action_space = {}
-        self.directory = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.ac = torch.load(osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))),r'spinningup\data\ppo\ppo_s0\pyt_save\model.pt'))
-        # self.ac = torch.load(r"C:\Users\philip\Storage\Epoch\citylearn-2022-starter-kit\training\spinningup\data\ppo\ppo_s0\pyt_save\model.pt")
+        self.ac = torch.load(osp.join(osp.dirname(current_model.__file__), "model.pt"))
 
         self.index_com = [0, 2, 19, 4, 8, 24]
         self.index_part = [20, 21, 22, 23]
