@@ -44,11 +44,11 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(current_agent):
+def evaluate():
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingSpinningUpAgent(current_agent)
+    agent = OrderEnforcingSpinningUpAgent()
 
     obs_dict = env_reset(env)
 
@@ -70,9 +70,6 @@ def evaluate(current_agent):
             ### use this script for orchestrating the evaluations. 
 
             observations, _, done, _ = env.step(actions)
-
-            print(observations)
-            sys.exit()
 
             if done:
                 episodes_completed += 1
@@ -116,6 +113,5 @@ def evaluate(current_agent):
 
 
 if __name__ == '__main__':
-    from agents.rbc_agent import BasicRBCAgent
-    from agents.spinning_up_agent import BasicPPOAgent
-    evaluate(BasicPPOAgent)
+    evaluate()
+

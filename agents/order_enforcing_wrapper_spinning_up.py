@@ -17,9 +17,9 @@ class OrderEnforcingSpinningUpAgent:
     Emulates order enforcing wrapper in Pettingzoo for easy integration
     Calls each agent step with agent in a loop and returns the action
     """
-    def __init__(self, agent):
+    def __init__(self):
         self.num_buildings = None
-        self.agent = agent()
+        self.agent = UserAgent()
         self.action_space = None
     
     def register_reset(self, observation):
@@ -29,9 +29,13 @@ class OrderEnforcingSpinningUpAgent:
         obs = observation["observation"]
         self.num_buildings = len(obs)
 
-        for agent_id in range(self.num_buildings):
-            action_space = self.action_space[agent_id]
-            self.agent.set_action_space(agent_id, action_space)
+        self.agent.set_action_space(action_space)
+
+        # for agent_id in range(self.num_buildings):
+        #     action_space = self.action_space[agent_id]
+        #     self.agent.set_action_space(agent_id, action_space)
+        #     self.agent.set_q_tables(agent_id)
+
 
         return self.compute_action(obs)
     

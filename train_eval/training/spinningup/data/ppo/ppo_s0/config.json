@@ -7,13 +7,13 @@
     },
     "actor_critic":	"MLPActorCritic",
     "clip_ratio":	0.2,
-    "env_fn":	"<function <lambda> at 0x000001533A05FD30>",
-    "epochs":	10000,
+    "env_fn":	"<function TrainModel.run_ppo.<locals>.<lambda> at 0x000001F8801EDD30>",
+    "epochs":	50,
     "exp_name":	"ppo",
     "gamma":	0.99,
     "lam":	0.97,
     "logger":	{
-        "<train_eval.training.spinningup.utils.logx.EpochLogger object at 0x000001533A06B100>":	{
+        "<train_eval.training.spinningup.utils.logx.EpochLogger object at 0x000001F8801E9850>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo",
             "first_row":	true,
