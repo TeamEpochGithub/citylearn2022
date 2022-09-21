@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import gym
 import os.path as osp
@@ -12,6 +13,8 @@ from train_eval.training.spinningup.environments import epoch_citylearn
 from train_eval.training.spinningup.ppo import core as ppocore, ppo
 from train_eval.training.spinningup.utils.mpi_tools import mpi_fork
 from train_eval.training.spinningup.utils.run_utils import setup_logger_kwargs
+
+from train_eval.utils.convert_arguments import get_environment_argument_scalars, environment_convert_argument
 
 
 class TrainModel:
@@ -86,6 +89,11 @@ class TrainModel:
 
 
 if __name__ == "__main__":
+
+    print(get_environment_argument_scalars([0, 1, 2, 5, 8]))
+    print(get_environment_argument_scalars(["month", "day_type", "hour", "outdoor_dry_bulb_temperature_predicted_12h", "outdoor_relative_humidity_predicted_6h", ]))
+    sys.exit()
+
     trainer = TrainModel(epochs=100)
 
     environment_arguments = {

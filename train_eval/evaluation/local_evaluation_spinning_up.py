@@ -1,3 +1,4 @@
+import itertools
 import sys
 
 import numpy as np
@@ -74,7 +75,7 @@ def evaluate(current_agent):
 
             observations, _, done, _ = env.step(actions)
 
-            obs_list.append(observations[0])
+            obs_list.append(observations[0] + observations[1][-8:] + observations[2][-8:] + observations[3][-8:] + observations[4][-8:])
 
             if done:
                 episodes_completed += 1
@@ -115,6 +116,74 @@ def evaluate(current_agent):
                 np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean(
                     [e['price_cost'] for e in episode_metrics])) / 2))
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+
+    df = pd.DataFrame(obs_list, columns= ["month",
+                            "day_type",
+                            "hour",
+                            "outdoor_dry_bulb",
+                            "outdoor_dry_bulb_temperature_predicted_6h",
+                            "outdoor_dry_bulb_temperature_predicted_12h",
+                            "outdoor_dry_bulb_temperature_predicted_24h",
+                            "outdoor_relative_humidity",
+                            "outdoor_relative_humidity_predicted_6h",
+                            "outdoor_relative_humidity_predicted_12h",
+                            "outdoor_relative_humidity_predicted_24h",
+                            "diffuse_solar_irradiance",
+                            "diffuse_solar_irradiance_predicted_6h",
+                            "diffuse_solar_irradiance_predicted_12h",
+                            "diffuse_solar_irradiance_predicted_24h",
+                            "direct_solar_irradiance",
+                            "direct_solar_irradiance_predicted_6h",
+                            "direct_solar_irradiance_predicted_12h",
+                            "direct_solar_irradiance_predicted_24h",
+                            "carbon_intensity",
+                            "non_shiftable_load",
+                            "solar_generation",
+                            "electrical_storage_soc",
+                            "net_electricity_consumption",
+                            "electricity_pricing",
+                            "electricity_pricing_predicted_6h",
+                            "electricity_pricing_predicted_12h",
+                            "electricity_pricing_predicted_24h",
+                                          "non_shiftable_load",
+                                          "solar_generation",
+                                          "electrical_storage_soc",
+                                          "net_electricity_consumption",
+                                          "electricity_pricing",
+                                          "electricity_pricing_predicted_6h",
+                                          "electricity_pricing_predicted_12h",
+                                          "electricity_pricing_predicted_24h",
+                                          "non_shiftable_load",
+                                          "solar_generation",
+                                          "electrical_storage_soc",
+                                          "net_electricity_consumption",
+                                          "electricity_pricing",
+                                          "electricity_pricing_predicted_6h",
+                                          "electricity_pricing_predicted_12h",
+                                          "electricity_pricing_predicted_24h",
+                                          "non_shiftable_load",
+                                          "solar_generation",
+                                          "electrical_storage_soc",
+                                          "net_electricity_consumption",
+                                          "electricity_pricing",
+                                          "electricity_pricing_predicted_6h",
+                                          "electricity_pricing_predicted_12h",
+                                          "electricity_pricing_predicted_24h",
+                                          "non_shiftable_load",
+                                          "solar_generation",
+                                          "electrical_storage_soc",
+                                          "net_electricity_consumption",
+                                          "electricity_pricing",
+                                          "electricity_pricing_predicted_6h",
+                                          "electricity_pricing_predicted_12h",
+                                          "electricity_pricing_predicted_24h"
+                                          ])
+
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.max_rows', None)
+
+    print(df.describe())
+
 
 if __name__ == '__main__':
     from agents.rbc_agent import BasicRBCAgent
