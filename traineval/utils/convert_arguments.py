@@ -1,12 +1,14 @@
 import numpy as np
 
 # TODO: finish this method, and methods that use it, to get scaled values
-def get_environment_argument_scalars(argument_list):
+def environment_convert_scalars(argument_list):
 
-    max_scalars = [12, 7, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.2818, ]
-    min_scalars = [1, 1, 1, 5.6, 5.6, 5.6, 5.6, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0.0703]
+    max_scalars = [12, 7, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.2818, 8, 4, 1, 12, 0.54, 0.54, 0.54, 0.54]
+    min_scalars = [1, 1, 1, 5.6, 5.6, 5.6, 5.6, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0.0703, 0, 0, 0, -8.2, 0.27, 0.27, 0.27, 0.27]
 
-    pass
+    if isinstance(argument_list[0], str):
+        argument_list = environment_convert_argument(argument_list)
+    return np.array(max_scalars)[argument_list]
 
 
 def environment_convert_argument(argument_list):

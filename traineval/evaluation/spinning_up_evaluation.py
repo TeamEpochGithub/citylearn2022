@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import time
 
+from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars
 import pandas as pd
 
 from traineval.utils.convert_arguments import environment_convert_argument
@@ -71,7 +72,6 @@ def evaluate(environment_arguments):
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                print(metrics_t)
                 metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contact organizers")
@@ -104,7 +104,6 @@ def evaluate(environment_arguments):
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print(episode_metrics)
         print("Average Total Cost:", (
                 np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean(
                     [e['price_cost'] for e in episode_metrics])) / 2))
@@ -120,11 +119,20 @@ if __name__ == '__main__':
                                                   "solar_generation",
                                                   "electrical_storage_soc",
                                                   "net_electricity_consumption"])
+    district_scalars = environment_convert_scalars(["hour",
+                                                    "month",
+                                                    "carbon_intensity",
+                                                    "electricity_pricing"])
+    building_scalars = environment_convert_scalars(["non_shiftable_load",
+                                                    "solar_generation",
+                                                    "electrical_storage_soc",
+                                                    "net_electricity_consumption"])
 
     environment_arguments = {
         "district_indexes": district_args,
-        "district_normalizers": [12, 24, 1, 1],
+        "district_scalars": district_scalars,
         "building_indexes": building_args,
-        "building_normalizers": [5, 5, 5, 5]}
+        "building_scalars": building_scalars}
+
     evaluate(environment_arguments)
 

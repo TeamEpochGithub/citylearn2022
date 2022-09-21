@@ -1,7 +1,7 @@
 from traineval.training.train import TrainModel
 from traineval.evaluation.spinning_up_evaluation import evaluate
 from agents import rbc_agent
-from traineval.utils.convert_arguments import environment_convert_argument
+from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars
 
 
 class TrainerEvaluator:
@@ -31,19 +31,26 @@ if __name__ == "__main__":
                                                   "solar_generation",
                                                   "electrical_storage_soc",
                                                   "net_electricity_consumption"])
+    district_scalars = environment_convert_scalars(["hour",
+                                                  "month",
+                                                  "carbon_intensity",
+                                                  "electricity_pricing"])
+    building_scalars = environment_convert_scalars(["non_shiftable_load",
+                                                  "solar_generation",
+                                                  "electrical_storage_soc",
+                                                  "net_electricity_consumption"])
 
-    # TODO: get normalizers from utils as well, like 'environment_convert_argument'
     environment_arguments = {
         "district_indexes": district_args,
-        "district_normalizers": [12, 24, 1, 1],
+        "district_scalars": district_scalars,
         "building_indexes": building_args,
-        "building_normalizers": [5, 5, 5, 5]}
+        "building_scalars": building_scalars}
 
     trainer_evaluator = TrainerEvaluator(200)
     trainer = trainer_evaluator.setup_trainer(environment_arguments=environment_arguments)
     trainer_evaluator.run_trainer(trainer)
 
-    trainer_evaluator.run_evaluation()
+    #trainer_evaluator.run_evaluation()
 
     # Trainer wrapper should return model and time taken to achieve model every time it saves
     # Then we run evaluation on model

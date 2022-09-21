@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import gym
 import os.path as osp
@@ -12,7 +13,6 @@ from traineval.training.spinningup.environments import epoch_citylearn
 from traineval.training.spinningup.ppo import core as ppocore, ppo
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork
 from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
-
 
 class TrainModel:
 
@@ -85,13 +85,14 @@ class TrainModel:
 
 
 if __name__ == "__main__":
+
     trainer = TrainModel(epochs=100)
 
     environment_arguments = {
         "district_indexes": [0, 2, 19, 4, 8, 24],
-        "district_normalizers": [12, 24, 2, 100, 100, 1],
+        "district_scalars": [12, 24, 2, 100, 100, 1],
         "building_indexes": [20, 21, 22, 23],
-        "building_normalizers": [5, 5, 5, 5]}
+        "building_scalars": [5, 5, 5, 5]}
 
     trainer.register_environment(environment_arguments=environment_arguments)
     trainer.run_ppo()

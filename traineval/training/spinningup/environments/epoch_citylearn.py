@@ -1,5 +1,6 @@
 import itertools
 import os.path as osp
+import sys
 
 import gym
 import numpy as np
@@ -12,18 +13,20 @@ class EnvCityGym(gym.Env):
     Env wrapper coming from the gym library.
     """
 
-    def __init__(self, district_indexes, building_indexes, district_normalizers, building_normalizers):
+    def __init__(self, district_indexes, building_indexes, district_scalars, building_scalars):
+
+        # TODO: Change instances of normalization to scalar, com to district and part to building.
 
         self.index_com = district_indexes
         self.index_part = building_indexes
-        self.normalization_value_com = district_normalizers
-        self.normalization_value_part = building_normalizers
+        self.normalization_value_com = district_scalars
+        self.normalization_value_part = building_scalars
 
         self.env = CityLearnEnv(schema=osp.join(osp.dirname(competition_data.__file__), "schema.json"))
 
         # get the number of buildings
-        self.num_buildings = len(self.env.action_space)
-        self.len_tot_index = len(self.index_com) + len(self.index_part) * self.num_buildings
+        self.num_buildings = 5
+        self.len_tot_index = len(self.index_com) + len(self.index_part) * 5
 
         # define action and observation space
         self.action_space = gym.spaces.Box(low=np.array([-1] * self.num_buildings),
@@ -40,6 +43,10 @@ class EnvCityGym(gym.Env):
         # TO THINK : normalize the observation space
 
     def reset(self):
+
+        # print(self.num_buildings, self.env.action_space)
+        # sys.exit()
+
         obs_dict = self.env_reset(self.env)
         obs = self.env.reset()
 

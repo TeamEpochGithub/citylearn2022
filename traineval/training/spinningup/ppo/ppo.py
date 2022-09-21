@@ -341,9 +341,9 @@ if __name__ == '__main__':
 
     environment_arguments = {
         "district_indexes": [0, 2, 19, 4, 8, 24],
-        "district_normalizers": [12, 24, 2, 100, 100, 1],
+        "district_scalars": [12, 24, 2, 100, 100, 1],
         "building_indexes": [20, 21, 22, 23],
-        "building_normalizers": [5, 5, 5, 5]}
+        "building_scalars": [5, 5, 5, 5]}
 
     register(
         id="Epoch-Citylearn-v1",
