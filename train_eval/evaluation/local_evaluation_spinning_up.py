@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import time
 
@@ -42,11 +44,11 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate():
+def evaluate(current_agent):
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingSpinningUpAgent()
+    agent = OrderEnforcingSpinningUpAgent(current_agent)
 
     obs_dict = env_reset(env)
 
@@ -68,12 +70,16 @@ def evaluate():
             ### use this script for orchestrating the evaluations. 
 
             observations, _, done, _ = env.step(actions)
+
+            print(observations)
+            sys.exit()
+
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
                 metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
                 if np.any(np.isnan(metrics_t)):
-                    raise ValueError("Episode metrics are nan, please contant organizers")
+                    raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
                 print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
@@ -110,4 +116,6 @@ def evaluate():
 
 
 if __name__ == '__main__':
-    evaluate()
+    from agents.rbc_agent import BasicRBCAgent
+    from agents.spinning_up_agent import BasicPPOAgent
+    evaluate(BasicPPOAgent)

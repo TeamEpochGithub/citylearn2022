@@ -29,7 +29,8 @@ class TrainModel:
             kwargs=environment_arguments,
         )
 
-    def retrieve_args(self):
+    # TODO: take arguments as input and add them to parser if they are not-None
+    def retrieve_parsed_args(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--env', type=str, default='Epoch-Citylearn-v1')
         parser.add_argument('--hid', type=int, default=64)
@@ -39,51 +40,47 @@ class TrainModel:
         parser.add_argument('--seed', '-s', type=int, default=0)
         parser.add_argument('--cpu', type=int, default=4)
         parser.add_argument('--steps', type=int, default=4000)
-        parser.add_argument('--epochs', type=int, default=self.epochs)
+        parser.add_argument('--epochs', type=int, default=50)
         parser.add_argument('--exp_name', type=str, default='ppo')
         args = parser.parse_args()
 
         return args
 
     def run_ppo(self):
-        args = self.retrieve_args()
+        parsed_args = self.retrieve_parsed_args()
 
-        mpi_fork(args.cpu)
+        mpi_fork(parsed_args.cpu)
 
-        logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
-        ppo.ppo(lambda: gym.make(args.env), actor_critic=ppocore.MLPActorCritic,
-                ac_kwargs=dict(hidden_sizes=[args.hid] * args.l), gamma=args.gamma,
-                seed=args.seed, steps_per_epoch=args.steps, epochs=args.epochs,
+        logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
+        ppo.ppo(lambda: gym.make(parsed_args.env), actor_critic=ppocore.MLPActorCritic,
+                ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
+                seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
                 logger_kwargs=logger_kwargs)
 
         print("##### PPO model trained #####")
 
     def run_ddpg(self):
 
-        args = self.retrieve_args()
+        parsed_args = self.retrieve_parsed_args()
 
-        logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
-        ddpg.ddpg(lambda: gym.make(args.env), actor_critic=ddpgcore.MLPActorCritic,
-                  ac_kwargs=dict(hidden_sizes=[args.hid] * args.l),
-                  gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+        logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
+        ddpg.ddpg(lambda: gym.make(parsed_args.env), actor_critic=ddpgcore.MLPActorCritic,
+                  ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
+                  gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
                   logger_kwargs=logger_kwargs)
 
         print("##### DDPG model trained #####")
 
-    # def run_experiment_grid(self):
-    #     args = self.retrieve_args()
-    #
-    #     eg = ExperimentGrid(name='ppo-pyt-bench')
-    #     eg.add('env_name', 'Epoch-Citylearn-v1', '', True)
-    #     eg.add('seed', [10 * i for i in range(args.num_runs)])
-    #     eg.add('epochs', 10)
-    #     eg.add('steps_per_epoch', 4000)
-    #     eg.add('ac_kwargs:hidden_sizes', [(32,), (64, 64)], 'hid')
-    #     eg.add('ac_kwargs:activation', [torch.nn.Tanh, torch.nn.ReLU], '')
-    #     eg.run(ppo_pytorch, num_cpu=args.cpu)
-    #
-    #     print("##### Experiment grid ran #####")
+    def train_model(self, model_type, environment_arguments):
 
+        self.register_environment(environment_arguments=environment_arguments)
+
+        if model_type == "ppo":
+            trainer.run_ppo()
+        elif model_type == "ddpg":
+            trainer.run_ddpg()
+
+    # TODO: Add ExperimentGrid for GridSearchCV-like hyperparameter tuning
 
 
 if __name__ == "__main__":
@@ -94,10 +91,6 @@ if __name__ == "__main__":
         "district_normalizers": [12, 24, 2, 100, 100, 1],
         "building_indexes": [20, 21, 22, 23],
         "building_normalizers": [5, 5, 5, 5]}
-
-
-    print(environment_convert_argument([0,2,19]))
-    print(environment_convert_argument(["month", "hour", "solar_generation"]))
 
     trainer.register_environment(environment_arguments=environment_arguments)
     trainer.run_ppo()

@@ -1,6 +1,6 @@
 import numpy as np
 
-
+# TODO: finish this method, and methods that use it, to get scaled values
 def get_environment_argument_scalars(argument_list):
 
     max_scalars = [12, 7, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.2818, ]
