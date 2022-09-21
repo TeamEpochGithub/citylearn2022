@@ -68,7 +68,7 @@ def get_reward(electricity_consumption: List[float], carbon_emission: List[float
     district_carbon_emissions = carbon_emission
     price_cost, emission_cost, grid_cost = calculate_values(district_electricity_price, district_carbon_emissions, district_electrictiy_consumption)
     reward = ((price_cost + emission_cost + grid_cost)/5) * -1
-    print(price_cost, emission_cost, grid_cost)
+    # print(price_cost, emission_cost, grid_cost)
     # ************** END ***************
 
     return reward
