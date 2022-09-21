@@ -61,7 +61,6 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
-    average_cost = 2
     try:
         while True:
 
@@ -73,7 +72,9 @@ def evaluate():
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
+                metrics = {"price_cost": metrics_t[0],
+                           "emmision_cost": metrics_t[1],
+                           "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contant organizers")
                 episode_metrics.append(metrics)
@@ -98,15 +99,17 @@ def evaluate():
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")
         interrupted = True
-
+    
     if not interrupted:
         print("=========================Completed=========================")
 
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+        print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
         average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
-                                       np.mean([e['emmision_cost'] for e in episode_metrics])])
+                                np.mean([e['emmision_cost'] for e in episode_metrics]),
+                                np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
     return average_cost

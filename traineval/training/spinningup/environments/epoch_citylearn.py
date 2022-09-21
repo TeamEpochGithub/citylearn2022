@@ -105,7 +105,7 @@ class EnvCityGym(gym.Env):
 
         # return observation, sum(reward), done, info
         # sys.exit()
-        return np.array(observation, dtype=np.float32), sum(reward), done, info
+        return np.array(observation, dtype=np.float32), reward, done, info
 
     def render(self, mode='human'):
         return self.env.render(mode)

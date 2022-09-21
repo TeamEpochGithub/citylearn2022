@@ -3,6 +3,8 @@ import sys
 import numpy as np
 import time
 
+import pandas as pd
+
 from traineval.utils.convert_arguments import environment_convert_argument
 
 from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
@@ -12,7 +14,7 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 
 
 class Constants:
-    episodes = 3
+    episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
 
 def action_space_to_dict(aspace):
@@ -69,6 +71,7 @@ def evaluate(environment_arguments):
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
+                print(metrics_t)
                 metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contact organizers")
@@ -101,6 +104,7 @@ def evaluate(environment_arguments):
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+        print(episode_metrics)
         print("Average Total Cost:", (
                 np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean(
                     [e['price_cost'] for e in episode_metrics])) / 2))
