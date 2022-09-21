@@ -1,9 +1,5 @@
-import sys
-
 import numpy as np
 import time
-
-from traineval.utils.convert_arguments import environment_convert_argument
 
 """
 Please do not make changes to this file. 
@@ -12,15 +8,16 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
+from agents.orderenforcingwrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 
 class Constants:
-    episodes = 3
+    episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
+
 
 def action_space_to_dict(aspace):
     """ Only for box space """
@@ -46,11 +43,11 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(environment_arguments):
+def evaluate():
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingSpinningUpAgent(environment_arguments)
+    agent = OrderEnforcingAgent()
 
     obs_dict = env_reset(env)
 
@@ -64,21 +61,21 @@ def evaluate(environment_arguments):
     num_steps = 0
     interrupted = False
     episode_metrics = []
+    average_cost = 2
     try:
         while True:
 
-            ### This is only a reference script provided to allow you 
-            ### to do local evaluation. The evaluator **DOES NOT** 
-            ### use this script for orchestrating the evaluations. 
+            ### This is only a reference script provided to allow you
+            ### to do local evaluation. The evaluator **DOES NOT**
+            ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
-
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
                 metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
                 if np.any(np.isnan(metrics_t)):
-                    raise ValueError("Episode metrics are nan, please contact organizers")
+                    raise ValueError("Episode metrics are nan, please contant organizers")
                 episode_metrics.append(metrics)
                 print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
@@ -108,26 +105,12 @@ def evaluate(environment_arguments):
     if len(episode_metrics) > 0:
         print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
         print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print("Average Total Cost:", (
-                np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean(
-                    [e['price_cost'] for e in episode_metrics])) / 2))
+        average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
+                                       np.mean([e['emmision_cost'] for e in episode_metrics])])
+        print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+    return average_cost
 
 
 if __name__ == '__main__':
-    district_args = environment_convert_argument(["hour",
-                                                  "month",
-                                                  "carbon_intensity",
-                                                  "electricity_pricing"])
-    building_args = environment_convert_argument(["non_shiftable_load",
-                                                  "solar_generation",
-                                                  "electrical_storage_soc",
-                                                  "net_electricity_consumption"])
-
-    environment_arguments = {
-        "district_indexes": district_args,
-        "district_normalizers": [12, 24, 1, 1],
-        "building_indexes": building_args,
-        "building_normalizers": [5, 5, 5, 5]}
-    evaluate(environment_arguments)
-
+    evaluate()

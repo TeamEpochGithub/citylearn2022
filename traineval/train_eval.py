@@ -1,5 +1,5 @@
 from traineval.training.train import TrainModel
-from traineval.evaluation.local_evaluation_spinning_up import evaluate
+from traineval.evaluation.spinning_up_evaluation import evaluate
 from agents import rbc_agent
 from traineval.utils.convert_arguments import environment_convert_argument
 

@@ -14,7 +14,7 @@ class BasicPPOAgent:
 
         self.index_com = environment_arguments["district_indexes"]
         self.index_part = environment_arguments["building_indexes"]
-        self.normalization_value_com = [12, 24, 2, 100, 100, 1]
+        self.normalization_value_com = [12, 24, 1, 1]
         self.normalization_value_part = [5, 5, 5, 5]
 
         self.len_tot_index = len(self.index_com) + len(self.index_part) * 5
