@@ -7,21 +7,21 @@
     },
     "actor_critic":	"MLPActorCritic",
     "clip_ratio":	0.2,
-    "env_fn":	"<function <lambda> at 0x000001533A05FD30>",
-    "epochs":	10000,
+    "env_fn":	"<function TrainModel.run_ppo.<locals>.<lambda> at 0x0000020DF74CA310>",
+    "epochs":	50,
     "exp_name":	"ppo",
     "gamma":	0.99,
     "lam":	0.97,
     "logger":	{
-        "<train_eval.training.spinningup.utils.logx.EpochLogger object at 0x000001533A06B100>":	{
+        "<train_eval.training.spinningup.utils.logx.EpochLogger object at 0x0000020DF74CC6A0>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo",
             "first_row":	true,
             "log_current_row":	{},
             "log_headers":	[],
-            "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\train_eval\\training\\spinningup/data\\ppo\\ppo_s0",
+            "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\train_eval\\training\\spinningup/data\\ppo\\ppo_s0",
             "output_file":	{
-                "<_io.TextIOWrapper name='C:\\\\Users\\\\philip\\\\Storage\\\\Epoch\\\\citylearn-2022-starter-kit\\\\train_eval\\\\training\\\\spinningup/data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
+                "<_io.TextIOWrapper name='C:\\\\Users\\\\Lars\\\\Documents\\\\Epoch\\\\CityLearn\\\\citylearn-2022-starter-kit\\\\train_eval\\\\training\\\\spinningup/data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
                     "mode":	"w"
                 }
             }
@@ -29,7 +29,7 @@
     },
     "logger_kwargs":	{
         "exp_name":	"ppo",
-        "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\train_eval\\training\\spinningup/data\\ppo\\ppo_s0"
+        "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\train_eval\\training\\spinningup/data\\ppo\\ppo_s0"
     },
     "max_ep_len":	1000,
     "pi_lr":	0.0003,

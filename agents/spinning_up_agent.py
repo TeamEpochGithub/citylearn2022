@@ -24,7 +24,7 @@ class BasicPPOAgent:
 
 
     def compute_action(self, observations, building_count):
-        """Get observation return action"""v
+        """Get observation return action"""
 
         return self.model_policy(observations, building_count)
 
@@ -44,9 +44,13 @@ class BasicPPOAgent:
 
         for index, current_raw_action in enumerate(raw_actions):
 
+            #print(index, current_raw_action, self.action_space[index])
+
             current_action = np.array([current_raw_action], dtype=np.float32)
-            print(self.action_space[index], current_action)
-            assert self.action_space[index].contains(current_action)
+            #print(self.action_space[index], current_action)
+            #assert self.action_space[index].contains(current_action)
             action_list.append(current_action)
+
+        #assert self.action_space[0].contains(action_list)
 
         return action_list

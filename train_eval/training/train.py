@@ -23,6 +23,8 @@ class TrainModel:
         complete_path = osp.dirname(epoch_citylearn.__file__).replace("\\", ".")
         relative_path = complete_path[complete_path.find("kit.") + 4:] + ".epoch_citylearn"
 
+        print(environment_arguments)
+
         register(
             id="Epoch-Citylearn-v1",
             entry_point=relative_path + ":EnvCityGym",

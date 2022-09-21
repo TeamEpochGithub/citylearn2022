@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import time
+import pandas as pd
 
 """
 Please do not make changes to this file. 
@@ -17,7 +18,7 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 
 
 class Constants:
-    episodes = 3
+    episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
 
 def action_space_to_dict(aspace):
@@ -47,6 +48,8 @@ def env_reset(env):
 def evaluate(current_agent):
     print("Starting local evaluation")
 
+    obs_list = []
+
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingSpinningUpAgent(current_agent)
 
@@ -67,12 +70,11 @@ def evaluate(current_agent):
 
             ### This is only a reference script provided to allow you 
             ### to do local evaluation. The evaluator **DOES NOT** 
-            ### use this script for orchestrating the evaluations. 
+            ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
 
-            print(observations)
-            sys.exit()
+            obs_list.append(observations[0])
 
             if done:
                 episodes_completed += 1
@@ -113,7 +115,6 @@ def evaluate(current_agent):
                 np.mean([e['emmision_cost'] for e in episode_metrics] + np.mean(
                     [e['price_cost'] for e in episode_metrics])) / 2))
     print(f"Total time taken by agent: {agent_time_elapsed}s")
-
 
 if __name__ == '__main__':
     from agents.rbc_agent import BasicRBCAgent
