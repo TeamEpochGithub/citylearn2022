@@ -1,7 +1,7 @@
 import sys
 
 from gym.spaces import Box
-from agents.user_agent import UserAgent
+from agents.spinning_agent import SpinningAgent
 from rewards.user_reward import UserReward
 
 def dict_to_action_space(aspace_dict):
@@ -17,9 +17,9 @@ class OrderEnforcingSpinningUpAgent:
     Emulates order enforcing wrapper in Pettingzoo for easy integration
     Calls each agent step with agent in a loop and returns the action
     """
-    def __init__(self):
+    def __init__(self, environment_arguments):
         self.num_buildings = None
-        self.agent = UserAgent()
+        self.agent = SpinningAgent(environment_arguments)
         self.action_space = None
     
     def register_reset(self, observation):

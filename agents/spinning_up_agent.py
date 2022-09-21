@@ -4,16 +4,16 @@ import numpy as np
 import torch
 import os.path as osp
 import itertools
-from train_eval.evaluation import current_model as current_model
+from traineval.evaluation import current_model as current_model
 
 class BasicPPOAgent:
 
-    def __init__(self):
+    def __init__(self, environment_arguments):
         self.action_space = {}
         self.ac = torch.load(osp.join(osp.dirname(current_model.__file__), "model.pt"))
 
-        self.index_com = [0, 2, 19, 4, 8, 24]
-        self.index_part = [20, 21, 22, 23]
+        self.index_com = environment_arguments["district_indexes"]
+        self.index_part = environment_arguments["building_indexes"]
         self.normalization_value_com = [12, 24, 2, 100, 100, 1]
         self.normalization_value_part = [5, 5, 5, 5]
 
