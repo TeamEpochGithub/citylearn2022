@@ -13,9 +13,9 @@ class TrainerEvaluator:
         current_trainer.register_environment(current_environment_arguments)
         return current_trainer
 
-    def run_trainer(self, trainer):
+    def run_trainer(self, trainer, model_type):
         # TODO: run_ppo should take arguments
-        trainer.run_ppo()
+        trainer.train_model(trainer, model_type=model_type)
 
     def run_evaluation(self, environment_arguments, model_type, model_seed, model_iteration):
         return evaluate(environment_arguments, model_type, model_seed, model_iteration)
@@ -36,11 +36,12 @@ if __name__ == "__main__":
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    num_epochs = 500
+    model_type = "ppo"
+    num_epochs = 1000
     trainer_evaluator = TrainerEvaluator(epochs=num_epochs)
     trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
-    trainer_evaluator.run_trainer(trainer)
+    trainer_evaluator.run_trainer(trainer, model_type=model_type)
 
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
-                                                                          model_type="ppo", model_seed="0",
-                                                                          model_iteration=str(num_epochs-1))
+                                                                          model_type=model_type, model_seed="0",
+                                                                          model_iteration=str(num_epochs - 1))

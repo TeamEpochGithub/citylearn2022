@@ -2,10 +2,15 @@ from copy import deepcopy
 import numpy as np
 import torch
 from torch.optim import Adam
-import gym
 import time
 import traineval.training.spinningup.ddpg.core as core
 from traineval.training.spinningup.utils.logx import EpochLogger
+from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars
+from traineval.utils.register_environment import register_environment
+import gym
+import os.path as osp
+from gym.envs.registration import register
+from traineval.training.spinningup.environments import epoch_citylearn
 
 
 class ReplayBuffer:
@@ -282,10 +287,36 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
 
 if __name__ == '__main__':
+
+    district_args = environment_convert_argument(["hour",
+                                                  "month",
+                                                  "carbon_intensity",
+                                                  "electricity_pricing"])
+    building_args = environment_convert_argument(["non_shiftable_load",
+                                                  "solar_generation",
+                                                  "electrical_storage_soc",
+                                                  "net_electricity_consumption"])
+    district_scalars = environment_convert_scalars(["hour",
+                                                    "month",
+                                                    "carbon_intensity",
+                                                    "electricity_pricing"])
+    building_scalars = environment_convert_scalars(["non_shiftable_load",
+                                                    "solar_generation",
+                                                    "electrical_storage_soc",
+                                                    "net_electricity_consumption"])
+
+    environment_arguments = {
+        "district_indexes": district_args,
+        "district_scalars": district_scalars,
+        "building_indexes": building_args,
+        "building_scalars": building_scalars}
+
+    register_environment(environment_arguments=environment_arguments)
+
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--env', type=str, default='CartPole-v0')
+    parser.add_argument('--env', type=str, default='Epoch-Citylearn-v1')
     parser.add_argument('--hid', type=int, default=256)
     parser.add_argument('--l', type=int, default=2)
     parser.add_argument('--gamma', type=float, default=0.99)
