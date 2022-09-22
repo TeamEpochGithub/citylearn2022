@@ -1,8 +1,6 @@
-from traineval.training.train import TrainModel
 from traineval.evaluation.spinning_up_evaluation import evaluate
-from agents import rbc_agent
-from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars, \
-    get_environment_arguments
+from traineval.training.train import TrainModel
+from traineval.utils.convert_arguments import get_environment_arguments
 
 
 class TrainerEvaluator:
@@ -44,7 +42,3 @@ if __name__ == "__main__":
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
                                                                           model_type="ppo", model_seed="0",
                                                                           model_iteration=str(num_epochs-1))
-    # print(averaged_score)
-    # Trainer wrapper should return model and time taken to achieve model every time it saves
-    # Then we run evaluation on model
-    # Finally we return all times_taken and average_scores to plot them
