@@ -1,14 +1,12 @@
 import argparse
-import sys
+import os.path as osp
 
 import gym
-import os.path as osp
 import torch
 from gym.envs.registration import register
 
 from traineval.utils.convert_arguments import environment_convert_argument, get_environment_arguments
-from traineval.training.spinningup.ddpg import ddpg
-from traineval.training.spinningup.ddpg import core as ddpgcore
+from traineval.training.spinningup.ddpg import core as ddpgcore, ddpg
 from traineval.training.spinningup.environments import epoch_citylearn
 from traineval.training.spinningup.ppo import core as ppocore, ppo
 from traineval.training.spinningup.sac import core as saccore, sac
@@ -16,6 +14,8 @@ from traineval.training.spinningup.td3 import core as td3core, td3
 from traineval.training.spinningup.vpg import core as vpgcore, vpg
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork
 from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
+from traineval.utils.convert_arguments import get_environment_arguments
+
 
 class TrainModel:
 
@@ -44,8 +44,8 @@ class TrainModel:
         parser.add_argument('--steps', type=int, default=4000)
         parser.add_argument('--epochs', type=int, default=self.epochs)
         parser.add_argument('--exp_name', type=str, default='ppo')
-        parser.add_argument('--save_freq', type=int, default=3)
-        args = parser.parse_args()
+        parser.add_argument('--save_freq', type=int, default=1)
+        args, unknown = parser.parse_known_args()
 
         return args
 
@@ -53,6 +53,7 @@ class TrainModel:
 
         parsed_args = self.retrieve_parsed_args()
 
+        # CAN'T USE mpi_fork WHEN RUNNING FROM JUPYTER NOTEBOOKS
         mpi_fork(parsed_args.cpu)
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
@@ -71,7 +72,7 @@ class TrainModel:
         ddpg.ddpg(lambda: gym.make(parsed_args.env), actor_critic=ddpgcore.MLPActorCritic,
                   ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
                   gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-                  logger_kwargs=logger_kwargs, save_freq=1)
+                  logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### DDPG model trained #####")
 
@@ -85,7 +86,7 @@ class TrainModel:
         sac.sac(lambda: gym.make(parsed_args.env), actor_critic=saccore.MLPActorCritic,
             ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
             gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs)
+            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### SAC model trained #####")
 
@@ -97,7 +98,7 @@ class TrainModel:
         td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
             ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
             gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs)
+            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### TD3 model trained #####")
 
@@ -111,7 +112,7 @@ class TrainModel:
         vpg.vpg(lambda: gym.make(parsed_args.env), actor_critic=vpgcore.MLPActorCritic,
             ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
             seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs)
+            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### VPG model trained #####")
 
