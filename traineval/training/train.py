@@ -48,8 +48,8 @@ class TrainModel:
     def run_ppo(self):
         parsed_args = self.retrieve_parsed_args()
 
-        # CAN'T USE MPI_FORK FROM JUPYTER NOTEBOOKS
-        # mpi_fork(parsed_args.cpu)
+        # CAN'T USE mpi_fork WHEN RUNNING FROM JUPYTER NOTEBOOKS
+        mpi_fork(parsed_args.cpu)
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         ppo.ppo(lambda: gym.make(parsed_args.env), actor_critic=ppocore.MLPActorCritic,
