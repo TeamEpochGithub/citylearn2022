@@ -5,23 +5,23 @@
             64
         ]
     },
+    "act_noise":	0.1,
     "actor_critic":	"MLPActorCritic",
-    "clip_ratio":	0.2,
-    "env_fn":	"<function TrainModel.run_ppo.<locals>.<lambda> at 0x000001876C9521F0>",
-    "epochs":	100,
+    "batch_size":	100,
+    "env_fn":	"<function TrainModel.run_td3.<locals>.<lambda> at 0x00000221353768B0>",
+    "epochs":	10,
     "exp_name":	"ppo",
     "gamma":	0.99,
-    "lam":	0.97,
     "logger":	{
-        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x000001875D715F10>":	{
+        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x0000022135371EB0>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo",
             "first_row":	true,
             "log_current_row":	{},
             "log_headers":	[],
-            "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\traineval\\training\\spinningup\\data\\ppo\\ppo_s0",
+            "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\traineval\\training\\spinningup\\data\\ppo\\ppo_s0",
             "output_file":	{
-                "<_io.TextIOWrapper name='C:\\\\Users\\\\philip\\\\Storage\\\\Epoch\\\\citylearn-2022-starter-kit\\\\traineval\\\\training\\\\spinningup\\\\data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
+                "<_io.TextIOWrapper name='C:\\\\Users\\\\Lars\\\\Documents\\\\Epoch\\\\CityLearn\\\\citylearn-2022-starter-kit\\\\traineval\\\\training\\\\spinningup\\\\data\\\\ppo\\\\ppo_s0\\\\progress.txt' mode='w' encoding='cp1252'>":	{
                     "mode":	"w"
                 }
             }
@@ -29,15 +29,21 @@
     },
     "logger_kwargs":	{
         "exp_name":	"ppo",
-        "output_dir":	"C:\\Users\\philip\\Storage\\Epoch\\citylearn-2022-starter-kit\\traineval\\training\\spinningup\\data\\ppo\\ppo_s0"
+        "output_dir":	"C:\\Users\\Lars\\Documents\\Epoch\\CityLearn\\citylearn-2022-starter-kit\\traineval\\training\\spinningup\\data\\ppo\\ppo_s0"
     },
     "max_ep_len":	1000,
-    "pi_lr":	0.0003,
-    "save_freq":	3,
+    "noise_clip":	0.5,
+    "num_test_episodes":	10,
+    "pi_lr":	0.001,
+    "policy_delay":	2,
+    "polyak":	0.995,
+    "q_lr":	0.001,
+    "replay_size":	1000000,
+    "save_freq":	1,
     "seed":	0,
+    "start_steps":	10000,
     "steps_per_epoch":	4000,
-    "target_kl":	0.01,
-    "train_pi_iters":	80,
-    "train_v_iters":	80,
-    "vf_lr":	0.001
+    "target_noise":	0.2,
+    "update_after":	1000,
+    "update_every":	50
 }

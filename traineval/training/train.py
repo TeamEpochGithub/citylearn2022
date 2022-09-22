@@ -3,7 +3,7 @@ import sys
 
 import gym
 import os.path as osp
-
+import torch
 from gym.envs.registration import register
 
 from traineval.utils.convert_arguments import environment_convert_argument, get_environment_arguments
@@ -11,6 +11,9 @@ from traineval.training.spinningup.ddpg import ddpg
 from traineval.training.spinningup.ddpg import core as ddpgcore
 from traineval.training.spinningup.environments import epoch_citylearn
 from traineval.training.spinningup.ppo import core as ppocore, ppo
+from traineval.training.spinningup.sac import core as saccore, sac
+from traineval.training.spinningup.td3 import core as td3core, td3
+from traineval.training.spinningup.vpg import core as vpgcore, vpg
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork
 from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
 
@@ -47,6 +50,7 @@ class TrainModel:
         return args
 
     def run_ppo(self):
+
         parsed_args = self.retrieve_parsed_args()
 
         mpi_fork(parsed_args.cpu)
@@ -71,14 +75,58 @@ class TrainModel:
 
         print("##### DDPG model trained #####")
 
-    def train_model(self, model_type, environment_arguments):
+    def run_sac(self):
 
-        self.register_environment(environment_arguments=environment_arguments)
+        parsed_args = self.retrieve_parsed_args()
+
+        torch.set_num_threads(torch.get_num_threads())
+
+        logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
+        sac.sac(lambda: gym.make(parsed_args.env), actor_critic=saccore.MLPActorCritic,
+            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
+            gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
+            logger_kwargs=logger_kwargs)
+
+        print("##### SAC model trained #####")
+
+    def run_td3(self):
+
+        parsed_args = self.retrieve_parsed_args()
+
+        logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
+        td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
+            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
+            gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
+            logger_kwargs=logger_kwargs)
+
+        print("##### TD3 model trained #####")
+
+    def run_vpg(self):
+
+        parsed_args = self.retrieve_parsed_args()
+
+        mpi_fork(parsed_args.cpu)
+
+        logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
+        vpg.vpg(lambda: gym.make(parsed_args.env), actor_critic=vpgcore.MLPActorCritic,
+            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
+            seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
+            logger_kwargs=logger_kwargs)
+
+        print("##### VPG model trained #####")
+
+    def train_model(self, trainer, model_type):
 
         if model_type == "ppo":
             trainer.run_ppo()
         elif model_type == "ddpg":
             trainer.run_ddpg()
+        elif model_type == "sac":
+            trainer.run_sac()
+        elif model_type == "td3":
+            trainer.run_td3()
+        elif model_type == "vpg":
+            trainer.run_vpg()
 
     # TODO: Add ExperimentGrid for GridSearchCV-like hyperparameter tuning
 
@@ -88,7 +136,9 @@ if __name__ == "__main__":
     district_args = ["hour",
                      "month",
                      "carbon_intensity",
-                     "electricity_pricing"]
+                     "electricity_pricing",
+                     "outdoor_dry_bulb_temperature_predicted_6h",
+                     "outdoor_relative_humidity_predicted_6h"]
 
     building_args = ["non_shiftable_load",
                      "solar_generation",
