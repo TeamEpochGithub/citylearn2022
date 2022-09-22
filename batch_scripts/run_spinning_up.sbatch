@@ -38,5 +38,5 @@ conda activate mypython
 #conda list
 ###
 
-python ../training/spinningup/ppo/ppo.py
+python ../traineval/train_eval.py
 conda deactivate

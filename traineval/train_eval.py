@@ -25,7 +25,9 @@ if __name__ == "__main__":
     district_args = ["hour",
                      "month",
                      "carbon_intensity",
-                     "electricity_pricing"]
+                     "electricity_pricing",
+                     "outdoor_dry_bulb_temperature_predicted_6h",
+                     "outdoor_relative_humidity_predicted_6h"]
 
     building_args = ["non_shiftable_load",
                      "solar_generation",
@@ -34,7 +36,7 @@ if __name__ == "__main__":
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    num_epochs = 5
+    num_epochs = 500
     trainer_evaluator = TrainerEvaluator(epochs=num_epochs)
     trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
     trainer_evaluator.run_trainer(trainer)
