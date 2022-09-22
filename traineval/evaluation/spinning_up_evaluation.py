@@ -112,7 +112,7 @@ def evaluate(environment_arguments, model_type, model_seed, model_iteration):
                                 np.mean([e['emmision_cost'] for e in episode_metrics]),
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost:", average_cost)
-        return average_cost
+        return average_cost, agent_time_elapsed
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
 

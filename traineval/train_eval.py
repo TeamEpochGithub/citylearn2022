@@ -10,21 +10,20 @@ class TrainerEvaluator:
     def __init__(self, epochs):
         self.epochs = epochs
 
-    def setup_trainer(self, environment_arguments):
-        trainer = TrainModel(self.epochs)
-        trainer.register_environment(environment_arguments)
-        return trainer
+    def setup_trainer(self, current_environment_arguments):
+        current_trainer = TrainModel(self.epochs)
+        current_trainer.register_environment(current_environment_arguments)
+        return current_trainer
 
     def run_trainer(self, trainer):
         # TODO: run_ppo should take arguments
         trainer.run_ppo()
 
-    def run_evaluation(self, environment_arguments, model_type="ppo", model_seed="0", model_iteration="3"):
+    def run_evaluation(self, environment_arguments, model_type, model_seed, model_iteration):
         return evaluate(environment_arguments, model_type, model_seed, model_iteration)
 
 
 if __name__ == "__main__":
-
     district_args = ["hour",
                      "month",
                      "carbon_intensity",
@@ -37,13 +36,15 @@ if __name__ == "__main__":
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    trainer_evaluator = TrainerEvaluator(epochs=100)
-    # trainer = trainer_evaluator.setup_trainer(environment_arguments=environment_arguments)
-    # trainer_evaluator.run_trainer(trainer)
+    num_epochs = 5
+    trainer_evaluator = TrainerEvaluator(epochs=num_epochs)
+    trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
+    trainer_evaluator.run_trainer(trainer)
 
-    averaged_score = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
-                                                      model_type="ppo", model_seed="0", model_iteration="3")
-    print(averaged_score)
+    averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
+                                                                          model_type="ppo", model_seed="0",
+                                                                          model_iteration=str(num_epochs-1))
+    # print(averaged_score)
     # Trainer wrapper should return model and time taken to achieve model every time it saves
     # Then we run evaluation on model
     # Finally we return all times_taken and average_scores to plot them

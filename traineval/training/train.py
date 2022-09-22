@@ -1,18 +1,17 @@
 import argparse
-import sys
-
-import gym
 import os.path as osp
 
+import gym
 from gym.envs.registration import register
 
-from traineval.utils.convert_arguments import environment_convert_argument, get_environment_arguments
-from traineval.training.spinningup.ddpg import ddpg
 from traineval.training.spinningup.ddpg import core as ddpgcore
+from traineval.training.spinningup.ddpg import ddpg
 from traineval.training.spinningup.environments import epoch_citylearn
 from traineval.training.spinningup.ppo import core as ppocore, ppo
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork
 from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
+from traineval.utils.convert_arguments import get_environment_arguments
+
 
 class TrainModel:
 
@@ -41,15 +40,16 @@ class TrainModel:
         parser.add_argument('--steps', type=int, default=4000)
         parser.add_argument('--epochs', type=int, default=self.epochs)
         parser.add_argument('--exp_name', type=str, default='ppo')
-        parser.add_argument('--save_freq', type=int, default=3)
-        args = parser.parse_args()
+        parser.add_argument('--save_freq', type=int, default=1)
+        args, unknown = parser.parse_known_args()
 
         return args
 
     def run_ppo(self):
         parsed_args = self.retrieve_parsed_args()
 
-        mpi_fork(parsed_args.cpu)
+        # CAN'T USE MPI_FORK FROM JUPYTER NOTEBOOKS
+        # mpi_fork(parsed_args.cpu)
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         ppo.ppo(lambda: gym.make(parsed_args.env), actor_critic=ppocore.MLPActorCritic,
@@ -71,9 +71,9 @@ class TrainModel:
 
         print("##### DDPG model trained #####")
 
-    def train_model(self, model_type, environment_arguments):
+    def train_model(self, model_type, current_environment_arguments):
 
-        self.register_environment(environment_arguments=environment_arguments)
+        self.register_environment(environment_arguments=current_environment_arguments)
 
         if model_type == "ppo":
             trainer.run_ppo()

@@ -14,6 +14,7 @@ from traineval.training.spinningup.environments import epoch_citylearn
 from traineval.training.spinningup.utils.logx import EpochLogger
 from traineval.training.spinningup.utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork, mpi_avg, proc_id, mpi_statistics_scalar, num_procs
+from traineval.utils.convert_arguments import get_environment_arguments
 
 
 class PPOBuffer:
@@ -93,7 +94,7 @@ class PPOBuffer:
 def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         steps_per_epoch=4000, epochs=50, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,
         vf_lr=1e-3, train_pi_iters=80, train_v_iters=80, lam=0.97, max_ep_len=1000,
-        target_kl=0.01, logger_kwargs=dict(), save_freq=10):
+        target_kl=0.01, logger_kwargs=dict(), save_freq=1):
     """
     Proximal Policy Optimization (by clipping),
     with early stopping based on approximate KL
@@ -339,11 +340,17 @@ if __name__ == '__main__':
     complete_path = osp.dirname(epoch_citylearn.__file__).replace("\\", ".")
     relative_path = complete_path[complete_path.find("kit.") + 4:] + ".epoch_citylearn"
 
-    environment_arguments = {
-        "district_indexes": [0, 2, 19, 4, 8, 24],
-        "district_scalars": [12, 24, 2, 100, 100, 1],
-        "building_indexes": [20, 21, 22, 23],
-        "building_scalars": [5, 5, 5, 5]}
+    district_args = ["hour",
+                     "month",
+                     "carbon_intensity",
+                     "electricity_pricing"]
+
+    building_args = ["non_shiftable_load",
+                     "solar_generation",
+                     "electrical_storage_soc",
+                     "net_electricity_consumption"]
+
+    environment_arguments = get_environment_arguments(district_args, building_args)
 
     register(
         id="Epoch-Citylearn-v1",
@@ -359,7 +366,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--cpu', type=int, default=4)
     parser.add_argument('--steps', type=int, default=4000)
-    parser.add_argument('--epochs', type=int, default=10000)
+    parser.add_argument('--epochs', type=int, default=100)
     parser.add_argument('--exp_name', type=str, default='ppo')
     args = parser.parse_args()
 
@@ -372,4 +379,4 @@ if __name__ == '__main__':
     ppo(lambda: gym.make(args.env), actor_critic=core.MLPActorCritic,
         ac_kwargs=dict(hidden_sizes=[args.hid] * args.l), gamma=args.gamma,
         seed=args.seed, steps_per_epoch=args.steps, epochs=args.epochs,
-        logger_kwargs=logger_kwargs)
+        logger_kwargs=logger_kwargs, save_freq=1)
