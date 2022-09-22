@@ -1,19 +1,19 @@
 {
     "ac_kwargs":	{
         "hidden_sizes":	[
-            256,
-            256
+            64,
+            64
         ]
     },
     "actor_critic":	"MLPActorCritic",
     "alpha":	0.2,
     "batch_size":	100,
-    "env_fn":	"<function <lambda> at 0x00000234C7910D30>",
-    "epochs":	50,
+    "env_fn":	"<function TrainModel.run_sac.<locals>.<lambda> at 0x0000019B268980D0>",
+    "epochs":	2,
     "exp_name":	"sac",
     "gamma":	0.99,
     "logger":	{
-        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x00000234C7900850>":	{
+        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x0000019B26892F40>":	{
             "epoch_dict":	{},
             "exp_name":	"sac",
             "first_row":	true,
