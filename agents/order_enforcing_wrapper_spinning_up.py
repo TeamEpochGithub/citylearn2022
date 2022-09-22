@@ -17,9 +17,9 @@ class OrderEnforcingSpinningUpAgent:
     Emulates order enforcing wrapper in Pettingzoo for easy integration
     Calls each agent step with agent in a loop and returns the action
     """
-    def __init__(self, environment_arguments):
+    def __init__(self, environment_arguments, model_type, model_seed, model_iteration):
         self.num_buildings = None
-        self.agent = SpinningAgent(environment_arguments)
+        self.agent = SpinningAgent(environment_arguments, model_type, model_seed, model_iteration)
         self.action_space = None
     
     def register_reset(self, observation):

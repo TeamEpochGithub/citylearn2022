@@ -4,13 +4,16 @@ import numpy as np
 import torch
 import os.path as osp
 import itertools
-from traineval.evaluation import current_model as current_model
+from traineval.training.spinningup.data.ppo.ppo_s0 import pyt_save
+from traineval.training.spinningup import data as saved_models
 
 class BasicPPOAgent:
 
-    def __init__(self, environment_arguments):
+    def __init__(self, environment_arguments, model_type:str, model_seed:int, model_iteration:int):
         self.action_space = {}
-        self.ac = torch.load(osp.join(osp.dirname(current_model.__file__), "model.pt"))
+        model_path = model_type + '\\' + model_type + '_s' + str(model_seed) + '\\' + 'pyt_save' + '\\' \
+                     + 'model' + str(model_iteration) + '.pt'
+        self.ac = torch.load(osp.join(osp.dirname(saved_models.__file__), model_path))
 
         self.index_com = environment_arguments["district_indexes"]
         self.index_part = environment_arguments["building_indexes"]
@@ -22,16 +25,15 @@ class BasicPPOAgent:
     def set_action_space(self, action_space):
         self.action_space = action_space
 
-
     def compute_action(self, observations, building_count):
         """Get observation return action"""
 
         return self.ppo_policy(observations, building_count)
 
     def ppo_policy(self, observations, building_count):
-
         observation_common = [observations[0][i] / n for i, n in zip(self.index_com, self.normalization_value_com)]
-        observation_particular = [[o[i] / n for i, n in zip(self.index_part, self.normalization_value_part)] for o in observations]
+        observation_particular = [[o[i] / n for i, n in zip(self.index_part, self.normalization_value_part)] for o in
+                                  observations]
 
         observation_particular = list(itertools.chain(*observation_particular))
         transformed_observation = observation_common + observation_particular
