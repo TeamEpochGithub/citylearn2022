@@ -3,7 +3,8 @@ import sys
 import numpy as np
 import time
 
-from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars
+from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars, \
+    get_environment_arguments
 import pandas as pd
 
 from traineval.utils.convert_arguments import environment_convert_argument
@@ -42,11 +43,11 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(environment_arguments):
+def evaluate(environment_arguments, model_type, model_seed, model_iteration):
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingSpinningUpAgent(environment_arguments)
+    agent = OrderEnforcingSpinningUpAgent(environment_arguments, model_type, model_seed, model_iteration)
 
     obs_dict = env_reset(env)
 
@@ -72,7 +73,9 @@ def evaluate(environment_arguments):
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
+                metrics = {"price_cost": metrics_t[0],
+                           "emmision_cost": metrics_t[1],
+                           "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
@@ -109,32 +112,22 @@ def evaluate(environment_arguments):
                                 np.mean([e['emmision_cost'] for e in episode_metrics]),
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost:", average_cost)
+        return average_cost
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
 
 if __name__ == '__main__':
-    district_args = environment_convert_argument(["hour",
-                                                  "month",
-                                                  "carbon_intensity",
-                                                  "electricity_pricing"])
-    building_args = environment_convert_argument(["non_shiftable_load",
-                                                  "solar_generation",
-                                                  "electrical_storage_soc",
-                                                  "net_electricity_consumption"])
-    district_scalars = environment_convert_scalars(["hour",
-                                                    "month",
-                                                    "carbon_intensity",
-                                                    "electricity_pricing"])
-    building_scalars = environment_convert_scalars(["non_shiftable_load",
-                                                    "solar_generation",
-                                                    "electrical_storage_soc",
-                                                    "net_electricity_consumption"])
+    district_args = ["hour",
+                     "month",
+                     "carbon_intensity",
+                     "electricity_pricing"]
 
-    environment_arguments = {
-        "district_indexes": district_args,
-        "district_scalars": district_scalars,
-        "building_indexes": building_args,
-        "building_scalars": building_scalars}
+    building_args = ["non_shiftable_load",
+                     "solar_generation",
+                     "electrical_storage_soc",
+                     "net_electricity_consumption"]
+
+    environment_arguments = get_environment_arguments(district_args, building_args)
 
     evaluate(environment_arguments)
 
