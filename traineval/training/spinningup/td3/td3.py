@@ -1,21 +1,19 @@
 from copy import deepcopy
+import itertools
 import numpy as np
 import torch
 from torch.optim import Adam
+import gym
 import time
-import traineval.training.spinningup.ddpg.core as core
+import traineval.training.spinningup.td3.core as core
 from traineval.training.spinningup.utils.logx import EpochLogger
 from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars
 from traineval.utils.register_environment import register_environment
-import gym
-import os.path as osp
-from gym.envs.registration import register
-from traineval.training.spinningup.environments import epoch_citylearn
 
 
 class ReplayBuffer:
     """
-    A simple FIFO experience replay buffer for DDPG agents.
+    A simple FIFO experience replay buffer for TD3 agents.
     """
 
     def __init__(self, obs_dim, act_dim, size):
@@ -45,21 +43,23 @@ class ReplayBuffer:
         return {k: torch.as_tensor(v, dtype=torch.float32) for k, v in batch.items()}
 
 
-def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
-         steps_per_epoch=4000, epochs=100, replay_size=int(1e6), gamma=0.99,
-         polyak=0.995, pi_lr=1e-3, q_lr=1e-3, batch_size=100, start_steps=10000,
-         update_after=1000, update_every=50, act_noise=0.1, num_test_episodes=10,
-         max_ep_len=1000, logger_kwargs=dict(), save_freq=1):
+def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
+        steps_per_epoch=4000, epochs=100, replay_size=int(1e6), gamma=0.99,
+        polyak=0.995, pi_lr=1e-3, q_lr=1e-3, batch_size=100, start_steps=10000,
+        update_after=1000, update_every=50, act_noise=0.1, target_noise=0.2,
+        noise_clip=0.5, policy_delay=2, num_test_episodes=10, max_ep_len=1000,
+        logger_kwargs=dict(), save_freq=1):
     """
-    Deep Deterministic Policy Gradient (DDPG)
+    Twin Delayed Deep Deterministic Policy Gradient (TD3)
     Args:
         env_fn : A function which creates a copy of the environment.
             The environment must satisfy the OpenAI Gym API.
         actor_critic: The constructor method for a PyTorch Module with an ``act``
-            method, a ``pi`` module, and a ``q`` module. The ``act`` method and
-            ``pi`` module should accept batches of observations as inputs,
-            and ``q`` should accept a batch of observations and a batch of
-            actions as inputs. When called, these should return:
+            method, a ``pi`` module, a ``q1`` module, and a ``q2`` module.
+            The ``act`` method and ``pi`` module should accept batches of
+            observations as inputs, and ``q1`` and ``q2`` should accept a batch
+            of observations and a batch of actions as inputs. When called,
+            these should return:
             ===========  ================  ======================================
             Call         Output Shape      Description
             ===========  ================  ======================================
@@ -67,13 +67,17 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
                                            | observation.
             ``pi``       (batch, act_dim)  | Tensor containing actions from policy
                                            | given observations.
-            ``q``        (batch,)          | Tensor containing the current estimate
+            ``q1``       (batch,)          | Tensor containing one current estimate
                                            | of Q* for the provided observations
+                                           | and actions. (Critical: make sure to
+                                           | flatten this!)
+            ``q2``       (batch,)          | Tensor containing the other current
+                                           | estimate of Q* for the provided observations
                                            | and actions. (Critical: make sure to
                                            | flatten this!)
             ===========  ================  ======================================
         ac_kwargs (dict): Any kwargs appropriate for the ActorCritic object
-            you provided to DDPG.
+            you provided to TD3.
         seed (int): Seed for random number generators.
         steps_per_epoch (int): Number of steps of interaction (state-action pairs)
             for the agent and the environment in each epoch.
@@ -101,6 +105,12 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             is locked to 1.
         act_noise (float): Stddev for Gaussian exploration noise added to
             policy at training time. (At test time, no noise is added.)
+        target_noise (float): Stddev for smoothing noise added to target
+            policy.
+        noise_clip (float): Limit for absolute value of target policy
+            smoothing noise.
+        policy_delay (int): Policy will only be updated once every
+            policy_delay times for each update of the Q-networks.
         num_test_episodes (int): Number of episodes to test the deterministic
             policy at the end of each epoch.
         max_ep_len (int): Maximum length of trajectory / episode / rollout.
@@ -130,77 +140,101 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
     for p in ac_targ.parameters():
         p.requires_grad = False
 
+    # List of parameters for both Q-networks (save this for convenience)
+    q_params = itertools.chain(ac.q1.parameters(), ac.q2.parameters())
+
     # Experience buffer
     replay_buffer = ReplayBuffer(obs_dim=obs_dim, act_dim=act_dim, size=replay_size)
 
     # Count variables (protip: try to get a feel for how different size networks behave!)
-    var_counts = tuple(core.count_vars(module) for module in [ac.pi, ac.q])
-    logger.log('\nNumber of parameters: \t pi: %d, \t q: %d\n' % var_counts)
+    var_counts = tuple(core.count_vars(module) for module in [ac.pi, ac.q1, ac.q2])
+    logger.log('\nNumber of parameters: \t pi: %d, \t q1: %d, \t q2: %d\n' % var_counts)
 
-    # Set up function for computing DDPG Q-loss
+    # Set up function for computing TD3 Q-losses
     def compute_loss_q(data):
         o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
 
-        q = ac.q(o, a)
+        q1 = ac.q1(o, a)
+        q2 = ac.q2(o, a)
 
-        # Bellman backup for Q function
+        # Bellman backup for Q functions
         with torch.no_grad():
-            q_pi_targ = ac_targ.q(o2, ac_targ.pi(o2))
+            pi_targ = ac_targ.pi(o2)
+
+            # Target policy smoothing
+            epsilon = torch.randn_like(pi_targ) * target_noise
+            epsilon = torch.clamp(epsilon, -noise_clip, noise_clip)
+            a2 = pi_targ + epsilon
+            a2 = torch.clamp(a2, -act_limit, act_limit)
+
+            # Target Q-values
+            q1_pi_targ = ac_targ.q1(o2, a2)
+            q2_pi_targ = ac_targ.q2(o2, a2)
+            q_pi_targ = torch.min(q1_pi_targ, q2_pi_targ)
             backup = r + gamma * (1 - d) * q_pi_targ
 
         # MSE loss against Bellman backup
-        loss_q = ((q - backup) ** 2).mean()
+        loss_q1 = ((q1 - backup) ** 2).mean()
+        loss_q2 = ((q2 - backup) ** 2).mean()
+        loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
-        loss_info = dict(QVals=q.detach().numpy())
+        loss_info = dict(Q1Vals=q1.detach().numpy(),
+                         Q2Vals=q2.detach().numpy())
 
         return loss_q, loss_info
 
-    # Set up function for computing DDPG pi loss
+    # Set up function for computing TD3 pi loss
     def compute_loss_pi(data):
         o = data['obs']
-        q_pi = ac.q(o, ac.pi(o))
-        return -q_pi.mean()
+        q1_pi = ac.q1(o, ac.pi(o))
+        return -q1_pi.mean()
 
     # Set up optimizers for policy and q-function
     pi_optimizer = Adam(ac.pi.parameters(), lr=pi_lr)
-    q_optimizer = Adam(ac.q.parameters(), lr=q_lr)
+    q_optimizer = Adam(q_params, lr=q_lr)
 
     # Set up model saving
     logger.setup_pytorch_saver(ac)
 
-    def update(data):
-        # First run one gradient descent step for Q.
+    def update(data, timer):
+        # First run one gradient descent step for Q1 and Q2
         q_optimizer.zero_grad()
         loss_q, loss_info = compute_loss_q(data)
         loss_q.backward()
         q_optimizer.step()
 
-        # Freeze Q-network so you don't waste computational effort
-        # computing gradients for it during the policy learning step.
-        for p in ac.q.parameters():
-            p.requires_grad = False
-
-        # Next run one gradient descent step for pi.
-        pi_optimizer.zero_grad()
-        loss_pi = compute_loss_pi(data)
-        loss_pi.backward()
-        pi_optimizer.step()
-
-        # Unfreeze Q-network so you can optimize it at next DDPG step.
-        for p in ac.q.parameters():
-            p.requires_grad = True
-
         # Record things
-        logger.store(LossQ=loss_q.item(), LossPi=loss_pi.item(), **loss_info)
+        logger.store(LossQ=loss_q.item(), **loss_info)
 
-        # Finally, update target networks by polyak averaging.
-        with torch.no_grad():
-            for p, p_targ in zip(ac.parameters(), ac_targ.parameters()):
-                # NB: We use an in-place operations "mul_", "add_" to update target
-                # params, as opposed to "mul" and "add", which would make new tensors.
-                p_targ.data.mul_(polyak)
-                p_targ.data.add_((1 - polyak) * p.data)
+        # Possibly update pi and target networks
+        if timer % policy_delay == 0:
+
+            # Freeze Q-networks so you don't waste computational effort
+            # computing gradients for them during the policy learning step.
+            for p in q_params:
+                p.requires_grad = False
+
+            # Next run one gradient descent step for pi.
+            pi_optimizer.zero_grad()
+            loss_pi = compute_loss_pi(data)
+            loss_pi.backward()
+            pi_optimizer.step()
+
+            # Unfreeze Q-networks so you can optimize it at next DDPG step.
+            for p in q_params:
+                p.requires_grad = True
+
+            # Record things
+            logger.store(LossPi=loss_pi.item())
+
+            # Finally, update target networks by polyak averaging.
+            with torch.no_grad():
+                for p, p_targ in zip(ac.parameters(), ac_targ.parameters()):
+                    # NB: We use an in-place operations "mul_", "add_" to update target
+                    # params, as opposed to "mul" and "add", which would make new tensors.
+                    p_targ.data.mul_(polyak)
+                    p_targ.data.add_((1 - polyak) * p.data)
 
     def get_action(o, noise_scale):
         a = ac.act(torch.as_tensor(o, dtype=torch.float32))
@@ -257,9 +291,9 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
         # Update handling
         if t >= update_after and t % update_every == 0:
-            for _ in range(update_every):
+            for j in range(update_every):
                 batch = replay_buffer.sample_batch(batch_size)
-                update(data=batch)
+                update(data=batch, timer=j)
 
         # End of epoch handling
         if (t + 1) % steps_per_epoch == 0:
@@ -279,7 +313,8 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             logger.log_tabular('EpLen', average_only=True)
             logger.log_tabular('TestEpLen', average_only=True)
             logger.log_tabular('TotalEnvInteracts', t)
-            logger.log_tabular('QVals', with_min_and_max=True)
+            logger.log_tabular('Q1Vals', with_min_and_max=True)
+            logger.log_tabular('Q2Vals', with_min_and_max=True)
             logger.log_tabular('LossPi', average_only=True)
             logger.log_tabular('LossQ', average_only=True)
             logger.log_tabular('Time', time.time() - start_time)
@@ -287,7 +322,6 @@ def ddpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
 
 if __name__ == '__main__':
-
     district_args = environment_convert_argument(["hour",
                                                   "month",
                                                   "carbon_intensity",
@@ -322,14 +356,14 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--seed', '-s', type=int, default=0)
     parser.add_argument('--epochs', type=int, default=50)
-    parser.add_argument('--exp_name', type=str, default='ddpg')
+    parser.add_argument('--exp_name', type=str, default='td3')
     args = parser.parse_args()
 
     from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
 
     logger_kwargs = setup_logger_kwargs(args.exp_name, args.seed)
 
-    ddpg(lambda: gym.make(args.env), actor_critic=core.MLPActorCritic,
-         ac_kwargs=dict(hidden_sizes=[args.hid] * args.l),
-         gamma=args.gamma, seed=args.seed, epochs=args.epochs,
-         logger_kwargs=logger_kwargs)
+    td3(lambda: gym.make(args.env), actor_critic=core.MLPActorCritic,
+        ac_kwargs=dict(hidden_sizes=[args.hid] * args.l),
+        gamma=args.gamma, seed=args.seed, epochs=args.epochs,
+        logger_kwargs=logger_kwargs)
