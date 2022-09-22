@@ -34,25 +34,28 @@ class TrainModel:
         )
 
     # TODO: take arguments as input and add them to parser if they are not-None
-    def retrieve_parsed_args(self):
+    def retrieve_parsed_args(self, arguments):
         parser = argparse.ArgumentParser()
-        parser.add_argument('--env', type=str, default='Epoch-Citylearn-v1')
-        parser.add_argument('--hid', type=int, default=64)
-        parser.add_argument('--l', type=int, default=2)
-        parser.add_argument('--gamma', type=float, default=0.99)
-        parser.add_argument('--seed', '-s', type=int, default=0)
-        parser.add_argument('--cpu', type=int, default=4)
-        parser.add_argument('--steps', type=int, default=4000)
+
+        for i in range(len(arguments)):
+            parser.add_argument(*arguments[i][0], type=arguments[i][1], default=arguments[i][2])
+        # parser.add_argument('--env', type=str, default='Epoch-Citylearn-v1')
+        # parser.add_argument('--hid', type=int, default=64)
+        # parser.add_argument('--l', type=int, default=2)
+        # parser.add_argument('--gamma', type=float, default=0.99)
+        # parser.add_argument('--seed', '-s', type=int, default=0)
+        # parser.add_argument('--cpu', type=int, default=4)
+        # parser.add_argument('--steps', type=int, default=4000)
         parser.add_argument('--epochs', type=int, default=self.epochs)
         parser.add_argument('--exp_name', type=str, default=self.model_type)
-        parser.add_argument('--save_freq', type=int, default=1)
+        # parser.add_argument('--save_freq', type=int, default=1)
         args, unknown = parser.parse_known_args()
 
         return args
 
-    def run_ppo(self):
+    def run_ppo(self, arguments):
 
-        parsed_args = self.retrieve_parsed_args()
+        parsed_args = self.retrieve_parsed_args(arguments)
 
         # CAN'T USE mpi_fork WHEN RUNNING FROM JUPYTER NOTEBOOKS
         mpi_fork(parsed_args.cpu)
@@ -65,9 +68,9 @@ class TrainModel:
 
         print("##### PPO model trained #####")
 
-    def run_ddpg(self):
+    def run_ddpg(self, arguments):
 
-        parsed_args = self.retrieve_parsed_args()
+        parsed_args = self.retrieve_parsed_args(arguments)
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         ddpg.ddpg(lambda: gym.make(parsed_args.env), actor_critic=ddpgcore.MLPActorCritic,
@@ -77,9 +80,9 @@ class TrainModel:
 
         print("##### DDPG model trained #####")
 
-    def run_sac(self):
+    def run_sac(self, arguments):
 
-        parsed_args = self.retrieve_parsed_args()
+        parsed_args = self.retrieve_parsed_args(arguments)
 
         torch.set_num_threads(torch.get_num_threads())
 
@@ -91,9 +94,9 @@ class TrainModel:
 
         print("##### SAC model trained #####")
 
-    def run_td3(self):
+    def run_td3(self, arguments):
 
-        parsed_args = self.retrieve_parsed_args()
+        parsed_args = self.retrieve_parsed_args(arguments)
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
@@ -103,9 +106,9 @@ class TrainModel:
 
         print("##### TD3 model trained #####")
 
-    def run_vpg(self):
+    def run_vpg(self,arguments):
 
-        parsed_args = self.retrieve_parsed_args()
+        parsed_args = self.retrieve_parsed_args(arguments)
 
         mpi_fork(parsed_args.cpu)
 
@@ -117,21 +120,32 @@ class TrainModel:
 
         print("##### VPG model trained #####")
 
-    def train_model(self, trainer):
+    def train_model(self, trainer, arguments):
 
         if self.model_type == "ppo":
-            trainer.run_ppo()
+            trainer.run_ppo(arguments)
         elif self.model_type == "ddpg":
-            trainer.run_ddpg()
+            trainer.run_ddpg(arguments)
         elif self.model_type == "sac":
-            trainer.run_sac()
+            trainer.run_sac(arguments)
         elif self.model_type == "td3":
-            trainer.run_td3()
+            trainer.run_td3(arguments)
         elif self.model_type == "vpg":
-            trainer.run_vpg()
+            trainer.run_vpg(arguments)
 
     # TODO: Add ExperimentGrid for GridSearchCV-like hyperparameter tuning
 
+arguments = argument_list = [
+        [['--env'], str, 'Epoch-Citylearn-v1'],
+        [['--hid'], int, 64],
+        [['--l'], int, 2],
+        [['--gamma'], float, 0.99],
+        [['--seed', '-s'], int, 0],
+        [['--cpu'], int, 4],
+        [['--steps'], int, 4000],
+        [['--save_freq'], int, 1],
+        [['--num_runs'], int, 1]
+        ]
 
 if __name__ == "__main__":
 
@@ -149,8 +163,8 @@ if __name__ == "__main__":
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    trainer = TrainModel(epochs=100)
+    trainer = TrainModel(epochs=1, model_type="ppo")
     trainer.register_environment(environment_arguments=environment_arguments)
-    trainer.run_ppo()
+    trainer.run_ppo(arguments)
     # trainer.run_ddpg()
     # trainer.run_experiment_grid()
