@@ -16,7 +16,7 @@ unset CONDA_SHLVL
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
 ### Comment out next lines after first run
-#conda info --envs
+#conda info --environments
 #conda create -n mypython
 ###
 
@@ -35,6 +35,11 @@ conda activate mypython
 #conda install -c conda-forge tqdm
 #pip install git+https://github.com/intelligent-environments-lab/CityLearn.git@v1.3.6
 #pip install requirements.txt
+#conda install numpy=1.21.5
+#conda update conda
+#conda install anaconda
+#pip install --upgrade numpy==1.21.6
+#pip install numpy --upgrade
 #conda list
 ###
 

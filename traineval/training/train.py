@@ -23,16 +23,6 @@ class TrainModel:
         self.epochs = epochs
         self.model_type = model_type
 
-    def register_environment(self, environment_arguments):
-        complete_path = osp.dirname(epoch_citylearn.__file__).replace("\\", ".")
-        relative_path = complete_path[complete_path.find("kit.") + 4:] + ".epoch_citylearn"
-
-        register(
-            id="Epoch-Citylearn-v1",
-            entry_point=relative_path + ":EnvCityGym",
-            kwargs=environment_arguments,
-        )
-
     # TODO: take arguments as input and add them to parser if they are not-None
     def retrieve_parsed_args(self):
         parser = argparse.ArgumentParser()
@@ -85,9 +75,9 @@ class TrainModel:
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         sac.sac(lambda: gym.make(parsed_args.env), actor_critic=saccore.MLPActorCritic,
-            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
-            gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
+                gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### SAC model trained #####")
 
@@ -97,9 +87,9 @@ class TrainModel:
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
-            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
-            gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
+                gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### TD3 model trained #####")
 
@@ -111,9 +101,9 @@ class TrainModel:
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         vpg.vpg(lambda: gym.make(parsed_args.env), actor_critic=vpgcore.MLPActorCritic,
-            ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
-            seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
-            logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
+                seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
 
         print("##### VPG model trained #####")
 
@@ -134,7 +124,6 @@ class TrainModel:
 
 
 if __name__ == "__main__":
-
     district_args = ["hour",
                      "month",
                      "carbon_intensity",

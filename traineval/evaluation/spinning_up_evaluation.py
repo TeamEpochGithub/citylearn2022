@@ -1,18 +1,12 @@
-import sys
-
-import numpy as np
+import os.path as osp
 import time
 
-from traineval.utils.convert_arguments import environment_convert_argument, environment_convert_scalars, \
-    get_environment_arguments
-import pandas as pd
-
-from traineval.utils.convert_arguments import environment_convert_argument
+import numpy as np
+from citylearn.citylearn import CityLearnEnv
 
 from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
-from citylearn.citylearn import CityLearnEnv
-import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
+from traineval.utils.convert_arguments import get_environment_arguments
 
 
 class Constants:

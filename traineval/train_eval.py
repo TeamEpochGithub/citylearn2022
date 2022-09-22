@@ -1,6 +1,7 @@
-from traineval.evaluation.spinning_up_evaluation import evaluate
-from traineval.training.train import TrainModel
-from traineval.utils.convert_arguments import get_environment_arguments
+from evaluation.spinning_up_evaluation import evaluate
+from traineval.utils.register_environment import register_environment
+from training.train import TrainModel
+from utils.convert_arguments import get_environment_arguments
 
 
 class TrainerEvaluator:
@@ -11,7 +12,7 @@ class TrainerEvaluator:
 
     def setup_trainer(self, current_environment_arguments):
         current_trainer = TrainModel(self.epochs, self.model_type)
-        current_trainer.register_environment(current_environment_arguments)
+        register_environment(environment_arguments=current_environment_arguments)
         return current_trainer
 
     def run_trainer(self, trainer):
@@ -38,11 +39,11 @@ if __name__ == "__main__":
     environment_arguments = get_environment_arguments(district_args, building_args)
 
     model_type = "ppo"
-    num_epochs = 1000
+    num_epochs = 10000
     trainer_evaluator = TrainerEvaluator(epochs=num_epochs, model_type=model_type)
     trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
     trainer_evaluator.run_trainer(trainer)
-
-    averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
-                                                                          model_type=model_type, model_seed="0",
-                                                                          model_iteration=str(num_epochs - 1))
+    #
+    # averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
+    #                                                                       model_type=model_type, model_seed="0",
+    #                                                                       model_iteration=str(num_epochs - 1))

@@ -1,11 +1,11 @@
-import sys
+import itertools
+import os.path as osp
 
 import numpy as np
 import torch
-import os.path as osp
-import itertools
-from traineval.training.spinningup.data.ppo.ppo_s0 import pyt_save
+
 from traineval.training.spinningup import data as saved_models
+
 
 class BasicPPOAgent:
 

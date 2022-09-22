@@ -16,7 +16,7 @@ unset CONDA_SHLVL
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
 ### Comment out next lines after first run
-#conda info --envs
+#conda info --environments
 #conda create -n mypython
 ###
 
