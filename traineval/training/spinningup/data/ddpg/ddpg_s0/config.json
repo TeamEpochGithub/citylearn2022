@@ -1,19 +1,19 @@
 {
     "ac_kwargs":	{
         "hidden_sizes":	[
-            256,
-            256
+            64,
+            64
         ]
     },
     "act_noise":	0.1,
     "actor_critic":	"MLPActorCritic",
     "batch_size":	100,
-    "env_fn":	"<function <lambda> at 0x0000020D8A113E50>",
-    "epochs":	50,
+    "env_fn":	"<function TrainModel.run_ddpg.<locals>.<lambda> at 0x00000183096980D0>",
+    "epochs":	2,
     "exp_name":	"ddpg",
     "gamma":	0.99,
     "logger":	{
-        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x0000020D8A115F70>":	{
+        "<traineval.training.spinningup.utils.logx.EpochLogger object at 0x0000018309692F40>":	{
             "epoch_dict":	{},
             "exp_name":	"ddpg",
             "first_row":	true,

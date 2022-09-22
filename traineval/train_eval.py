@@ -5,17 +5,18 @@ from traineval.utils.convert_arguments import get_environment_arguments
 
 class TrainerEvaluator:
 
-    def __init__(self, epochs):
+    def __init__(self, epochs, model_type):
         self.epochs = epochs
+        self.model_type = model_type
 
     def setup_trainer(self, current_environment_arguments):
-        current_trainer = TrainModel(self.epochs)
+        current_trainer = TrainModel(self.epochs, self.model_type)
         current_trainer.register_environment(current_environment_arguments)
         return current_trainer
 
-    def run_trainer(self, trainer, model_type):
+    def run_trainer(self, trainer):
         # TODO: run_ppo should take arguments
-        trainer.train_model(trainer, model_type=model_type)
+        trainer.train_model(trainer)
 
     def run_evaluation(self, environment_arguments, model_type, model_seed, model_iteration):
         return evaluate(environment_arguments, model_type, model_seed, model_iteration)
@@ -36,11 +37,11 @@ if __name__ == "__main__":
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    model_type = "td3"
+    model_type = "ddpg"
     num_epochs = 2
-    trainer_evaluator = TrainerEvaluator(epochs=num_epochs)
+    trainer_evaluator = TrainerEvaluator(epochs=num_epochs, model_type=model_type)
     trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
-    trainer_evaluator.run_trainer(trainer, model_type=model_type)
+    trainer_evaluator.run_trainer(trainer)
 
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(environment_arguments=environment_arguments,
                                                                           model_type=model_type, model_seed="0",

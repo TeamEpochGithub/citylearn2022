@@ -19,8 +19,9 @@ from traineval.utils.convert_arguments import get_environment_arguments
 
 class TrainModel:
 
-    def __init__(self, epochs):
+    def __init__(self, epochs, model_type):
         self.epochs = epochs
+        self.model_type = model_type
 
     def register_environment(self, environment_arguments):
         complete_path = osp.dirname(epoch_citylearn.__file__).replace("\\", ".")
@@ -43,7 +44,7 @@ class TrainModel:
         parser.add_argument('--cpu', type=int, default=4)
         parser.add_argument('--steps', type=int, default=4000)
         parser.add_argument('--epochs', type=int, default=self.epochs)
-        parser.add_argument('--exp_name', type=str, default='ppo')
+        parser.add_argument('--exp_name', type=str, default=self.model_type)
         parser.add_argument('--save_freq', type=int, default=1)
         args, unknown = parser.parse_known_args()
 
@@ -116,17 +117,17 @@ class TrainModel:
 
         print("##### VPG model trained #####")
 
-    def train_model(self, trainer, model_type):
+    def train_model(self, trainer):
 
-        if model_type == "ppo":
+        if self.model_type == "ppo":
             trainer.run_ppo()
-        elif model_type == "ddpg":
+        elif self.model_type == "ddpg":
             trainer.run_ddpg()
-        elif model_type == "sac":
+        elif self.model_type == "sac":
             trainer.run_sac()
-        elif model_type == "td3":
+        elif self.model_type == "td3":
             trainer.run_td3()
-        elif model_type == "vpg":
+        elif self.model_type == "vpg":
             trainer.run_vpg()
 
     # TODO: Add ExperimentGrid for GridSearchCV-like hyperparameter tuning

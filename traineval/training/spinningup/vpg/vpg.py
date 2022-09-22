@@ -280,7 +280,8 @@ def vpg(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
         # Save model
         if (epoch % save_freq == 0) or (epoch == epochs - 1):
-            logger.save_state({'env': env}, None)
+            print("Saving model")
+            logger.save_state({'env': env}, epoch)
 
         # Perform VPG update!
         update()
