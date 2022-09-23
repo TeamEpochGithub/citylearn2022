@@ -37,8 +37,9 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(environment_arguments, model_type, model_seed, model_iteration):
-    print("Starting local evaluation")
+def evaluate(environment_arguments, model_type, model_seed, model_iteration, verbose=True):
+    if verbose:
+        print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingSpinningUpAgent(environment_arguments, model_type, model_seed, model_iteration)
@@ -73,7 +74,8 @@ def evaluate(environment_arguments, model_type, model_seed, model_iteration):
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
-                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
+                if verbose:
+                    print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
                 obs_dict = env_reset(env)
 
@@ -87,27 +89,33 @@ def evaluate(environment_arguments, model_type, model_seed, model_iteration):
 
             num_steps += 1
             if num_steps % 1000 == 0:
-                print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
+                if verbose:
+                    print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
                 break
     except KeyboardInterrupt:
-        print("========================= Stopping Evaluation =========================")
+        if verbose:
+            print("========================= Stopping Evaluation =========================")
         interrupted = True
 
     if not interrupted:
-        print("=========================Completed=========================")
+        if verbose:
+            print("=========================Completed=========================")
 
     if len(episode_metrics) > 0:
-        print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
-        print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
+        if verbose:
+            print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
+            print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+            print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
         average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
                                 np.mean([e['emmision_cost'] for e in episode_metrics]),
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
-        print("Average cost:", average_cost)
+        if verbose:
+            print("Average cost:", average_cost)
         return average_cost, agent_time_elapsed
-    print(f"Total time taken by agent: {agent_time_elapsed}s")
+    if verbose:
+        print(f"Total time taken by agent: {agent_time_elapsed}s")
 
 
 if __name__ == '__main__':
