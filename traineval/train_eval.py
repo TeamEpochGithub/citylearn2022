@@ -1,6 +1,7 @@
 from traineval.evaluation.spinning_up_evaluation import evaluate
 from traineval.training.train import TrainModel
 from traineval.utils.convert_arguments import get_environment_arguments
+from traineval.utils.register_environment import register_environment
 
 
 class TrainerEvaluator:
@@ -12,7 +13,7 @@ class TrainerEvaluator:
 
     def setup_trainer(self, current_environment_arguments):
         current_trainer = TrainModel(self.epochs, self.model_type)
-        current_trainer.register_environment(current_environment_arguments)
+        register_environment(current_environment_arguments)
         return current_trainer
 
     def run_trainer(self, trainer):
@@ -36,7 +37,7 @@ if __name__ == "__main__":
                      "electrical_storage_soc",
                      "net_electricity_consumption"]
 
-    model_args = argument_list = [
+    model_args = [
         [['--env'], str, 'Epoch-Citylearn-v1'],
         [['--hid'], int, 64],
         [['--l'], int, 2],
@@ -52,7 +53,7 @@ if __name__ == "__main__":
 
     model_type = "ppo"
     num_epochs = 10000
-    trainer_evaluator = TrainerEvaluator(epochs=num_epochs, model_type=model_type)
+    trainer_evaluator = TrainerEvaluator(epochs=num_epochs, model_type=model_type, model_args=model_args)
     trainer = trainer_evaluator.setup_trainer(current_environment_arguments=environment_arguments)
     trainer_evaluator.run_trainer(trainer)
     #
