@@ -37,8 +37,8 @@ if __name__ == "__main__":
                      "electrical_storage_soc",
                      "net_electricity_consumption"]
 
-    model_type = "ppo"
-    number_of_epochs = 5
+    model_type = "td3"
+    number_of_epochs = 500
     model_seed = 0
 
     model_args = argument_list = [
@@ -48,10 +48,11 @@ if __name__ == "__main__":
         [['--gamma'], float, 0.99],
         [['--seed', '-s'], int, model_seed],
         [['--cpu'], int, 4],
-        [['--steps'], int, 4000],
+        [['--steps'], int, 20],
         [['--epochs'], int, number_of_epochs],
         [['--exp_name'], str, model_type],
-        [['--save_freq'], int, 1],
+        [['--save_freq'], int, 50],
+        [['--max_ep_len'], int, 1000],
         ]
 
     environment_arguments = get_environment_arguments(district_args, building_args)
