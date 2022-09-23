@@ -15,14 +15,13 @@ from traineval.training.spinningup.vpg import core as vpgcore, vpg
 from traineval.training.spinningup.utils.mpi_tools import mpi_fork
 from traineval.training.spinningup.utils.run_utils import setup_logger_kwargs
 from traineval.utils.convert_arguments import get_environment_arguments
+from traineval.utils.register_environment import register_environment
 
 
 class TrainModel:
 
-    def __init__(self, epochs, model_type):
-        self.epochs = epochs
-        self.model_type = model_type
-
+    def __init__(self, model_args):
+        self.model_args = self.retrieve_parsed_args(model_args)
     # TODO: take arguments as input and add them to parser if they are not-None
     def retrieve_parsed_args(self, arguments):
         parser = argparse.ArgumentParser()
@@ -36,16 +35,16 @@ class TrainModel:
         # parser.add_argument('--seed', '-s', type=int, default=0)
         # parser.add_argument('--cpu', type=int, default=4)
         # parser.add_argument('--steps', type=int, default=4000)
-        parser.add_argument('--epochs', type=int, default=self.epochs)
-        parser.add_argument('--exp_name', type=str, default=self.model_type)
+        #parser.add_argument('--epochs', type=int, default=self.epochs)
+        #parser.add_argument('--exp_name', type=str, default=self.model_type)
         # parser.add_argument('--save_freq', type=int, default=1)
         args, unknown = parser.parse_known_args()
 
         return args
 
-    def run_ppo(self, arguments):
+    def run_ppo(self):
 
-        parsed_args = self.retrieve_parsed_args(arguments)
+        parsed_args = self.model_args
 
         # CAN'T USE mpi_fork WHEN RUNNING FROM JUPYTER NOTEBOOKS
         mpi_fork(parsed_args.cpu)
@@ -58,9 +57,9 @@ class TrainModel:
 
         print("##### PPO model trained #####")
 
-    def run_ddpg(self, arguments):
+    def run_ddpg(self):
 
-        parsed_args = self.retrieve_parsed_args(arguments)
+        parsed_args = self.model_args
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         ddpg.ddpg(lambda: gym.make(parsed_args.env), actor_critic=ddpgcore.MLPActorCritic,
@@ -70,9 +69,9 @@ class TrainModel:
 
         print("##### DDPG model trained #####")
 
-    def run_sac(self, arguments):
+    def run_sac(self):
 
-        parsed_args = self.retrieve_parsed_args(arguments)
+        parsed_args = self.model_args
 
         torch.set_num_threads(torch.get_num_threads())
 
@@ -84,9 +83,9 @@ class TrainModel:
 
         print("##### SAC model trained #####")
 
-    def run_td3(self, arguments):
+    def run_td3(self):
 
-        parsed_args = self.retrieve_parsed_args(arguments)
+        parsed_args = self.model_args
 
         logger_kwargs = setup_logger_kwargs(parsed_args.exp_name, parsed_args.seed)
         td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
@@ -96,9 +95,9 @@ class TrainModel:
 
         print("##### TD3 model trained #####")
 
-    def run_vpg(self,arguments):
+    def run_vpg(self):
 
-        parsed_args = self.retrieve_parsed_args(arguments)
+        parsed_args = self.model_args
 
         mpi_fork(parsed_args.cpu)
 
@@ -110,32 +109,21 @@ class TrainModel:
 
         print("##### VPG model trained #####")
 
-    def train_model(self, trainer, arguments):
+    def train_model(self):
 
-        if self.model_type == "ppo":
-            trainer.run_ppo(arguments)
-        elif self.model_type == "ddpg":
-            trainer.run_ddpg(arguments)
-        elif self.model_type == "sac":
-            trainer.run_sac(arguments)
-        elif self.model_type == "td3":
-            trainer.run_td3(arguments)
-        elif self.model_type == "vpg":
-            trainer.run_vpg(arguments)
+        if self.model_args.exp_name == "ppo":
+            self.run_ppo()
+        elif self.model_args.exp_name == "ddpg":
+            self.run_ddpg()
+        elif self.model_args.exp_name == "sac":
+            self.run_sac()
+        elif self.model_args.exp_name == "td3":
+            self.run_td3()
+        elif self.model_args.exp_name == "vpg":
+            self.run_vpg()
 
     # TODO: Add ExperimentGrid for GridSearchCV-like hyperparameter tuning
 
-arguments = argument_list = [
-        [['--env'], str, 'Epoch-Citylearn-v1'],
-        [['--hid'], int, 64],
-        [['--l'], int, 2],
-        [['--gamma'], float, 0.99],
-        [['--seed', '-s'], int, 0],
-        [['--cpu'], int, 4],
-        [['--steps'], int, 4000],
-        [['--save_freq'], int, 1],
-        [['--num_runs'], int, 1]
-        ]
 
 if __name__ == "__main__":
     district_args = ["hour",
@@ -150,10 +138,26 @@ if __name__ == "__main__":
                      "electrical_storage_soc",
                      "net_electricity_consumption"]
 
+    model_type = "ppo"
+    number_of_epochs = 5
+
+    model_args = argument_list = [
+        [['--env'], str, 'Epoch-Citylearn-v1'],
+        [['--hid'], int, 64],
+        [['--l'], int, 2],
+        [['--gamma'], float, 0.99],
+        [['--seed', '-s'], int, 0],
+        [['--cpu'], int, 4],
+        [['--steps'], int, 4000],
+        [['--epochs'], int, number_of_epochs],
+        [['--exp_name'], str, model_type],
+        [['--save_freq'], int, 1],
+    ]
+
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    trainer = TrainModel(epochs=1, model_type="ppo")
-    trainer.register_environment(environment_arguments=environment_arguments)
-    trainer.run_ppo(arguments)
-    # trainer.run_ddpg()
-    # trainer.run_experiment_grid()
+    trainer = TrainModel(model_args)
+
+    register_environment(environment_arguments=environment_arguments)
+
+    trainer.train_model()
