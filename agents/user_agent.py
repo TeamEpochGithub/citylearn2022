@@ -11,7 +11,10 @@ from agents.spinning_up_agent import BasicPPOAgent
 ###################################################################
 
 # UserAgent = RandomAgent
-UserAgent = BasicRBCAgent
+# UserAgent = BasicRBCAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
+from agents.zero_grid_agent import ZeroGridAgent
+
+UserAgent = ZeroGridAgent

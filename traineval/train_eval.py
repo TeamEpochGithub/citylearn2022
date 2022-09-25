@@ -37,8 +37,8 @@ if __name__ == "__main__":
                      "electrical_storage_soc",
                      "net_electricity_consumption"]
 
-    model_type = "ppo"
-    number_of_epochs = 5000
+    model_type = "td3"
+    number_of_epochs = 500
     model_seed = 0
     save_freq = 20
 
@@ -58,10 +58,10 @@ if __name__ == "__main__":
     environment_arguments = get_environment_arguments(district_args, building_args)
 
     trainer_evaluator = TrainerEvaluator(model_args, environment_arguments)
-    trainer = trainer_evaluator.setup_trainer()
-    trainer_evaluator.run_trainer(trainer)
-    #
+    # trainer = trainer_evaluator.setup_trainer()
+    # trainer_evaluator.run_trainer(trainer)
+
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(model_type=model_type, model_seed=model_seed,
-                                                                          model_iteration=str(number_of_epochs - 1),
+                                                                          model_iteration=20,
                                                                           verbose=True)
     print(averaged_score, agent_time_elapsed)

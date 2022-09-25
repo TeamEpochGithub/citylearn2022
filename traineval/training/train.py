@@ -25,6 +25,7 @@ class TrainModel:
 
     # TODO: take arguments as input and add them to parser if they are not-None
     def retrieve_parsed_args(self, arguments):
+
         parser = argparse.ArgumentParser()
 
         for i in range(len(arguments)):

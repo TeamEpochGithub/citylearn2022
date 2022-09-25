@@ -160,7 +160,6 @@ class Logger:
         if proc_id() == 0:
             output = json.dumps(config_json, separators=(',', ':\t'), indent=4, sort_keys=True)
             print(colorize('Saving config:\n', color='cyan', bold=True))
-            print(output)
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 

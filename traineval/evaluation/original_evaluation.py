@@ -1,5 +1,9 @@
+import itertools
+
 import numpy as np
 import time
+
+from tqdm import tqdm
 
 """
 Please do not make changes to this file. 
@@ -116,4 +120,20 @@ def evaluate():
 
 
 if __name__ == '__main__':
+
+    # weights = [0, 0.001, 0.005, 0.01, 0.02, 0.03]
+    #
+    # discharges = [-0.09]
+    # charges = [0.14, 0.15, 0.16]
+    # hoursin = [5,6,7,8]
+    # hoursout = [12,13,14,15,16]
+    # scores_dict = {}
+    #
+    # for weight_combination in itertools.product(discharges, charges):
+    #     print(weight_combination)
+    #     scores_dict[str(weight_combination)] = evaluate(weight_combination)
+    #
+    # best_key = min(scores_dict, key=scores_dict.get)
+    # print(best_key)
+    # print(scores_dict[best_key])
     evaluate()

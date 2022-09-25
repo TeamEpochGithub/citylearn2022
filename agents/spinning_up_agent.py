@@ -9,7 +9,7 @@ from traineval.training.spinningup import data as saved_models
 
 class BasicPPOAgent:
 
-    def __init__(self, environment_arguments, model_type:str, model_seed:int, model_iteration:int):
+    def __init__(self, environment_arguments, model_type: str, model_seed: int, model_iteration: int):
         self.action_space = {}
         model_path = model_type + '\\' + model_type + '_s' + str(model_seed) + '\\' + 'pyt_save' + '\\' \
                      + 'model' + str(model_iteration) + '.pt'
