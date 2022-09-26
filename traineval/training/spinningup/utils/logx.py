@@ -160,7 +160,6 @@ class Logger:
         if proc_id() == 0:
             output = json.dumps(config_json, separators=(',', ':\t'), indent=4, sort_keys=True)
             print(colorize('Saving config:\n', color='cyan', bold=True))
-            print(output)
             with open(osp.join(self.output_dir, "config.json"), 'w') as out:
                 out.write(output)
 
@@ -262,7 +261,7 @@ class Logger:
             fpath = osp.join(self.output_dir, fpath)
             fname = 'model' + ('%d' % itr if itr is not None else '') + '.pt'
             fname = osp.join(fpath, fname)
-            print(fname)
+
             os.makedirs(fpath, exist_ok=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")

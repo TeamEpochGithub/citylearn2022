@@ -22,8 +22,10 @@ class TrainModel:
 
     def __init__(self, model_args):
         self.model_args = self.retrieve_parsed_args(model_args)
+
     # TODO: take arguments as input and add them to parser if they are not-None
     def retrieve_parsed_args(self, arguments):
+
         parser = argparse.ArgumentParser()
 
         for i in range(len(arguments)):
@@ -35,8 +37,8 @@ class TrainModel:
         # parser.add_argument('--seed', '-s', type=int, default=0)
         # parser.add_argument('--cpu', type=int, default=4)
         # parser.add_argument('--steps', type=int, default=4000)
-        #parser.add_argument('--epochs', type=int, default=self.epochs)
-        #parser.add_argument('--exp_name', type=str, default=self.model_type)
+        # parser.add_argument('--epochs', type=int, default=self.epochs)
+        # parser.add_argument('--exp_name', type=str, default=self.model_type)
         # parser.add_argument('--save_freq', type=int, default=1)
         args, unknown = parser.parse_known_args()
 

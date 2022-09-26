@@ -57,7 +57,6 @@ def get_reward(electricity_consumption: List[float], carbon_emission: List[float
         """
 
     # *********** BEGIN EDIT ***********
-    # Replace with custom reward calculation
     carbon_emission = np.array(carbon_emission).clip(min=0)
     electricity_price = np.array(electricity_price).clip(min=0)
     reward = (carbon_emission + electricity_price) * -1
@@ -65,13 +64,11 @@ def get_reward(electricity_consumption: List[float], carbon_emission: List[float
     # ************** END ***************
 
     # *********** BEGIN EDIT ***********
-    # Replace with custom reward calculation
-    # net_electricity_consumption = `cooling_electricity_co8nsumption` + `heating_electricity_consumption` + `dhw_electricity_consumption` + `electrical_storage_electricity_consumption` + `non_shiftable_load_demand` + `solar_generation`
+    ## net_electricity_consumption = `cooling_electricity_consumption` + `heating_electricity_consumption` + `dhw_electricity_consumption` + `electrical_storage_electricity_consumption` + `non_shiftable_load_demand` + `solar_generation`
     # district_electricity_price = electricity_price
-    # district_electrictiy_consumption = electricity_consumption
+    # district_electricity_consumption = electricity_consumption
     # district_carbon_emissions = carbon_emission
-    # price_cost, emission_cost, grid_cost = calculate_values(district_electricity_price, district_carbon_emissions, district_electrictiy_consumption)
+    # price_cost, emission_cost, grid_cost = calculate_values(district_electricity_price, district_carbon_emissions, district_electricity_consumption)
     # reward = ((price_cost + emission_cost + grid_cost)/5) * -1
-    # print(price_cost, emission_cost, grid_cost)
-    # ************** END ***************
     # return reward
+    # ************** END ***************

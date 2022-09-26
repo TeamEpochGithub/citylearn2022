@@ -19,8 +19,8 @@ class TrainerEvaluator:
         # TODO: run_ppo should take arguments
         trainer.train_model()
 
-    def run_evaluation(self, model_type, model_seed, model_iteration):
-        return evaluate(self.environment_arguments, model_type, model_seed, model_iteration)
+    def run_evaluation(self, model_type, model_seed, model_iteration, verbose=True):
+        return evaluate(self.environment_arguments, model_type, model_seed, model_iteration, verbose)
 
 
 if __name__ == "__main__":
@@ -40,8 +40,9 @@ if __name__ == "__main__":
     model_type = "td3"
     number_of_epochs = 500
     model_seed = 0
+    save_freq = 20
 
-    model_args = argument_list = [
+    model_args = [
         [['--env'], str, 'Epoch-Citylearn-v1'],
         [['--hid'], int, 64],
         [['--l'], int, 2],
@@ -53,6 +54,7 @@ if __name__ == "__main__":
         [['--exp_name'], str, model_type],
         [['--save_freq'], int, 50],
         [['--max_ep_len'], int, 1000],
+        [['--save_freq'], int, save_freq],
         ]
 
     environment_arguments = get_environment_arguments(district_args, building_args)
@@ -62,4 +64,6 @@ if __name__ == "__main__":
     trainer_evaluator.run_trainer(trainer)
     #
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(model_type=model_type, model_seed=model_seed,
-                                                                          model_iteration=str(number_of_epochs - 1))
+                                                                          model_iteration=20,
+                                                                          verbose=True)
+    print(averaged_score, agent_time_elapsed)
