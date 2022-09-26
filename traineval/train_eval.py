@@ -25,20 +25,23 @@ class TrainerEvaluator:
 
 if __name__ == "__main__":
 
-    district_args = ["hour",
-                     "month",
-                     "carbon_intensity",
-                     "electricity_pricing",
-                     "outdoor_dry_bulb_temperature_predicted_6h",
-                     "outdoor_relative_humidity_predicted_6h"]
+    # district_args = ["hour",
+    #                  "month",
+    #                  "carbon_intensity",
+    #                  "electricity_pricing",
+    #                  "outdoor_dry_bulb_temperature_predicted_6h",
+    #                  "outdoor_relative_humidity_predicted_6h"]
+    #
+    # building_args = ["non_shiftable_load",
+    #                  "solar_generation",
+    #                  "electrical_storage_soc",
+    #                  "net_electricity_consumption"]
 
-    building_args = ["non_shiftable_load",
-                     "solar_generation",
-                     "electrical_storage_soc",
-                     "net_electricity_consumption"]
+    district_args = ["hour"]
+    building_args = []
 
-    model_type = "td3"
-    number_of_epochs = 500
+    model_type = "ppo"
+    number_of_epochs = 200
     model_seed = 0
     save_freq = 20
 
@@ -48,11 +51,12 @@ if __name__ == "__main__":
         [['--l'], int, 2],
         [['--gamma'], float, 0.99],
         [['--seed', '-s'], int, model_seed],
-        [['--cpu'], int, 4],
-        [['--steps'], int, 4000],
+        [['--cpu'], int, 1],
+        [['--steps'], int, 8760 - 1],
         [['--epochs'], int, number_of_epochs],
         [['--exp_name'], str, model_type],
         [['--save_freq'], int, save_freq],
+        [['--max_ep_len'], int, 8760]
         ]
 
     environment_arguments = get_environment_arguments(district_args, building_args)
@@ -62,6 +66,6 @@ if __name__ == "__main__":
     # trainer_evaluator.run_trainer(trainer)
 
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(model_type=model_type, model_seed=model_seed,
-                                                                          model_iteration=20,
+                                                                          model_iteration=number_of_epochs,
                                                                           verbose=True)
     print(averaged_score, agent_time_elapsed)

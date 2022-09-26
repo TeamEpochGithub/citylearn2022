@@ -39,6 +39,8 @@ class BasicPPOAgent:
         transformed_observation = observation_common + observation_particular
 
         actions = self.ac.act(torch.as_tensor(transformed_observation, dtype=torch.float32))
+        # print(list(actions.copy()))
+        # print(observations[0][2])
 
         action_list = []
 

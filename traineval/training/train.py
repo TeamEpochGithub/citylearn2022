@@ -55,7 +55,7 @@ class TrainModel:
         ppo.ppo(lambda: gym.make(parsed_args.env), actor_critic=ppocore.MLPActorCritic,
                 ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
                 seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
-                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq, max_ep_len=parsed_args.max_ep_len)
 
         print("##### PPO model trained #####")
 
