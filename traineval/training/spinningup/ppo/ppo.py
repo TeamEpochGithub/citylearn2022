@@ -291,9 +291,12 @@ def ppo(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
             o = next_o
 
             timeout = ep_len == max_ep_len
+            # print("timeout", ep_len, " == ", max_ep_len)
             terminal = d or timeout
+            # print("terminal", d, " or ", timeout)
             epoch_ended = t == local_steps_per_epoch - 1
-
+            # print("epochended", t, " == ", local_steps_per_epoch-1)
+            # print(t, ep_len)
             if terminal or epoch_ended:
                 if epoch_ended and not (terminal):
                     print('Warning: trajectory cut off by epoch at %d steps.' % ep_len, flush=True)
