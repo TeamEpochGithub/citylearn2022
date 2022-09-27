@@ -1,21 +1,17 @@
-import numpy as np
+import os.path as osp
 import time
 
-"""
-Please do not make changes to this file. 
-This is only a reference script provided to allow you 
-to do local evaluation. The evaluator **DOES NOT** 
-use this script for orchestrating the evaluations. 
-"""
-
-from agents.orderenforcingwrapper import OrderEnforcingAgent
+import numpy as np
 from citylearn.citylearn import CityLearnEnv
+
+from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
+from data import citylearn_challenge_2022_phase_1 as competition_data
+from traineval.utils.convert_arguments import get_environment_arguments
 
 
 class Constants:
     episodes = 1
-    schema_path = './data/citylearn_challenge_2022_phase_1/schema.json'
-
+    schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
 
 def action_space_to_dict(aspace):
     """ Only for box space """
@@ -41,11 +37,12 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate():
-    print("Starting local evaluation")
+def evaluate(environment_arguments, model_type, model_seed, model_iteration, verbose=True):
+    if verbose:
+        print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingAgent()
+    agent = OrderEnforcingSpinningUpAgent(environment_arguments, model_type, model_seed, model_iteration)
 
     obs_dict = env_reset(env)
 
@@ -59,7 +56,6 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
-    average_cost = 2
     try:
         while True:
 
@@ -68,14 +64,18 @@ def evaluate():
             ### use this script for orchestrating the evaluations. 
 
             observations, _, done, _ = env.step(actions)
+
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                metrics = {"price_cost": metrics_t[0], "emmision_cost": metrics_t[1]}
+                metrics = {"price_cost": metrics_t[0],
+                           "emmision_cost": metrics_t[1],
+                           "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
-                    raise ValueError("Episode metrics are nan, please contant organizers")
+                    raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
-                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
+                if verbose:
+                    print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
                 obs_dict = env_reset(env)
 
@@ -89,50 +89,47 @@ def evaluate():
 
             num_steps += 1
             if num_steps % 1000 == 0:
-                print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
+                if verbose:
+                    print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
                 break
     except KeyboardInterrupt:
-        print("========================= Stopping Evaluation =========================")
+        if verbose:
+            print("========================= Stopping Evaluation =========================")
         interrupted = True
 
     if not interrupted:
-        print("=========================Completed=========================")
+        if verbose:
+            print("=========================Completed=========================")
 
     if len(episode_metrics) > 0:
-        print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
-        print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+        if verbose:
+            print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
+            print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+            print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
         average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
-                                       np.mean([e['emmision_cost'] for e in episode_metrics])])
-        print("Average cost", average_cost)
-    print(f"Total time taken by agent: {agent_time_elapsed}s")
-    return average_cost
+                                np.mean([e['emmision_cost'] for e in episode_metrics]),
+                                np.mean([e['grid_cost'] for e in episode_metrics])])
+        if verbose:
+            print("Average cost:", average_cost)
+        return average_cost, agent_time_elapsed
+    if verbose:
+        print(f"Total time taken by agent: {agent_time_elapsed}s")
 
 
 if __name__ == '__main__':
-    evaluate()
+    district_args = ["hour",
+                     "month",
+                     "carbon_intensity",
+                     "electricity_pricing"]
 
-    # minimum_cost = 2
-    # best_indices = []
-    # vals = list(range(0, 3))
-    # for v in vals:
-    #     average_cost = evaluate(v)
-    #     if average_cost < minimum_cost:
-    #         best_indices = v
-    #         minimum_cost = average_cost
+    building_args = ["non_shiftable_load",
+                     "solar_generation",
+                     "electrical_storage_soc",
+                     "net_electricity_consumption"]
 
-    # vals = list(range(0, 6))
-    # import itertools
-    #
-    # minimum_cost = 2
-    # best_indices = []
-    #
-    # for indices in itertools.combinations(vals, 3):
-    #     average_cost = evaluate(indices)
-    #     if average_cost < minimum_cost:
-    #         best_indices = indices
-    #         minimum_cost = average_cost
-    #     print(indices)
-    #
-    # print("best indices", best_indices, " with score ", minimum_cost)
+    environment_arguments = get_environment_arguments(district_args, building_args)
+
+    evaluate(environment_arguments)
+

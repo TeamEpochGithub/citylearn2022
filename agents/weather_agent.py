@@ -25,10 +25,11 @@ def weather_policy(observation, action_space):
     net_electricity_consumption = observation[23]
     electricity_pricing = observation[24]
 
+
     # print((carbon_intensity + electricity_pricing)*-1)
 
-    # print("STORAGE", electrical_storage_soc)
-    # print("CONSUMPTION", net_electricity_consumption)
+    print("STORAGE", electrical_storage_soc)
+    print("CONSUMPTION", net_electricity_consumption)
 
     action_vals = [-0.3, -0.2, -0.15, -0.1, -0.05, -0.02, 0, 0.02, 0.05, 0.1, 0.2]
 

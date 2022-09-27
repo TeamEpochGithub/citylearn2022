@@ -1,7 +1,7 @@
 {
   "challenge_id": "neurips-2022-citylearn-challenge",
   "authors": [
-    "aicrowd-bot"
+    "philip_tempelman", "adrian", "lars", "bjorn_bucksch", "LauravanderHart", "mikhail_vlasenko"
   ],
   "description": "(optional) description about your awesome agent"
 }
