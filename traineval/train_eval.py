@@ -1,4 +1,4 @@
-from traineval.evaluation.spinning_up_evaluation import evaluate
+from traineval.training.custom_DRL.drlmain.spinning_up_evaluation import evaluate
 from traineval.training.train import TrainModel
 from traineval.utils.convert_arguments import get_environment_arguments
 from traineval.utils.register_environment import register_environment
