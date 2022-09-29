@@ -102,6 +102,9 @@ class EnvCityGym(gym.Env):
         """
         we apply the same action for all the buildings
         """
+
+        self.env.evaluate()
+
         # reprocessing action
         action = [[act] for act in action]
 
