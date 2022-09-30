@@ -127,7 +127,6 @@ class DeterministicActorCritic:
             action = self.pick_greedy(state)
 
         action = (((action - (-1)) * (0.3 - (-0.3))) / (1 - (-1))) + (-0.3)
-
         return action
 
     # Set up function for computing DDPG Q-loss
