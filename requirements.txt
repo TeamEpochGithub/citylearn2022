@@ -3,7 +3,7 @@ git+https://github.com/intelligent-environments-lab/CityLearn.git@v1.3.6
 torch~=1.12.1
 # scikit-learn~=1.1.2
 numpy~=1.21.6
-gym~=0.24.1
+gym~=0.21.0
 pandas~=1.3.5
 stable-baselines3[extra]~=1.6.0
 tensorflow~=2.10.0
@@ -18,3 +18,5 @@ tqdm~=4.64.1
 scikit-learn~=1.1.2
 scipy~=1.9.1
 swig
+mpi4py~=3.1.3
+smac~=1.4.0

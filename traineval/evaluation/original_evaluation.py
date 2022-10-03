@@ -1,4 +1,6 @@
 import itertools
+
+from ConfigSpace import ConfigurationSpace, UniformFloatHyperparameter
 from smac.facade.smac_bb_facade import SMAC4BB
 from smac.scenario.scenario import Scenario
 import numpy as np
@@ -126,7 +128,42 @@ if __name__ == '__main__':
 
     # Define your hyperparameters
     configspace = ConfigurationSpace()
-    configspace.add_hyperparameter(UniformIntegerHyperparameter("depth", 2, 100))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("load_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("load_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("load_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_3", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_1", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_2", -1, 1))
+    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_3", -1, 1))
 
     # Provide meta data for the optimization
     scenario = Scenario({
