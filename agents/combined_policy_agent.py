@@ -33,95 +33,114 @@ def combined_policy(observation, action_space, args):
     electricity_pricing_predicted_12h = observation[26]
     electricity_pricing_predicted_24h = observation[27]
 
-    price_action = 1
+    ### PRICE
+    pricing_action = 1
     if 0 < electricity_pricing <= 0.21:
-        price_action *= args["price_1"]
+        pricing_action *= args["price_1"]
     elif 0.21 < electricity_pricing <= 0.22:
-        price_action *= args["price_2"]
+        pricing_action *= args["price_2"]
     else:
-        price_action *= args["price_3"]
+        pricing_action *= args["price_3"]
 
+    pricing_pred_action = 1
     if 0 < electricity_pricing_predicted_6h <= 0.21:
-        price_action *= args["price_pred_1"]
+        pricing_pred_action *= args["price_pred_1"]
     elif 0.21 < electricity_pricing_predicted_6h <= 0.22:
-        price_action *= args["price_pred_2"]
+        pricing_pred_action *= args["price_pred_2"]
     else:
-        price_action *= args["price_pred_3"]
+        pricing_pred_action *= args["price_pred_3"]
 
-    emission_action = 1
+    ### EMISSION
+    carbon_action = 1
     if 0 < carbon_intensity <= 0.139231:
-        emission_action *= args["carbon_1"]
+        carbon_action *= args["carbon_1"]
     elif 0.139231 < carbon_intensity <= 0.169461:
-        emission_action *= args["carbon_2"]
+        carbon_action *= args["carbon_2"]
     else:
-        emission_action *= args["carbon_3"]
+        carbon_action *= args["carbon_3"]
 
+    generation_action = 1
     if 0 < solar_generation <= 0:
-        emission_action *= args["solar_1"]
+        generation_action *= args["solar_1"]
     elif 0 < solar_generation <= 163.14452:
-        emission_action *= args["solar_2"]
+        generation_action *= args["solar_2"]
     else:
-        emission_action *= args["solar_3"]
+        generation_action *= args["solar_3"]
 
+    diffuse_action = 1
     if 0 < diffuse_solar_irradiance <= 0:
-        emission_action *= args["solar_diffused_1"]
+        diffuse_action *= args["solar_diffused_1"]
     elif 0 < diffuse_solar_irradiance <= 216:
-        emission_action *= args["solar_diffused_2"]
+        diffuse_action *= args["solar_diffused_2"]
     else:
-        emission_action *= args["solar_diffused_3"]
+        diffuse_action *= args["solar_diffused_3"]
 
+    direct_action = 1
     if 0 < direct_solar_irradiance <= 0:
-        emission_action *= args["solar_direct_1"]
+        direct_action *= args["solar_direct_1"]
     elif 0 < direct_solar_irradiance <= 141:
-        emission_action *= args["solar_direct_2"]
+        direct_action *= args["solar_direct_2"]
     else:
-        emission_action *= args["solar_direct_3"]
+        direct_action *= args["solar_direct_3"]
 
-    grid_action = 1
-
+    ### GRID
+    hour_action = 1
     if 6 < hour <= 14:
-        grid_action *= args["hour_1"]
+        hour_action *= args["hour_1"]
     elif 14 < hour <= 23:
-        grid_action *= args["hour_2"]
+        hour_action *= args["hour_2"]
     else:
-        grid_action *= args["hour_3"]
+        hour_action *= args["hour_3"]
 
+    storage_action = 1
     if 0 < electrical_storage_soc <= 0.33:
-        grid_action *= args["storage_1"]
+        storage_action *= args["storage_1"]
     elif 0.33 < electrical_storage_soc <= 0.66:
-        grid_action *= args["storage_2"]
+        storage_action *= args["storage_2"]
     else:
-        grid_action *= args["storage_3"]
+        storage_action *= args["storage_3"]
 
+    consumption_action = 1
     if 0 < net_electricity_consumption <= 0.6:
-        grid_action *= args["consumption_1"]
+        consumption_action *= args["consumption_1"]
     elif 0.6 < net_electricity_consumption <= 1.2:
-        grid_action *= args["consumption_2"]
+        consumption_action *= args["consumption_2"]
     else:
-        grid_action *= args["consumption_3"]
+        consumption_action *= args["consumption_3"]
 
+    load_action = 1
     if 0 < non_shiftable_load <= 0.726493:
-        grid_action *= args["load_1"]
+        load_action *= args["load_1"]
     elif 0.726493 < non_shiftable_load <= 1.185376:
-        grid_action *= args["load_2"]
+        load_action *= args["load_2"]
     else:
-        grid_action *= args["load_3"]
+        load_action *= args["load_3"]
 
+    temp_action = 1
     if 0 < outdoor_dry_bulb_temperature <= 15.6:
-        grid_action *= args["temp_1"]
+        temp_action *= args["temp_1"]
     elif 15.6 < outdoor_dry_bulb_temperature <= 18.3:
-        grid_action *= args["temp_2"]
+        temp_action *= args["temp_2"]
     else:
-        grid_action *= args["temp_3"]
+        temp_action *= args["temp_3"]
 
+    humidity_action = 1
     if 0 < outdoor_relative_humidity <= 69:
-        grid_action *= args["humidity_1"]
+        humidity_action *= args["humidity_1"]
     elif 69 < outdoor_relative_humidity <= 81:
-        grid_action *= args["humidity_2"]
+        humidity_action *= args["humidity_2"]
     else:
-        grid_action *= args["humidity_3"]
+        humidity_action *= args["humidity_3"]
 
-    return (price_action + emission_action + grid_action) / 3
+    price_action = np.average([pricing_action, pricing_pred_action])
+    emission_action = np.average([carbon_action, generation_action, diffuse_action, direct_action])
+    grid_action = np.average([hour_action, storage_action, consumption_action, load_action, temp_action, humidity_action])
+
+    action_average = (price_action + emission_action + grid_action) / 3
+
+    action = np.array([action_average], dtype=action_space.dtype)
+
+    return action
 
 
 class MultiPolicyAgent:
@@ -130,12 +149,13 @@ class MultiPolicyAgent:
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
     """
 
-    def __init__(self):
-        action_space = {}
+    def __init__(self, args):
+        self.action_space = {}
+        self.args = args
 
     def set_action_space(self, agent_id, action_space):
-        action_space[agent_id] = action_space
+        self.action_space[agent_id] = action_space
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
-        return combined_policy(observation, action_space[agent_id])
+        return combined_policy(observation, self.action_space[agent_id], self.args)

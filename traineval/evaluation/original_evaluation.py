@@ -1,10 +1,9 @@
 import itertools
 
-from ConfigSpace import ConfigurationSpace, UniformFloatHyperparameter
-from smac.facade.smac_bb_facade import SMAC4BB
-from smac.scenario.scenario import Scenario
+from hyperopt import fmin, hp, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
+import pyspark
 
 from tqdm import tqdm
 
@@ -50,11 +49,11 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate():
+def evaluate(args):
     print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingAgent()
+    agent = OrderEnforcingAgent(args)
 
     obs_dict = env_reset(env)
 
@@ -106,7 +105,7 @@ def evaluate():
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")
         interrupted = True
-    
+
     if not interrupted:
         print("=========================Completed=========================")
 
@@ -119,60 +118,96 @@ def evaluate():
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
-    return average_cost
+    return {'loss': average_cost, 'status': STATUS_OK}
 
 
 if __name__ == '__main__':
-
     args = None
 
+    search_space = {"price_1": hp.uniform("price_1", -1, 1),
+                    "price_2": hp.uniform("price_2", -1, 1),
+                    "price_3": hp.uniform("price_3", -1, 1),
+                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
+                    "price_pred_2": hp.uniform("price_pred_2", -1, 1),
+                    "price_pred_3": hp.uniform("price_pred_3", -1, 1),
+                    "carbon_1": hp.uniform("carbon_1", -1, 1),
+                    "carbon_2": hp.uniform("carbon_2", -1, 1),
+                    "carbon_3": hp.uniform("carbon_3", -1, 1),
+                    "solar_1": hp.uniform("solar_1", -1, 1),
+                    "solar_2": hp.uniform("solar_2", -1, 1),
+                    "solar_3": hp.uniform("solar_3", -1, 1),
+                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
+                    "solar_diffused_2": hp.uniform("solar_diffused_2", -1, 1),
+                    "solar_diffused_3": hp.uniform("solar_diffused_3", -1, 1),
+                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
+                    "solar_direct_2": hp.uniform("solar_direct_2", -1, 1),
+                    "solar_direct_3": hp.uniform("solar_direct_3", -1, 1),
+                    "hour_1": hp.uniform("hour_1", -1, 1),
+                    "hour_2": hp.uniform("hour_2", -1, 1),
+                    "hour_3": hp.uniform("hour_3", -1, 1),
+                    "storage_1": hp.uniform("storage_1", -1, 1),
+                    "storage_2": hp.uniform("storage_2", -1, 1),
+                    "storage_3": hp.uniform("storage_3", -1, 1),
+                    "consumption_1": hp.uniform("consumption_1", -1, 1),
+                    "consumption_2": hp.uniform("consumption_2", -1, 1),
+                    "consumption_3": hp.uniform("consumption_3", -1, 1),
+                    "load_1": hp.uniform("load_1", -1, 1),
+                    "load_2": hp.uniform("load_2", -1, 1),
+                    "load_3": hp.uniform("load_3", -1, 1),
+                    "temp_1": hp.uniform("temp_1", -1, 1),
+                    "temp_2": hp.uniform("temp_2", -1, 1),
+                    "temp_3": hp.uniform("temp_3", -1, 1),
+                    "humidity_1": hp.uniform("humidity_1", -1, 1),
+                    "humidity_2": hp.uniform("humidity_2", -1, 1),
+                    "humidity_3": hp.uniform("humidity_3", -1, 1),
+                    }
+
+    algorithm = tpe.suggest
+
+    best_params = fmin(
+        fn=evaluate,
+        space=search_space,
+        algo=algorithm,
+        max_evals=1000,
+        trials=SparkTrials()
+    )
+
+    print(best_params)
+
     # Define your hyperparameters
-    configspace = ConfigurationSpace()
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("price_pred_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("carbon_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_diffused_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("solar_direct_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("hour_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("storage_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("consumption_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("load_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("load_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("load_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("temp_3", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_1", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_2", -1, 1))
-    configspace.add_hyperparameter(UniformFloatHyperparameter("humidity_3", -1, 1))
-
-    # Provide meta data for the optimization
-    scenario = Scenario({
-        "run_obj": "quality",  # Optimize quality (alternatively runtime)
-        "runcount-limit": 100,  # Max number of function evaluations (the more the better)
-        "cs": configspace,
-    })
-
-    smac = SMAC4BB(scenario=scenario, tae_runner=evaluate)
-    best_found_config = smac.optimize()
-
-    evaluate(args)
+    # "price_1"
+    # "price_2"
+    # "price_3"
+    # "price_pred_1"
+    # "price_pred_2"
+    # "price_pred_3"
+    # "carbon_1"
+    # "carbon_2"
+    # "carbon_3"
+    # "solar_1"
+    # "solar_2"
+    # "solar_3"
+    # "solar_diffused_1"
+    # "solar_diffused_2"
+    # "solar_diffused_3"
+    # "solar_direct_1"
+    # "solar_direct_2"
+    # "solar_direct_3"
+    # "hour_1"
+    # "hour_2"
+    # "hour_3"
+    # "storage_1"
+    # "storage_2"
+    # "storage_3"
+    # "consumption_1"
+    # "consumption_2"
+    # "consumption_3"
+    # "load_1"
+    # "load_2"
+    # "load_3"
+    # "temp_1"
+    # "temp_2"
+    # "temp_3"
+    # "humidity_1"
+    # "humidity_2"
+    # "humidity_3"

@@ -17,9 +17,9 @@ class OrderEnforcingAgent:
     Calls each agent step with agent in a loop and returns the action
     """
 
-    def __init__(self):
+    def __init__(self, args):
         self.num_buildings = None
-        self.agent = UserAgent()
+        self.agent = UserAgent(args)
         self.action_space = None
 
     def register_reset(self, observation):
