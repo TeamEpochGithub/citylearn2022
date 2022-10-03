@@ -5,6 +5,7 @@ from agents.weather_agent import BasicWeatherAgent
 from agents.sac_agent import SAC
 from agents.rlc_agent import RLCAgent
 from agents.spinning_up_agent import BasicPPOAgent
+from agents.test import Test
 
 ###################################################################
 #####                Specify your agent here                  #####
@@ -17,4 +18,5 @@ from agents.spinning_up_agent import BasicPPOAgent
 # UserAgent = BasicWeatherAgent
 from agents.zero_grid_agent import ZeroGridAgent
 
-UserAgent = ZeroGridAgent
+UserAgent = Test
+
