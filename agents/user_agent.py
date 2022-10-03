@@ -15,6 +15,6 @@ from agents.spinning_up_agent import BasicPPOAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
-from agents.zero_grid_agent import ZeroGridAgent
+from agents.combined_policy_agent import MultiPolicyAgent
 
-UserAgent = ZeroGridAgent
+UserAgent = MultiPolicyAgent

@@ -108,8 +108,8 @@ class DeterministicActorCritic:
         self.learning_rate = learning_rate
         self.actor = DeterministicPolicy(state_shape, n_possible_outputs, hidden_shape_actor)
         self.critic = QCritic(state_shape, n_possible_outputs, hidden_shape_critic)
-        self.optim_actor = optim.Adam(self.actor.parameters(), lr=learning_rate)
-        self.optim_critic = optim.Adam(self.critic.parameters(), lr=learning_rate)
+        self.optim_actor = optim.SGD(self.actor.parameters(), lr=learning_rate, momentum=0)
+        self.optim_critic = optim.SGD(self.critic.parameters(), lr=learning_rate, momentum=0)
         self.gamma = gamma
         self.epsilon = epsilon
 
