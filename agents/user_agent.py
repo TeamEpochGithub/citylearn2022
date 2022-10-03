@@ -1,3 +1,4 @@
+from agents.combined_policy_agent import MultiPolicyAgent
 from agents.random_agent import RandomAgent
 from agents.rbc_agent import BasicRBCAgent
 from agents.basic_reward_agent import BasicRewardAgent
@@ -18,5 +19,5 @@ from agents.test import Test
 # UserAgent = BasicWeatherAgent
 from agents.zero_grid_agent import ZeroGridAgent
 
-UserAgent = Test
+UserAgent = MultiPolicyAgent
 

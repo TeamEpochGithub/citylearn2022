@@ -102,6 +102,8 @@ def policy_cost_battery_minmax(observation, action_space):
 
     return action
 
+
+
 class Test:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent

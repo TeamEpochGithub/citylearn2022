@@ -1,5 +1,6 @@
 import itertools
-
+from smac.facade.smac_bb_facade import SMAC4BB
+from smac.scenario.scenario import Scenario
 import numpy as np
 import time
 
@@ -121,19 +122,20 @@ def evaluate():
 
 if __name__ == '__main__':
 
-    # weights = [0, 0.001, 0.005, 0.01, 0.02, 0.03]
-    #
-    # discharges = [-0.09]
-    # charges = [0.14, 0.15, 0.16]
-    # hoursin = [5,6,7,8]
-    # hoursout = [12,13,14,15,16]
-    # scores_dict = {}
-    #
-    # for weight_combination in itertools.product(discharges, charges):
-    #     print(weight_combination)
-    #     scores_dict[str(weight_combination)] = evaluate(weight_combination)
-    #
-    # best_key = min(scores_dict, key=scores_dict.get)
-    # print(best_key)
-    # print(scores_dict[best_key])
-    evaluate()
+    args = None
+
+    # Define your hyperparameters
+    configspace = ConfigurationSpace()
+    configspace.add_hyperparameter(UniformIntegerHyperparameter("depth", 2, 100))
+
+    # Provide meta data for the optimization
+    scenario = Scenario({
+        "run_obj": "quality",  # Optimize quality (alternatively runtime)
+        "runcount-limit": 100,  # Max number of function evaluations (the more the better)
+        "cs": configspace,
+    })
+
+    smac = SMAC4BB(scenario=scenario, tae_runner=evaluate)
+    best_found_config = smac.optimize()
+
+    evaluate(args)
