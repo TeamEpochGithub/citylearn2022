@@ -206,3 +206,17 @@ if __name__ == '__main__':
     #     month_params.append()
     #
     #     print(month)
+
+    # new_dict = [
+    #     {'emp_id': 456, 'emp_name': 'George', 'skills': 'Python'},
+    #     {'emp_id': 892, 'emp_name': 'Adam', 'skills': 'Java'},
+    #     {'emp_id': 178, 'emp_name': 'Gilchrist', 'skills': 'Mongo db'},
+    #     {'emp_id': 155, 'emp_name': 'Elon', 'skills': 'Sql'},
+    #     {'emp_id': 299, 'emp_name': 'Mask', 'skills': 'Ruby'},
+    # ]
+    #
+    # dict_to_csv(new_dict)
+    #
+    # lst = list(csv.DictReader(open('optimal_values.csv')));
+    # args = lst[0]
+    # print(args)

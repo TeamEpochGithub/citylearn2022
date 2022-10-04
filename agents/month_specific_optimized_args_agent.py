@@ -1,11 +1,15 @@
 import sys
 
 import numpy as np
+import csv
 
 # def optimized_combined_policy(observation, action_space, args):
 
 
-def combined_policy(observation, action_space, args):
+def combined_policy(observation, action_space):
+    lst = list(csv.DictReader(open('../traineval/evaluation/optimal_values.csv')));
+    args = lst[0]
+
     month = observation[0]
     day_type = observation[1]
     hour = observation[2]
@@ -145,7 +149,7 @@ def combined_policy(observation, action_space, args):
     return action
 
 
-class MultiPolicyAgent:
+class CombinedPolicyAgent:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
