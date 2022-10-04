@@ -8,6 +8,7 @@ from agents.rlc_agent import RLCAgent
 from agents.spinning_up_agent import BasicPPOAgent
 from agents.month_tuned_agent import MonthTunedAgent
 from agents.tunable_agent import MultiPolicyAgent
+from agents.day_tuned_agent import DayTunedAgent
 
 ###################################################################
 #####                Specify your agent here                  #####
@@ -18,6 +19,6 @@ from agents.tunable_agent import MultiPolicyAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
-
-UserAgent = MonthTunedAgent
+# UserAgent = MonthTunedAgent
+UserAgent = DayTunedAgent
 

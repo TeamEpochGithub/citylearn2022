@@ -15,7 +15,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.tuning_wrapper import OrderEnforcingAgent
+from agents.tuning_day_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
@@ -65,6 +65,9 @@ def evaluate(args):
     actions = agent.register_reset(obs_dict)
     agent_time_elapsed += time.perf_counter() - step_start
 
+    counter = 1
+    day = 1
+
     episodes_completed = 0
     num_steps = 0
     interrupted = False
@@ -77,6 +80,12 @@ def evaluate(args):
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
+            # heck which day it is for day_tuning
+            counter += 1
+            if counter % 24 == 0:
+                day += 1
+
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
@@ -95,7 +104,7 @@ def evaluate(args):
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
                 step_start = time.perf_counter()
-                actions = agent.compute_action(observations)
+                actions = agent.compute_action(observations, day)
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
@@ -174,7 +183,7 @@ def dict_to_csv(dict_list):
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open('tuned_values/optimal_values_month.csv', 'w') as csvfile:
+    with open('tuned_values/optimal_values_day.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
@@ -193,9 +202,9 @@ if __name__ == '__main__':
     # print(best_params)
 
     search_space = retrieve_search_space()
-    month_params = []
-    for month in range(1, 13): # 13
-        search_space["month"] = month
+    day_params = []
+    for day in range(1, 366):  # 13
+        search_space["day"] = day
         best_params = fmin(
             fn=evaluate,
             space=search_space,
@@ -203,11 +212,9 @@ if __name__ == '__main__':
             max_evals=1,
             trials=SparkTrials()
         )
-        best_params["month"] = month
-        month_params.append(best_params)
+        best_params["day"] = day
+        day_params.append(best_params)
 
-        print(month)
-    dict_to_csv(month_params)
-
-
+        print(day)
+    dict_to_csv(day_params)
 
