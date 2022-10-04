@@ -37,10 +37,12 @@ if __name__ == "__main__":
                      "electrical_storage_soc",
                      "net_electricity_consumption"]
 
-    model_type = "td3"
-    number_of_epochs = 500
+    model_type = "ppo"
+    number_of_epochs = 5
     model_seed = 0
-    save_freq = 20
+    save_freq = 1
+    steps = 8760
+    max_ep_len = steps - 1
 
     model_args = [
         [['--env'], str, 'Epoch-Citylearn-v1'],
@@ -48,12 +50,11 @@ if __name__ == "__main__":
         [['--l'], int, 2],
         [['--gamma'], float, 0.99],
         [['--seed', '-s'], int, model_seed],
-        [['--cpu'], int, 4],
-        [['--steps'], int, 20],
+        [['--cpu'], int, 1],
+        [['--steps'], int, steps],
         [['--epochs'], int, number_of_epochs],
         [['--exp_name'], str, model_type],
-        [['--save_freq'], int, 50],
-        [['--max_ep_len'], int, 1000],
+        [['--max_ep_len'], int, max_ep_len],
         [['--save_freq'], int, save_freq],
         ]
 
