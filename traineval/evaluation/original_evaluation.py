@@ -194,15 +194,16 @@ if __name__ == '__main__':
 
     search_space = retrieve_search_space()
     month_params = []
-    for month in range(1, 13):
+    for month in range(1, 13): # 13
         search_space["month"] = month
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=30,
+            max_evals=1,
             trials=SparkTrials()
         )
+        best_params["month"] = month
         month_params.append(best_params)
 
         print(month)
