@@ -2,15 +2,26 @@ import sys
 
 import numpy as np
 import csv
-
-# def optimized_combined_policy(observation, action_space, args):
+import os.path as osp
+import traineval.evaluation.tuned_values as value_dir
 
 
 def combined_policy(observation, action_space):
-    lst = list(csv.DictReader(open('../traineval/evaluation/optimal_values.csv')));
-    args = lst[0]
-
+    values_path = osp.join(osp.dirname(value_dir.__file__), "optimal_values.csv")
+    all_args = list(csv.DictReader(open(values_path), quoting=csv.QUOTE_ALL))
+    # lst = list(csv.DictReader(open('../traineval/evaluation/tuned_values/optimal_values.csv')));
+    # args = lst[0]
     month = observation[0]
+    args = None
+    for arg_dict in all_args:
+        if int(arg_dict["month"]) == int(month):
+            args = arg_dict
+            break
+    # args = all_args[int(month) - 1]
+    for k, v in args.items():
+        args[k] = float(v)
+    print(month, args)
+
     day_type = observation[1]
     hour = observation[2]
     outdoor_dry_bulb_temperature = observation[3]
@@ -140,7 +151,8 @@ def combined_policy(observation, action_space):
 
     price_action = np.average([pricing_action, pricing_pred_action])
     emission_action = np.average([carbon_action, generation_action, diffuse_action, direct_action])
-    grid_action = np.average([hour_action, storage_action, consumption_action, load_action, temp_action, humidity_action])
+    grid_action = np.average(
+        [hour_action, storage_action, consumption_action, load_action, temp_action, humidity_action])
 
     action_average = (price_action + emission_action + grid_action) / 3
 
@@ -149,19 +161,18 @@ def combined_policy(observation, action_space):
     return action
 
 
-class CombinedPolicyAgent:
+class MonthTunedAgent:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
     """
 
-    def __init__(self, args):
+    def __init__(self):
         self.action_space = {}
-        self.args = args
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
-        return combined_policy(observation, self.action_space[agent_id], self.args)
+        return combined_policy(observation, self.action_space[agent_id])

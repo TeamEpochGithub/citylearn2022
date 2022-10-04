@@ -1,50 +1,46 @@
-import sys
-
 from gym.spaces import Box
-from agents.spinning_agent import SpinningAgent
+from agents.pick_normal_agent import UserAgent
 from rewards.user_reward import UserReward
+
 
 def dict_to_action_space(aspace_dict):
     return Box(
-                low = aspace_dict["low"],
-                high = aspace_dict["high"],
-                dtype = aspace_dict["dtype"],
-              )
+        low=aspace_dict["low"],
+        high=aspace_dict["high"],
+        dtype=aspace_dict["dtype"],
+    )
 
 
-class OrderEnforcingSpinningUpAgent:
+class OrderEnforcingAgent:
     """
     Emulates order enforcing wrapper in Pettingzoo for easy integration
     Calls each agent step with agent in a loop and returns the action
     """
-    def __init__(self, environment_arguments, model_type, model_seed, model_iteration):
+
+    def __init__(self):
         self.num_buildings = None
-        self.agent = SpinningAgent(environment_arguments, model_type, model_seed, model_iteration)
+        self.agent = UserAgent()
         self.action_space = None
-    
+
     def register_reset(self, observation):
-        """Get the first observation after env.reset, return action""" 
+        """Get the first observation after env.reset, return action"""
         action_space = observation["action_space"]
         self.action_space = [dict_to_action_space(asd) for asd in action_space]
         obs = observation["observation"]
         self.num_buildings = len(obs)
 
-        self.agent.set_action_space(action_space)
-
-        # for agent_id in range(self.num_buildings):
-        #     action_space = self.action_space[agent_id]
-        #     self.agent.set_action_space(agent_id, action_space)
-        #     self.agent.set_q_tables(agent_id)
-
+        for agent_id in range(self.num_buildings):
+            action_space = self.action_space[agent_id]
+            self.agent.set_action_space(agent_id, action_space)
 
         return self.compute_action(obs)
-    
+
     def raise_aicrowd_error(self, msg):
         raise NameError(msg)
 
     def compute_action(self, observation):
         """
-        Inputs: 
+        Inputs:
             observation - List of observations from the env
         Returns:
             actions - List of actions in the same order as the observations
@@ -57,8 +53,14 @@ class OrderEnforcingSpinningUpAgent:
 
         """
         assert self.num_buildings is not None
-        rewards = UserReward(agent_count=len(observation),observation=observation).calculate()
+        rewards = UserReward(agent_count=len(observation), observation=observation).calculate()
 
         actions = []
 
-        return self.agent.compute_action(observation, self.num_buildings)
+        for agent_id in range(self.num_buildings):
+            # reward = rewards[agent_id]
+            actions.append(self.agent.compute_action(observation[agent_id], agent_id))
+
+        # If you want a single central agent setup, change this function as needed
+
+        return actions

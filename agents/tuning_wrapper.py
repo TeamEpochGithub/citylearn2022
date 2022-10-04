@@ -1,5 +1,5 @@
 from gym.spaces import Box
-from agents.user_agent import UserAgent
+from agents.pick_tuning_agent import TuningAgent
 from rewards.user_reward import UserReward
 
 
@@ -19,7 +19,7 @@ class OrderEnforcingAgent:
 
     def __init__(self, args):
         self.num_buildings = None
-        self.agent = UserAgent(args)
+        self.agent = TuningAgent(args)
         self.action_space = None
 
     def register_reset(self, observation):
@@ -49,7 +49,7 @@ class OrderEnforcingAgent:
         please make sure the actions are in same order as the observations
 
         Reward preprocesing - You can use your custom reward function here
-        please specify your reward function in agents/user_agent.py
+        please specify your reward function in agents/pick_normal_agent.py
 
         """
         assert self.num_buildings is not None
