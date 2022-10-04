@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def net_electricity_consumption(non_shiftable_load, electrical_storage_electricity_consumption, solar_generation_obs):
     #non_shiftable_load from csv data
     #solar_generation_obs from observation
@@ -115,5 +114,4 @@ net_electricity_consumption = net_electricity_consumption(non_shiftable_load, la
 print(net_electricity_consumption)
 
 #Correct result: 4.051166666666667
-
 
