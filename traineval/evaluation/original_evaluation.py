@@ -127,7 +127,7 @@ def dictToCsv(dict_list):
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open('test1.csv', 'w') as csvfile:
+    with open('optimal_values.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
