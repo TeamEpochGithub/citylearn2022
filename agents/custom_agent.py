@@ -1,20 +1,26 @@
 import itertools
 import os.path as osp
 
+import joblib
 import numpy as np
 import torch
+import pickle
 
-from traineval.training.spinningup import data as saved_models
+import agents.spinning_agent as agentfile
 
 
-class BasicPPOAgent:
+class CustomDRLAgent:
 
     def __init__(self, environment_arguments, model_type: str, model_seed: int, model_iteration: int):
         self.action_space = {}
-        model_path = model_type + '\\' + model_type + '_s' + str(model_seed) + '\\' + 'pyt_save' + '\\' \
-                     + 'model' + str(model_iteration) + '.pt'
-        self.ac = torch.load(osp.join(osp.dirname(saved_models.__file__), model_path))
-        print(self.ac)
+
+        # model_path = 'agents/trained_models/wowamodela.pt'
+        # print(osp.join(osp.dirname(trained_models.__file__), wowamodela.pt))
+        # self.ac = torch.load(osp.join(osp.dirname(saved_models.__file__), model_path))
+
+        # self.ac = torch.load(osp.join(osp.dirname(trained_models.__file__), "wowamodela.pt"))
+        self.ac = torch.load(osp.join(osp.dirname(agentfile.__file__),
+                                      "../traineval/training/custom_drl_algorithm/wowamodela.pt"))
 
         self.index_com = environment_arguments["district_indexes"]
         self.index_part = environment_arguments["building_indexes"]
@@ -39,13 +45,8 @@ class BasicPPOAgent:
         observation_particular = list(itertools.chain(*observation_particular))
         transformed_observation = observation_common + observation_particular
 
-        actions = self.ac.act(torch.as_tensor(transformed_observation, dtype=torch.float32))
-        # print(list(actions.copy()))
-        # print(observations[0][2])
+        actions = self.ac.pick(np.array(transformed_observation))
 
         action_list = []
 
-        for a in actions:
-            action_list.append(np.array([a], dtype=np.float32))
-
-        return action_list
+        return [actions.tolist()[0]] * building_count

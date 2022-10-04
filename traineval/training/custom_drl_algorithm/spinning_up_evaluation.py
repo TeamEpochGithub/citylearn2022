@@ -85,6 +85,7 @@ def evaluate(environment_arguments, model_type, model_seed, model_iteration, ver
             else:
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
+                # print("acts: ", actions, "obs: ", observations)
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
@@ -119,6 +120,9 @@ def evaluate(environment_arguments, model_type, model_seed, model_iteration, ver
 
 
 if __name__ == '__main__':
+    # district_args = ["hour", "carbon_intensity", "electricity_pricing"]
+    # building_args = ["electrical_storage_soc"]
+
     district_args = ["hour",
                      "month",
                      "carbon_intensity",
@@ -131,5 +135,5 @@ if __name__ == '__main__':
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
-    evaluate(environment_arguments)
+    evaluate(environment_arguments, "ppo", 0, 0, True)
 

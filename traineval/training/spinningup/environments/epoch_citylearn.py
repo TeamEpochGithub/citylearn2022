@@ -6,6 +6,8 @@ import gym
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from data import citylearn_challenge_2022_phase_1 as competition_data
+from traineval.utils.convert_arguments import environment_convert_argument
+from traineval.utils.feature_engineering import hour_to_time
 
 
 class EnvCityGym(gym.Env):
@@ -108,10 +110,18 @@ class EnvCityGym(gym.Env):
         # we do a step in the environment
         obs, reward, done, info = self.env.step(action)
 
+        storage = obs[0][environment_convert_argument(["electrical_storage_soc"])[0]]
+
+        if action[0][0] < 0 and storage <= 0:
+            reward = -2
+
+        if action[0][0] > 0 and storage >= 1:
+            reward = -2
+
         observation = self.get_observation(obs)
 
-        # return observation, sum(reward), done, info
-        # sys.exit()
+        # print("hour:", round(observation[0], 2), "act:", round(action[0][0], 2), "stor:", round(storage, 2), "rew:", round(reward, 2))
+
         return np.array(observation, dtype=np.float32), reward, done, info
 
     def render(self, mode='human'):
