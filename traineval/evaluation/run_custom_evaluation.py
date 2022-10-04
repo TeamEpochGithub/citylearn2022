@@ -8,6 +8,8 @@ import csv
 
 from tqdm import tqdm
 
+from dynamic_programming.custom_evaluation import evaluate_observation
+
 """
 Please do not make changes to this file. 
 This is only a reference script provided to allow you 
@@ -69,6 +71,8 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
+
+    observation_list = []
     try:
         while True:
 
@@ -77,9 +81,13 @@ def evaluate():
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
+            observation_list.append(observations)
+
             if done:
                 episodes_completed += 1
-                metrics_t = env.evaluate()
+                # metrics_t = env.evaluate()
+                metrics_t = evaluate_observation(observation_list)
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -121,6 +129,9 @@ def evaluate():
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
+    return evaluate_observation(observation_list)
 
 if __name__ == '__main__':
-    evaluate()
+    print(evaluate())
+
+

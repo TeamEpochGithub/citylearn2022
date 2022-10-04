@@ -44,19 +44,33 @@
 import numpy as np
 from dynamic_programming import electrical_calculations
 
+
 def evaluate_observation(observation_list):
 
-    observation_list = np.asarray(observation_list)
+    newlist = [] * 5
+    for observation in observation_list:
+        for ind, building in enumerate(observation):
+            newlist[ind].append(building)
 
-    net_electricity_consumption = observation_list[:, 23]
-    non_shiftable_load = observation_list[:, 20]
-    electricity_pricing = observation_list[:, 24]
-    carbon_intensity = observation_list[:, 19]
-    solar_generation = observation_list[:, 21]
+    scores = []
+    for building_obs in newlist:
+        observation_list = np.asarray(building_obs)
 
-    net_electricity_consumption_without_storage = non_shiftable_load - solar_generation
+        net_electricity_consumption = observation_list[:, 23]
+        non_shiftable_load = observation_list[:, 20]
+        electricity_pricing = observation_list[:, 24]
+        carbon_intensity = observation_list[:, 19]
+        solar_generation = observation_list[:, 21]
 
-    return evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing, carbon_intensity)
+        net_electricity_consumption_without_storage = non_shiftable_load - solar_generation
+
+        scores.append(np.asarray(
+            evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing,
+                     carbon_intensity)))
+
+    scores = np.asarray(scores)
+    return np.mean(scores[:, 0]), np.mean(scores[:, 1]), np.mean(scores[:, 2])
+
 
 def evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing,
              carbon_intensity):
