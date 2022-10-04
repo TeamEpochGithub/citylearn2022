@@ -121,9 +121,9 @@ def evaluate(args):
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
-    if average_cost < Constants.lowest_average_cost:
-        Constants.lowest_average_cost = average_cost
-        dict_to_csv([args])
+    # if average_cost < Constants.lowest_average_cost:
+    #     Constants.lowest_average_cost = average_cost
+    #     dict_to_csv([args])
 
     return {'loss': average_cost, 'status': STATUS_OK}
 
@@ -183,26 +183,27 @@ def dict_to_csv(dict_list):
 
 
 if __name__ == '__main__':
-    best_params = fmin(
-        fn=evaluate,
-        space=retrieve_search_space(),
-        algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-        max_evals=10,
-        trials=SparkTrials()
-    )
-    print(best_params)
+    # best_params = fmin(
+    #     fn=evaluate,
+    #     space=retrieve_search_space(),
+    #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #     max_evals=10,
+    #     trials=SparkTrials()
+    # )
+    # print(best_params)
 
-    #
-    # month_params = []
-    # for month in range(1,13):
-    #
-    #     best_params = fmin(
-    #         fn=evaluate,
-    #         space=retrieve_search_space(),
-    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #         max_evals=1000,
-    #         trials=SparkTrials()
-    #     )
-    #     month_params.append()
-    #
-    #     print(month)
+    search_space = retrieve_search_space()
+    month_params = []
+    for month in range(1, 13):
+        search_space["month"] = month
+        best_params = fmin(
+            fn=evaluate,
+            space=search_space,
+            algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+            max_evals=30,
+            trials=SparkTrials()
+        )
+        month_params.append(best_params)
+
+        print(month)
+    dict_to_csv(month_params)
