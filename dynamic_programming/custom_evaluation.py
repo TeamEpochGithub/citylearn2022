@@ -47,7 +47,7 @@ from dynamic_programming import electrical_calculations
 
 def evaluate_observation(observation_list):
 
-    newlist = [] * 5
+    newlist = [[], [], [], [], []]
     for observation in observation_list:
         for ind, building in enumerate(observation):
             newlist[ind].append(building)
