@@ -120,6 +120,18 @@ def evaluate(args):
     print(f"Total time taken by agent: {agent_time_elapsed}s")
     return {'loss': average_cost, 'status': STATUS_OK}
 
+import csv
+def dictToCsv(dict_list):
+
+    observation_values = []
+    for key in dict_list[0].keys():
+        observation_values.append(key)
+
+    with open('test1.csv', 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=observation_values)
+        writer.writeheader()
+        writer.writerows(dict_list)
+
 
 if __name__ == '__main__':
     args = None

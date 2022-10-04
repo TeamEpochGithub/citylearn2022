@@ -59,6 +59,13 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\traineval\evaluation\test1.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>
