@@ -1,6 +1,6 @@
 import itertools
 
-from hyperopt import fmin, hp, tpe, SparkTrials, space_eval, STATUS_OK
+from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
 import pyspark
@@ -162,13 +162,11 @@ if __name__ == '__main__':
                     "humidity_3": hp.uniform("humidity_3", -1, 1),
                     }
 
-    algorithm = tpe.suggest
-
     best_params = fmin(
         fn=evaluate,
         space=search_space,
-        algo=algorithm,
-        max_evals=1000,
+        algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+        max_evals=40000,
         trials=SparkTrials()
     )
 
