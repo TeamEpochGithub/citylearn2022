@@ -6,8 +6,8 @@
 # When this process terminates, the list will indicate which action at the entry point is optimal.
 # Further runs of this process will split the action spaces into increasingly smaller regions.
 
-# net_electricity_consumption_without_storage = non_shiftable_load_demand + solar_generation
-# net_electricity_consumption = electrical_storage_electricity_consumption + non_shiftable_load_demand + solar_generation
+# net_electricity_consumption_without_storage = non_shiftable_load_demand - solar_generation
+# net_electricity_consumption = electrical_storage_electricity_consumption + non_shiftable_load_demand - solar_generation
 
 # net_electricity_consumption_price = net_electricity_consumption * pricing.electricity_pricing
 # net_electricity_consumption_price_without_storage = net_electricity_consumption_without_storage * pricing.electricity_pricing
@@ -42,7 +42,21 @@
 #
 # Grid cost is the mean of Load Factor and Ramping
 import numpy as np
+from dynamic_programming import electrical_calculations
 
+def evaluate_observation(observation_list):
+
+    observation_list = np.asarray(observation_list)
+
+    net_electricity_consumption = observation_list[:, 23]
+    non_shiftable_load = observation_list[:, 20]
+    electricity_pricing = observation_list[:, 24]
+    carbon_intensity = observation_list[:, 19]
+    solar_generation = observation_list[:, 21]
+
+    net_electricity_consumption_without_storage = non_shiftable_load - solar_generation
+
+    return evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing, carbon_intensity)
 
 def evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing,
              carbon_intensity):
