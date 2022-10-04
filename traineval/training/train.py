@@ -67,7 +67,7 @@ class TrainModel:
         ddpg.ddpg(lambda: gym.make(parsed_args.env), actor_critic=ddpgcore.MLPActorCritic,
                   ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
                   gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-                  logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                  logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq, max_ep_len=parsed_args.max_ep_len)
 
         print("##### DDPG model trained #####")
 
@@ -81,7 +81,7 @@ class TrainModel:
         sac.sac(lambda: gym.make(parsed_args.env), actor_critic=saccore.MLPActorCritic,
                 ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
                 gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq, max_ep_len=parsed_args.max_ep_len)
 
         print("##### SAC model trained #####")
 
@@ -93,7 +93,7 @@ class TrainModel:
         td3.td3(lambda: gym.make(parsed_args.env), actor_critic=td3core.MLPActorCritic,
                 ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l),
                 gamma=parsed_args.gamma, seed=parsed_args.seed, epochs=parsed_args.epochs,
-                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq, max_ep_len=parsed_args.max_ep_len)
 
         print("##### TD3 model trained #####")
 
@@ -107,7 +107,7 @@ class TrainModel:
         vpg.vpg(lambda: gym.make(parsed_args.env), actor_critic=vpgcore.MLPActorCritic,
                 ac_kwargs=dict(hidden_sizes=[parsed_args.hid] * parsed_args.l), gamma=parsed_args.gamma,
                 seed=parsed_args.seed, steps_per_epoch=parsed_args.steps, epochs=parsed_args.epochs,
-                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq)
+                logger_kwargs=logger_kwargs, save_freq=parsed_args.save_freq, max_ep_len=parsed_args.max_ep_len)
 
         print("##### VPG model trained #####")
 
