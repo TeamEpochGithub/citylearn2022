@@ -20,7 +20,6 @@ def combined_policy(observation, action_space):
     # args = all_args[int(month) - 1]
     for k, v in args.items():
         args[k] = float(v)
-    print(month, args)
 
     day_type = observation[1]
     hour = observation[2]

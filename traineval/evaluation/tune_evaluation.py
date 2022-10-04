@@ -51,8 +51,9 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(args):
-    print("Starting local evaluation")
+def evaluate(args, verbose=False):
+    if verbose:
+        print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent(args)
@@ -86,7 +87,9 @@ def evaluate(args):
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contant organizers")
                 episode_metrics.append(metrics)
-                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
+
+                if verbose:
+                    print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
                 obs_dict = env_reset(env)
 
@@ -100,32 +103,37 @@ def evaluate(args):
 
             num_steps += 1
             if num_steps % 1000 == 0:
-                print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
+                if verbose:
+                    print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
                 break
     except KeyboardInterrupt:
-        print("========================= Stopping Evaluation =========================")
+        if verbose:
+            print("========================= Stopping Evaluation =========================")
         interrupted = True
 
     if not interrupted:
-        print("=========================Completed=========================")
+        if verbose:
+            print("=========================Completed=========================")
 
     if len(episode_metrics) > 0:
-        print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
-        print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-        print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
-        average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
-                                np.mean([e['emmision_cost'] for e in episode_metrics]),
-                                np.mean([e['grid_cost'] for e in episode_metrics])])
-        print("Average cost", average_cost)
-    print(f"Total time taken by agent: {agent_time_elapsed}s")
+        avg_price = np.mean([e['price_cost'] for e in episode_metrics])
+        avg_emission = np.mean([e['emmision_cost'] for e in episode_metrics])
+        avg_grid = np.mean([e['grid_cost'] for e in episode_metrics])
+        avg = np.mean([avg_price, avg_emission, avg_grid])
+        if verbose:
+            print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
+            print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+            print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
+            print("Average cost", avg)
+            print(f"Total time taken by agent: {agent_time_elapsed}s")
 
     # if average_cost < Constants.lowest_average_cost:
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': average_cost, 'status': STATUS_OK}
+    return {'loss': avg, 'status': STATUS_OK}
 
 
 def retrieve_search_space():
@@ -194,13 +202,13 @@ if __name__ == '__main__':
 
     search_space = retrieve_search_space()
     month_params = []
-    for month in range(1, 13): # 13
+    for month in tqdm(range(1, 13)):  # 13
         search_space["month"] = month
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=1,
+            max_evals=5,
             trials=SparkTrials()
         )
         best_params["month"] = month
@@ -209,5 +217,16 @@ if __name__ == '__main__':
         print(month)
     dict_to_csv(month_params)
 
-
-
+    # new_dict = [
+    #     {'emp_id': 456, 'emp_name': 'George', 'skills': 'Python'},
+    #     {'emp_id': 892, 'emp_name': 'Adam', 'skills': 'Java'},
+    #     {'emp_id': 178, 'emp_name': 'Gilchrist', 'skills': 'Mongo db'},
+    #     {'emp_id': 155, 'emp_name': 'Elon', 'skills': 'Sql'},
+    #     {'emp_id': 299, 'emp_name': 'Mask', 'skills': 'Ruby'},
+    # ]
+    #
+    # dict_to_csv(new_dict)
+    #
+    # lst = list(csv.DictReader(open('optimal_values.csv')));
+    # args = lst[0]
+    # print(args)
