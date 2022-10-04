@@ -118,12 +118,12 @@ def evaluate(args):
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+
+    # if average_cost <
+
     return {'loss': average_cost, 'status': STATUS_OK}
 
-
-if __name__ == '__main__':
-    args = None
-
+def retrieve_search_space():
     search_space = {"price_1": hp.uniform("price_1", -1, 1),
                     "price_2": hp.uniform("price_2", -1, 1),
                     "price_3": hp.uniform("price_3", -1, 1),
@@ -161,13 +161,32 @@ if __name__ == '__main__':
                     "humidity_2": hp.uniform("humidity_2", -1, 1),
                     "humidity_3": hp.uniform("humidity_3", -1, 1),
                     }
+    return search_space
+
+if __name__ == '__main__':
+    args = None
+
 
     best_params = fmin(
         fn=evaluate,
-        space=search_space,
+        space=retrieve_search_space(),
         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-        max_evals=40000,
+        max_evals=1000,
         trials=SparkTrials()
     )
-
     print(best_params)
+
+
+    month_params = []
+    for month in range(1,13):
+
+        best_params = fmin(
+            fn=evaluate,
+            space=retrieve_search_space(),
+            algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+            max_evals=1000,
+            trials=SparkTrials()
+        )
+        month_params.append()
+
+        print(month)
