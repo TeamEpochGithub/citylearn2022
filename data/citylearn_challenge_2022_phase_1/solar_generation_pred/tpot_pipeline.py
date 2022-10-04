@@ -7,6 +7,22 @@ from sklearn.pipeline import make_pipeline, make_union
 from sklearn.svm import LinearSVR
 from tpot.builtins import StackingEstimator
 from tpot.export_utils import set_param_recursive
+from TPOT import switched_data
+
+wthr = pd.read_csv("weather.csv")[
+    ["Outdoor Drybulb Temperature [C]", "Relative Humidity [%]", "Diffuse Solar Radiation [W/m2]",
+     "Direct Solar Radiation [W/m2]"]]
+
+data = pd.concat([wthr, pd.read_csv("Building_1.csv")[["Month", "Hour"]]], axis=1)
+
+(b1, b2, b3, b4, b5) = (pd.read_csv(f"Building_{i}.csv")["Solar Generation [W/kW]"] for i in range(1, 6))
+builds = [b1, b2, b3, b4, b5]
+
+y, x = switched_data(5, builds, data)
+
+training, testing, training_labels, testing_labels = train_test_split(x, y, test_size=.25, random_state=42)
+
+
 
 # NOTE: Make sure that the outcome column is labeled 'target' in the data file
 tpot_data = pd.read_csv('PATH/TO/DATA/FILE', sep='COLUMN_SEPARATOR', dtype=np.float64)
@@ -32,5 +48,5 @@ exported_pipeline = make_pipeline(
 # Fix random state for all the steps in exported pipeline
 set_param_recursive(exported_pipeline.steps, 'random_state', 42)
 
-exported_pipeline.fit(training_features, training_target)
+exported_pipeline.fit(training, training_labels)
 results = exported_pipeline.predict(testing_features)
