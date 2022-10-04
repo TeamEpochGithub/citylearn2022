@@ -35,6 +35,9 @@ def combined_policy(observation, action_space, args):
     electricity_pricing_predicted_12h = observation[26]
     electricity_pricing_predicted_24h = observation[27]
 
+    if month != args["month"]:
+        return np.array([0], dtype=action_space.dtype)
+
     ### PRICE
     pricing_action = 1
     if 0 < electricity_pricing <= 0.21:
