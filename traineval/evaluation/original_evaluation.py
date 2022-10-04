@@ -4,6 +4,7 @@ from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
 import pyspark
+import csv
 
 from tqdm import tqdm
 
@@ -23,6 +24,7 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 class Constants:
     episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
+    lowest_average_cost = 2
 
 
 def action_space_to_dict(aspace):
@@ -119,9 +121,12 @@ def evaluate(args):
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
-    # if average_cost <
+    if average_cost < Constants.lowest_average_cost:
+        Constants.lowest_average_cost = average_cost
+        dict_to_csv([args])
 
     return {'loss': average_cost, 'status': STATUS_OK}
+
 
 def retrieve_search_space():
     search_space = {"price_1": hp.uniform("price_1", -1, 1),
@@ -163,30 +168,41 @@ def retrieve_search_space():
                     }
     return search_space
 
+
+def dict_to_csv(dict_list):
+    observation_values = []
+    for key in dict_list[0].keys():
+        observation_values.append(key)
+
+    with open('optimal_values.csv', 'w') as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=observation_values)
+        writer.writeheader()
+        writer.writerows(dict_list)
+
+    print("WRITTEN TO FILE")
+
+
 if __name__ == '__main__':
-    args = None
-
-
     best_params = fmin(
         fn=evaluate,
         space=retrieve_search_space(),
         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-        max_evals=1000,
+        max_evals=10,
         trials=SparkTrials()
     )
     print(best_params)
 
-
-    month_params = []
-    for month in range(1,13):
-
-        best_params = fmin(
-            fn=evaluate,
-            space=retrieve_search_space(),
-            algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=1000,
-            trials=SparkTrials()
-        )
-        month_params.append()
-
-        print(month)
+    #
+    # month_params = []
+    # for month in range(1,13):
+    #
+    #     best_params = fmin(
+    #         fn=evaluate,
+    #         space=retrieve_search_space(),
+    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #         max_evals=1000,
+    #         trials=SparkTrials()
+    #     )
+    #     month_params.append()
+    #
+    #     print(month)
