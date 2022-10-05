@@ -1,5 +1,6 @@
 import itertools
 
+import pandas as pd
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
@@ -121,6 +122,9 @@ def evaluate():
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
+    return {'loss': average_cost, 'status': STATUS_OK}
 
 if __name__ == '__main__':
     evaluate()
+
+

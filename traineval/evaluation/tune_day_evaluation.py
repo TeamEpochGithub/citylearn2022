@@ -1,8 +1,11 @@
-import csv
-import time
+import itertools
 
+from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
-from hyperopt import fmin, hp, tpe, SparkTrials, STATUS_OK
+import time
+import pyspark
+import csv
+
 from tqdm import tqdm
 
 """
@@ -12,7 +15,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.tuning_wrapper import OrderEnforcingAgent
+from agents.tuning_day_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
@@ -48,16 +51,13 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(args, verbose=False):
-    if verbose:
-        print("Starting local evaluation")
+def evaluate(args):
+    print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent(args)
 
-    # observation_list = []
     obs_dict = env_reset(env)
-    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -65,11 +65,13 @@ def evaluate(args, verbose=False):
     actions = agent.register_reset(obs_dict)
     agent_time_elapsed += time.perf_counter() - step_start
 
+    counter = 1
+    day = 1
+
     episodes_completed = 0
     num_steps = 0
     interrupted = False
     episode_metrics = []
-
     try:
         while True:
 
@@ -79,21 +81,21 @@ def evaluate(args, verbose=False):
 
             observations, _, done, _ = env.step(actions)
 
+            # heck which day it is for day_tuning
+            counter += 1
+            if counter % 24 == 0:
+                day += 1
+
             if done:
                 episodes_completed += 1
-
                 metrics_t = env.evaluate()
-                # metrics_t = evaluate_observation(observation_list)
-
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
                     raise ValueError("Episode metrics are nan, please contant organizers")
                 episode_metrics.append(metrics)
-
-                if verbose:
-                    print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
+                print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
                 obs_dict = env_reset(env)
 
@@ -101,48 +103,41 @@ def evaluate(args, verbose=False):
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
-                # observation_list.append(observations)
-
                 step_start = time.perf_counter()
-                actions = agent.compute_action(observations)
+                actions = agent.compute_action(observations, day)
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
             if num_steps % 1000 == 0:
-                if verbose:
-                    print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
+                print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
                 break
     except KeyboardInterrupt:
-        if verbose:
-            print("========================= Stopping Evaluation =========================")
+        print("========================= Stopping Evaluation =========================")
         interrupted = True
 
     if not interrupted:
-        if verbose:
-            print("=========================Completed=========================")
+        print("=========================Completed=========================")
 
     if len(episode_metrics) > 0:
-        avg_price = np.mean([e['price_cost'] for e in episode_metrics])
-        avg_emission = np.mean([e['emmision_cost'] for e in episode_metrics])
-        avg_grid = np.mean([e['grid_cost'] for e in episode_metrics])
-        avg = np.mean([avg_price, avg_emission, avg_grid])
-        if verbose:
-            print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
-            print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
-            print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
-            print("Average cost", avg)
-            print(f"Total time taken by agent: {agent_time_elapsed}s")
+        print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
+        print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
+        print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
+        average_cost = np.mean([np.mean([e['price_cost'] for e in episode_metrics]),
+                                np.mean([e['emmision_cost'] for e in episode_metrics]),
+                                np.mean([e['grid_cost'] for e in episode_metrics])])
+        print("Average cost", average_cost)
+    print(f"Total time taken by agent: {agent_time_elapsed}s")
 
     # if average_cost < Constants.lowest_average_cost:
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': avg_emission, 'status': STATUS_OK}
+    return {'loss': average_cost, 'status': STATUS_OK}
 
 
-def get_observation_weights_search_space():
+def retrieve_search_space():
     search_space = {"price_1": hp.uniform("price_1", -1, 1),
                     "price_2": hp.uniform("price_2", -1, 1),
                     "price_3": hp.uniform("price_3", -1, 1),
@@ -183,20 +178,12 @@ def get_observation_weights_search_space():
     return search_space
 
 
-def get_specific_action_values():
-    search_space = {}
-    for i in range(1, 25):
-        search_space[f"hour_{i}"] = hp.uniform(f"hour_{i}", -1, 1)
-    return search_space
-
-
-def dict_to_csv(dict_list, name):
+def dict_to_csv(dict_list):
     observation_values = []
-
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open(f'tuned_values/optimal_values_{name}.csv', 'w') as csvfile:
+    with open('tuned_values/optimal_values_day.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
@@ -207,42 +194,27 @@ def dict_to_csv(dict_list, name):
 if __name__ == '__main__':
     # best_params = fmin(
     #     fn=evaluate,
-    #     space=get_observation_weights_search_space(),
+    #     space=retrieve_search_space(),
     #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #     max_evals=8000,
+    #     max_evals=10,
     #     trials=SparkTrials()
     # )
-    # dict_to_csv([best_params], "year")
     # print(best_params)
 
-    search_space = get_specific_action_values()
-    daily_actions = []
-    for day in range(1, 366):
+    search_space = retrieve_search_space()
+    day_params = []
+    for day in range(1, 366):  # 13
         search_space["day"] = day
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=8000,
+            max_evals=50,
             trials=SparkTrials()
         )
         best_params["day"] = day
-        daily_actions.append(best_params)
-    dict_to_csv(daily_actions, "daily_overfit")
-    print(best_params)
+        day_params.append(best_params)
 
-    # search_space = retrieve_search_space()
-    # month_params = []
-    # for month in range(1, 13):  # 13
-    #     search_space["month"] = month
-    #     best_params = fmin(
-    #         fn=evaluate,
-    #         space=search_space,
-    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #         max_evals=3000,
-    #         trials=SparkTrials()
-    #     )
-    #     best_params["month"] = month
-    #     month_params.append(best_params)
+        print(day)
+    dict_to_csv(day_params)
 
-    # dict_to_csv(month_params, "month")
