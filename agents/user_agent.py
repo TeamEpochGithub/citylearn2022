@@ -11,7 +11,7 @@ from agents.month_tuned_agent import MonthTunedAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
-UserAgent = MultiPolicyAgent
+UserAgent = MonthTunedAgent
 # UserAgent = DayTunedAgent
 
 # Changen naar MonthTunedAgent en dan weer submission maken

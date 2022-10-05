@@ -25,7 +25,6 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 class Constants:
     episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
-    lowest_average_cost = 2
 
 
 def action_space_to_dict(aspace):
@@ -121,8 +120,8 @@ def evaluate():
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+    return average_cost
 
-    return {'loss': average_cost, 'status': STATUS_OK}
 
 if __name__ == '__main__':
     evaluate()
