@@ -185,10 +185,11 @@ def retrieve_search_space():
 
 def dict_to_csv(dict_list, name):
     observation_values = []
+
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open(f'tuned_values/optimal_values{name}.csv', 'w') as csvfile:
+    with open(f'tuned_values/optimal_values_{name}.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
@@ -201,11 +202,11 @@ if __name__ == '__main__':
         fn=evaluate,
         space=retrieve_search_space(),
         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-        max_evals=1,
+        max_evals=8000,
         trials=SparkTrials()
     )
+    dict_to_csv([best_params], "year")
     print(best_params)
-    dict_to_csv(best_params, "year")
 
     # search_space = retrieve_search_space()
     # month_params = []
