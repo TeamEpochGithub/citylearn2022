@@ -209,7 +209,7 @@ if __name__ == '__main__':
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=1,
+            max_evals=50,
             trials=SparkTrials()
         )
         best_params["day"] = day

@@ -126,31 +126,16 @@ def evaluate():
 
 if __name__ == '__main__':
     evaluate()
-    # for i in range(20):
-    #
-    #     with open('tuned_values/hourcounter.csv', newline='') as f:
-    #         reader = csv.reader(f)
-    #         row1 = next(reader)
-    #         print(type(int(row1[0])))
-    #
-    #     day = row1[0]
-    #     print(day)
-    #
-    #     new_day = str(int(day) + 1)
-    #     writer = csv.writer(open('tuned_values/hourcounter.csv', 'w'))
-    #     writer.writerows(new_day)
-    #
-    #     print(int(1/24))
 
     # for i in range(20):
-    #     with open('test.txt', 'r') as f:
+    #     with open('hourcounter.txt', 'r') as f:
     #         hour = f.read()
     #
     #         print(hour)
     #
     #     new_hour = int(hour) + 1
     #
-    #     with open('test.txt', 'w') as f:
+    #     with open('hourcounter.txt', 'w') as f:
     #         f.write(str(new_hour))
     #
     #         f.close()

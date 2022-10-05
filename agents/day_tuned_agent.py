@@ -9,8 +9,8 @@ import pandas as pd
 
 def combined_policy(observation, action_space):
 
-    hour_path = osp.join(osp.dirname(value_dir.__file__), "hourcounter.csv")
-    with open('test.txt', 'r') as f:
+    hour_path = osp.join(osp.dirname(value_dir.__file__), "hourcounter.txt")
+    with open(hour_path, 'r') as f:
         hour = f.read()
 
     day = int(int(hour) / 24) + 1
@@ -19,37 +19,10 @@ def combined_policy(observation, action_space):
     if new_hour == 8760:
         new_hour = 0
 
-    with open('test.txt', 'w') as f:
+    with open(hour_path, 'w') as f:
         f.write(str(new_hour))
 
         f.close()
-
-
-    # with open(hour_path, newline='') as f:
-    #     reader = csv.reader(f)
-    #     row1 = next(reader)
-    #
-    # hour = int(row1[0])
-    # print(hour)
-    #
-    # day = int(hour / 24 + 1)
-    # # print(day)
-    # #
-    # new_hour = str(hour + 1)
-    # print(new_hour)
-    # if new_hour == 8760:
-    #     new_hour = 1
-    #
-    # writer = csv.writer(open(hour_path, 'w'))
-    # writer.writerows(new_hour)
-
-
-    # readfile .txt
-    #
-    # if File % 24 == 0:
-    #     day = File / 24
-    #
-    # write file += 1
 
     values_path = osp.join(osp.dirname(value_dir.__file__), "optimal_values_day.csv")
     all_args = list(csv.DictReader(open(values_path), quoting=csv.QUOTE_ALL))
