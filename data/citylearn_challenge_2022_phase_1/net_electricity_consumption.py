@@ -16,6 +16,7 @@ def solar_generation_obs(nominal_power, solar_generation_data):
 def electrical_storage_soc(soc, previous_capacity):
     #soc is battery level in kWh for this time-step
     #previous_capacity is capacity of battery for the previous time-step
+    #electrical_storage_soc is observation of battery level
     return soc/previous_capacity
 
 
@@ -84,21 +85,40 @@ def efficiency(energy_normed):
 
 #Example for second observation, taking action 0.5:
 
-action = 0.5
+action = 0.638
 
-energy_normed = energy_normed(energy=energy(action=action, previous_capacity=6.4))
+previous_capacity = 6.4
+previous_soc = 0
+
+
+# Electrical storage consumption is -previous_soc*efficiency <= energy_normed <= (previous_capacity-previous_soc)/efficiency
+# and if we take |action| <= 5/previous_capacity, energy_normed = action*previous_capacity.
+# We can take -sqrt(0.83)*previous_soc <= action*previous_capacity <= (previous_capacity-previous_soc)/sqrt(0.9) and we are safe
+
+
+# if action >= 0:
+#     action = min(5/previous_capacity, action)
+# else:
+#     action = max(-5/previous_capacity, action)
+
+energy_normed = energy_normed(energy=energy(action=action, previous_capacity=previous_capacity))
 
 efficiency = efficiency(energy_normed=energy_normed)
 
-soc = soc(energy_normed=energy_normed, soc_init=soc_init(previous_soc=0), efficiency=efficiency, previous_capacity=6.4)
+# if energy_normed >= 0:
+#     consumption = min((previous_capacity-previous_soc)/efficiency, energy_normed)
+# else:
+#     consumption = max(-1*previous_soc, energy_normed)
 
-last_energy_balance = last_energy_balance(soc=soc, previous_soc=0, efficiency=efficiency)
+soc = soc(energy_normed=energy_normed, soc_init=soc_init(previous_soc=previous_soc), efficiency=efficiency, previous_capacity=previous_capacity)
 
-capacity = new_capacity(previous_capacity=6.4, last_energy_balance=last_energy_balance)
+last_energy_balance = last_energy_balance(soc=soc, previous_soc=previous_soc, efficiency=efficiency)
 
-battery = electrical_storage_soc(soc=soc, previous_capacity=6.4)
+capacity = new_capacity(previous_capacity=previous_capacity, last_energy_balance=last_energy_balance)
 
-print(battery)
+battery = electrical_storage_soc(soc=soc, previous_capacity=previous_capacity)
+
+print(f"Battery observation: {battery}")
 
 #Correct result should be: 0.47156653825308686
 
@@ -110,8 +130,6 @@ solar_generation_obs = solar_generation_obs(nominal_power=4, solar_generation_da
 non_shiftable_load = 0.8511666666666671
 
 net_electricity_consumption = net_electricity_consumption(non_shiftable_load, last_energy_balance, solar_generation_obs)
-
-print(net_electricity_consumption)
 
 #Correct result: 4.051166666666667
 

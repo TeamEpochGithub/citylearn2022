@@ -7,7 +7,11 @@ from sklearn.pipeline import make_pipeline, make_union
 from sklearn.svm import LinearSVR
 from tpot.builtins import StackingEstimator
 from tpot.export_utils import set_param_recursive
-from TPOT import switched_data
+from solar_generation_pred.TPOT import switched_data
+import os
+
+
+absolute_path = os.path.abspath(os.path.dirname('data.csv'))
 
 wthr = pd.read_csv("weather.csv")[
     ["Outdoor Drybulb Temperature [C]", "Relative Humidity [%]", "Diffuse Solar Radiation [W/m2]",
@@ -49,4 +53,4 @@ exported_pipeline = make_pipeline(
 set_param_recursive(exported_pipeline.steps, 'random_state', 42)
 
 exported_pipeline.fit(training, training_labels)
-results = exported_pipeline.predict(testing_features)
+results = exported_pipeline.predict(testing)
