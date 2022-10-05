@@ -1,5 +1,5 @@
-from agents.tunable_agent import MultiPolicyAgent
 from agents.day_tunable_agent import MultiPolicyDayAgent
+from agents.day_tunable_agent_actions import TunableDayActionsAgent
 from agents.tuning_month_agent import MultiPolicyAgent
 from agents.tuning_year_agent import TuningYearAgent
 
@@ -8,5 +8,6 @@ from agents.tuning_year_agent import TuningYearAgent
 ###################################################################
 
 # TuningAgent = MultiPolicyAgent
-TuningAgent = MultiPolicyDayAgent
+# TuningAgent = MultiPolicyDayAgent
 # TuningAgent = TuningYearAgent
+TuningAgent = TunableDayActionsAgent

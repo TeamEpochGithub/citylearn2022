@@ -7,9 +7,9 @@ import traineval.evaluation.tuned_values as value_dir
 
 
 def combined_policy(observation, action_space):
-    values_path = osp.join(osp.dirname(value_dir.__file__), "optimal_values.csv")
+    values_path = osp.join(osp.dirname(value_dir.__file__), "optimal_values_month.csv")
     all_args = list(csv.DictReader(open(values_path), quoting=csv.QUOTE_ALL))
-    # lst = list(csv.DictReader(open('../traineval/evaluation/tuned_values/optimal_values.csv')));
+    # lst = list(csv.DictReader(open('../traineval/evaluation/tuned_values/optimal_values_month.csv')));
     # args = lst[0]
     month = observation[0]
     args = None

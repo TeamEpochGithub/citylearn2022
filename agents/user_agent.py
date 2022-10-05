@@ -7,7 +7,6 @@ from agents.sac_agent import SAC
 from agents.rlc_agent import RLCAgent
 from agents.spinning_up_agent import BasicPPOAgent
 from agents.month_tuned_agent import MonthTunedAgent
-from agents.tunable_agent import MultiPolicyAgent
 from agents.day_tuned_agent import DayTunedAgent
 from agents.tuning_month_agent import MultiPolicyAgent
 
@@ -20,6 +19,7 @@ from agents.tuning_month_agent import MultiPolicyAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
-# UserAgent = MonthTunedAgent
-UserAgent = DayTunedAgent
+UserAgent = MonthTunedAgent
+# UserAgent = DayTunedAgent
 
+# Changen naar MonthTunedAgent en dan weer submission maken

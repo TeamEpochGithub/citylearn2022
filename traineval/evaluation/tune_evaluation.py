@@ -215,34 +215,18 @@ if __name__ == '__main__':
     # dict_to_csv([best_params], "year")
     # print(best_params)
 
-    search_space = get_specific_action_values()
-    daily_actions = []
-    for day in range(1, 366):
-        search_space["day"] = day
+    search_space = get_observation_weights_search_space()
+    month_params = []
+    for month in range(1, 13):  # 13
+        search_space["month"] = month
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=8000,
+            max_evals=5000,
             trials=SparkTrials()
         )
-        best_params["day"] = day
-        daily_actions.append(best_params)
-    dict_to_csv(daily_actions, "daily_overfit")
-    print(best_params)
+        best_params["month"] = month
+        month_params.append(best_params)
 
-    # search_space = retrieve_search_space()
-    # month_params = []
-    # for month in range(1, 13):  # 13
-    #     search_space["month"] = month
-    #     best_params = fmin(
-    #         fn=evaluate,
-    #         space=search_space,
-    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #         max_evals=3000,
-    #         trials=SparkTrials()
-    #     )
-    #     best_params["month"] = month
-    #     month_params.append(best_params)
-
-    # dict_to_csv(month_params, "month")
+    dict_to_csv(month_params, "month")
