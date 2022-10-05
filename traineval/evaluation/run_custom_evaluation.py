@@ -1,13 +1,15 @@
 import itertools
+import sys
 
-import pandas as pd
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
-import pyspark
+#import pyspark
 import csv
 
 from tqdm import tqdm
+
+from dynamic_programming.custom_evaluation import evaluate_observation
 
 """
 Please do not make changes to this file. 
@@ -70,6 +72,8 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
+
+    observation_list = []
     try:
         while True:
 
@@ -78,14 +82,21 @@ def evaluate():
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
+            observation_list.append(observations)
+
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
+                # print(metrics_t)
+                # metrics_t = evaluate_observation(observation_list)
+                # print(metrics_t)
+                # sys.exit()
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
-                    raise ValueError("Episode metrics are nan, please contant organizers")
+                    raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
                 print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
@@ -95,6 +106,8 @@ def evaluate():
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
@@ -122,9 +135,9 @@ def evaluate():
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
-    return {'loss': average_cost, 'status': STATUS_OK}
+    return evaluate_observation(observation_list)
 
 if __name__ == '__main__':
-    evaluate()
+    print(evaluate())
 
 

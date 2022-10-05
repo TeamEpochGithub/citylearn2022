@@ -25,25 +25,24 @@ class TrainerEvaluator:
 
 if __name__ == "__main__":
 
-    # district_args = ["hour",
-    #                  "month",
-    #                  "carbon_intensity",
-    #                  "electricity_pricing",
-    #                  "outdoor_dry_bulb_temperature_predicted_6h",
-    #                  "outdoor_relative_humidity_predicted_6h"]
-    #
-    # building_args = ["non_shiftable_load",
-    #                  "solar_generation",
-    #                  "electrical_storage_soc",
-    #                  "net_electricity_consumption"]
+    district_args = ["hour",
+                     "month",
+                     "carbon_intensity",
+                     "electricity_pricing",
+                     "outdoor_dry_bulb_temperature_predicted_6h",
+                     "outdoor_relative_humidity_predicted_6h"]
 
-    district_args = ["hour"]
-    building_args = []
+    building_args = ["non_shiftable_load",
+                     "solar_generation",
+                     "electrical_storage_soc",
+                     "net_electricity_consumption"]
 
     model_type = "ppo"
-    number_of_epochs = 200
+    number_of_epochs = 5
     model_seed = 0
-    save_freq = 20
+    save_freq = 1
+    steps = 8760
+    max_ep_len = steps - 1
 
     model_args = [
         [['--env'], str, 'Epoch-Citylearn-v1'],
@@ -52,20 +51,20 @@ if __name__ == "__main__":
         [['--gamma'], float, 0.99],
         [['--seed', '-s'], int, model_seed],
         [['--cpu'], int, 1],
-        [['--steps'], int, 8760 - 1],
+        [['--steps'], int, steps],
         [['--epochs'], int, number_of_epochs],
         [['--exp_name'], str, model_type],
+        [['--max_ep_len'], int, max_ep_len],
         [['--save_freq'], int, save_freq],
-        [['--max_ep_len'], int, 8760]
         ]
 
     environment_arguments = get_environment_arguments(district_args, building_args)
 
     trainer_evaluator = TrainerEvaluator(model_args, environment_arguments)
-    # trainer = trainer_evaluator.setup_trainer()
-    # trainer_evaluator.run_trainer(trainer)
-
+    trainer = trainer_evaluator.setup_trainer()
+    trainer_evaluator.run_trainer(trainer)
+    #
     averaged_score, agent_time_elapsed = trainer_evaluator.run_evaluation(model_type=model_type, model_seed=model_seed,
-                                                                          model_iteration=number_of_epochs,
+                                                                          model_iteration=20,
                                                                           verbose=True)
     print(averaged_score, agent_time_elapsed)
