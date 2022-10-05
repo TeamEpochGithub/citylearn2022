@@ -148,7 +148,7 @@ def combined_policy(observation, action_space, args):
     return action
 
 
-class MultiPolicyAgent:
+class TunableMonthAgent:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23

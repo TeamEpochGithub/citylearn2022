@@ -1,4 +1,4 @@
-from agents.tuning_month_agent import MultiPolicyAgent
+from agents.month_tunable_agent import TunableMonthAgent
 from agents.random_agent import RandomAgent
 from agents.rbc_agent import BasicRBCAgent
 from agents.basic_reward_agent import BasicRewardAgent
@@ -8,7 +8,7 @@ from agents.rlc_agent import RLCAgent
 from agents.spinning_up_agent import BasicPPOAgent
 from agents.month_tuned_agent import MonthTunedAgent
 from agents.day_tuned_agent import DayTunedAgent
-from agents.tuning_month_agent import MultiPolicyAgent
+from agents.month_tunable_agent import TunableMonthAgent
 
 ###################################################################
 #####                Specify your agent here                  #####
