@@ -1,4 +1,5 @@
 import itertools
+import sys
 
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
@@ -86,13 +87,16 @@ def evaluate():
 
             if done:
                 episodes_completed += 1
-                # metrics_t = env.evaluate()
+                metrics_t = env.evaluate()
+                print(metrics_t)
                 metrics_t = evaluate_observation(observation_list)
+                print(metrics_t)
+                sys.exit()
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
                 if np.any(np.isnan(metrics_t)):
-                    raise ValueError("Episode metrics are nan, please contant organizers")
+                    raise ValueError("Episode metrics are nan, please contact organizers")
                 episode_metrics.append(metrics)
                 print(f"Episode complete: {episodes_completed} | Latest episode metrics: {metrics}", )
 
@@ -102,6 +106,8 @@ def evaluate():
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
