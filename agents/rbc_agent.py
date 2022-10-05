@@ -113,6 +113,7 @@ class BasicRBCAgent2:
 
     def __init__(self):
         self.action_space = {}
+
         self.action_list = [-0.1458088606595993, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.04167395830154419,
                             0.09054271131753922, 0.0922057256102562, 0.077418752014637, 0.12712708115577698,
                             0.09861145913600922, 0.1265302151441574, 0.06878437101840973, -0.06157761067152023,
@@ -1656,7 +1657,6 @@ class BasicRBCAgent2:
                             0.021706771105527878, 0.059422917664051056, 0.0, 0.0, 0.0, 0.0, -0.2342679649591446,
                             -0.26691094040870667, -0.18032291531562805, -0.3078348934650421, -0.3455442786216736,
                             -0.2984218895435333, 0]
-
         self.timestep = -1
 
     def set_action_space(self, agent_id, action_space):
@@ -1665,5 +1665,5 @@ class BasicRBCAgent2:
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
         self.timestep += 1
-        collaborative_timestep = self.timestep // 5
+        collaborative_timestep = self.timestep // len(observation)
         return np.array([self.action_list[collaborative_timestep]], dtype=self.action_space[agent_id].dtype)
