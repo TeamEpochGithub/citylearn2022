@@ -139,7 +139,7 @@ def evaluate(args, verbose=False):
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': avg, 'status': STATUS_OK}
+    return {'loss': avg_price, 'status': STATUS_OK}
 
 
 def retrieve_search_space():
@@ -183,12 +183,12 @@ def retrieve_search_space():
     return search_space
 
 
-def dict_to_csv(dict_list):
+def dict_to_csv(dict_list, name):
     observation_values = []
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open('tuned_values/optimal_values.csv', 'w') as csvfile:
+    with open(f'tuned_values/optimal_values{name}.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
@@ -197,27 +197,28 @@ def dict_to_csv(dict_list):
 
 
 if __name__ == '__main__':
-    # best_params = fmin(
-    #     fn=evaluate,
-    #     space=retrieve_search_space(),
-    #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #     max_evals=10,
-    #     trials=SparkTrials()
-    # )
-    # print(best_params)
+    best_params = fmin(
+        fn=evaluate,
+        space=retrieve_search_space(),
+        algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+        max_evals=1,
+        trials=SparkTrials()
+    )
+    print(best_params)
+    dict_to_csv(best_params, "year")
 
-    search_space = retrieve_search_space()
-    month_params = []
-    for month in range(1, 13):  # 13
-        search_space["month"] = month
-        best_params = fmin(
-            fn=evaluate,
-            space=search_space,
-            algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=3000,
-            trials=SparkTrials()
-        )
-        best_params["month"] = month
-        month_params.append(best_params)
+    # search_space = retrieve_search_space()
+    # month_params = []
+    # for month in range(1, 13):  # 13
+    #     search_space["month"] = month
+    #     best_params = fmin(
+    #         fn=evaluate,
+    #         space=search_space,
+    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #         max_evals=3000,
+    #         trials=SparkTrials()
+    #     )
+    #     best_params["month"] = month
+    #     month_params.append(best_params)
 
-    dict_to_csv(month_params)
+    # dict_to_csv(month_params, "month")
