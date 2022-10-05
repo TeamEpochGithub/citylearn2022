@@ -139,10 +139,10 @@ def evaluate(args, verbose=False):
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': avg_price, 'status': STATUS_OK}
+    return {'loss': avg_emission, 'status': STATUS_OK}
 
 
-def retrieve_search_space():
+def get_observation_weights_search_space():
     search_space = {"price_1": hp.uniform("price_1", -1, 1),
                     "price_2": hp.uniform("price_2", -1, 1),
                     "price_3": hp.uniform("price_3", -1, 1),
@@ -183,6 +183,13 @@ def retrieve_search_space():
     return search_space
 
 
+def get_specific_action_values():
+    search_space = {}
+    for i in range(1, 25):
+        search_space[f"hour_{i}"] = hp.uniform(f"hour_{i}", -1, 1)
+    return search_space
+
+
 def dict_to_csv(dict_list, name):
     observation_values = []
 
@@ -198,14 +205,30 @@ def dict_to_csv(dict_list, name):
 
 
 if __name__ == '__main__':
-    best_params = fmin(
-        fn=evaluate,
-        space=retrieve_search_space(),
-        algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-        max_evals=8000,
-        trials=SparkTrials()
-    )
-    dict_to_csv([best_params], "year")
+    # best_params = fmin(
+    #     fn=evaluate,
+    #     space=get_observation_weights_search_space(),
+    #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #     max_evals=8000,
+    #     trials=SparkTrials()
+    # )
+    # dict_to_csv([best_params], "year")
+    # print(best_params)
+
+    search_space = get_specific_action_values()
+    daily_actions = []
+    for day in range(1, 366):
+        search_space["day"] = day
+        best_params = fmin(
+            fn=evaluate,
+            space=search_space,
+            algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+            max_evals=8000,
+            trials=SparkTrials()
+        )
+        best_params["day"] = day
+        daily_actions.append(best_params)
+    dict_to_csv(daily_actions, "daily_overfit")
     print(best_params)
 
     # search_space = retrieve_search_space()

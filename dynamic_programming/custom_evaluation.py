@@ -41,10 +41,14 @@
 #                     : Divide the battery storage value by the non-battery storage value
 #
 # Grid cost is the mean of Load Factor and Ramping
+import sys
+
 import numpy as np
 from dynamic_programming import electrical_calculations
 
 
+# Takes a list of observations as they are given by the CityGymEnv.
+# This list comprises lists that each contain an observation for a single building.
 def evaluate_observation(observation_list):
 
     newlist = [[], [], [], [], []]
@@ -52,11 +56,13 @@ def evaluate_observation(observation_list):
         for ind, building in enumerate(observation):
             newlist[ind].append(building)
 
-    scores = []
+
+    values = []
     for building_obs in newlist:
         observation_list = np.asarray(building_obs)
 
         net_electricity_consumption = observation_list[:, 23]
+
         non_shiftable_load = observation_list[:, 20]
         electricity_pricing = observation_list[:, 24]
         carbon_intensity = observation_list[:, 19]
@@ -64,13 +70,12 @@ def evaluate_observation(observation_list):
 
         net_electricity_consumption_without_storage = non_shiftable_load - solar_generation
 
-        scores.append(np.asarray(
-            evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing,
-                     carbon_intensity)))
+        values.append([net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing, carbon_intensity])
 
-    scores = np.asarray(scores)
-    return np.mean(scores[:, 0]), np.mean(scores[:, 1]), np.mean(scores[:, 2])
+    values = np.asarray(values)
+    values = sum([values[0, :], values[1, :], values[2, :], values[3, :], values[4, :]])
 
+    return evaluate(values[0], values[1], values[2], values[3])
 
 def evaluate(net_electricity_consumption, net_electricity_consumption_without_storage, electricity_pricing,
              carbon_intensity):
@@ -82,6 +87,7 @@ def evaluate(net_electricity_consumption, net_electricity_consumption_without_st
     net_electricity_consumption_price = net_electricity_consumption * electricity_pricing
     net_electricity_consumption_price_without_storage = net_electricity_consumption_without_storage * electricity_pricing
 
+    net_electricity_consumption_emission = np.clip(net_electricity_consumption * carbon_intensity, a_min=0, a_max=None)
     net_electricity_consumption_emission = net_electricity_consumption * carbon_intensity
     net_electricity_consumption_emission_without_storage = net_electricity_consumption_without_storage * carbon_intensity
 
