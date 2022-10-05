@@ -88,10 +88,10 @@ def evaluate():
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                print(metrics_t)
-                metrics_t = evaluate_observation(observation_list)
-                print(metrics_t)
-                sys.exit()
+                # print(metrics_t)
+                # metrics_t = evaluate_observation(observation_list)
+                # print(metrics_t)
+                # sys.exit()
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
