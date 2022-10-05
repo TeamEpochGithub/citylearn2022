@@ -17,7 +17,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.original_wrapper import OrderEnforcingAgent
+from agents.orderenforcingwrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
