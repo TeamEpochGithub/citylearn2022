@@ -133,3 +133,33 @@ net_electricity_consumption = net_electricity_consumption(non_shiftable_load, la
 
 #Correct result: 4.051166666666667
 
+
+
+
+def ranging(number, vmax, vmin):
+    return max(min(vmax, number), vmin)
+
+positive = 1 if action >= 0 else -1
+
+action = ranging(action, 5/previous_capacity, -5/previous_capacity)
+energy = action*previous_capacity
+
+x = np.abs(action*previous_capacity/5)
+
+if 0 <= np.abs(action) <= 1.5/previous_capacity:
+    efficiency = np.sqrt(0.83)
+elif 1.5/previous_capacity < np.abs(action) < 3.5/previous_capacity:
+    efficiency = np.sqrt(0.7775 + 0.175*x)
+elif 3.5/previous_capacity <= np.abs(action) <= 4/previous_capacity: #Optimal efficiency
+    efficiency = np.sqrt(0.9)
+elif 4/previous_capacity < np.abs(action) <= 5/previous_capacity:
+    efficiency = np.sqrt(1.1-0.25*x)
+
+-previous_soc*efficiency/previous_capacity <= action <= (previous_capacity-previous_soc)/(efficiency*previous_capacity)
+
+energy = ranging(energy, (previous_capacity-previous_soc)/efficiency, -1*previous_soc/efficiency)
+
+consumption = energy + non_shiftable_load - solar_generation_obs
+
+
+

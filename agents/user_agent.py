@@ -1,5 +1,5 @@
 from agents.random_agent import RandomAgent
-from agents.rbc_agent import BasicRBCAgent
+from agents.rbc_agent import BasicRBCAgent, BasicRBCAgent2
 from agents.basic_reward_agent import BasicRewardAgent
 from agents.weather_agent import BasicWeatherAgent
 from agents.sac_agent import SAC
@@ -17,4 +17,4 @@ from agents.spinning_up_agent import BasicPPOAgent
 # UserAgent = BasicWeatherAgent
 from agents.zero_grid_agent import ZeroGridAgent
 
-UserAgent = ZeroGridAgent
+UserAgent = BasicRBCAgent2
