@@ -55,7 +55,9 @@ def evaluate(args, verbose=False):
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent(args)
 
+    # observation_list = []
     obs_dict = env_reset(env)
+    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -67,6 +69,7 @@ def evaluate(args, verbose=False):
     num_steps = 0
     interrupted = False
     episode_metrics = []
+
     try:
         while True:
 
@@ -75,9 +78,13 @@ def evaluate(args, verbose=False):
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
             if done:
                 episodes_completed += 1
+
                 metrics_t = env.evaluate()
+                # metrics_t = evaluate_observation(observation_list)
+
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -94,6 +101,8 @@ def evaluate(args, verbose=False):
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+                # observation_list.append(observations)
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
@@ -123,8 +132,8 @@ def evaluate(args, verbose=False):
             print("Average Price Cost:", np.mean([e['price_cost'] for e in episode_metrics]))
             print("Average Emmision Cost:", np.mean([e['emmision_cost'] for e in episode_metrics]))
             print("Average Grid Cost:", np.mean([e['grid_cost'] for e in episode_metrics]))
-            print("Average cost", avg)
             print(f"Total time taken by agent: {agent_time_elapsed}s")
+            print("Average cost", avg)
 
     # if average_cost < Constants.lowest_average_cost:
     #     Constants.lowest_average_cost = average_cost
@@ -199,17 +208,16 @@ if __name__ == '__main__':
 
     search_space = retrieve_search_space()
     month_params = []
-    for month in tqdm(range(1, 13)):  # 13
+    for month in range(1, 13):  # 13
         search_space["month"] = month
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=5,
+            max_evals=3000,
             trials=SparkTrials()
         )
         best_params["month"] = month
         month_params.append(best_params)
 
-        print(month)
     dict_to_csv(month_params)

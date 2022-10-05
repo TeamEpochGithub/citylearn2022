@@ -59,7 +59,9 @@ def evaluate():
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent()
 
+    # observation_list = []
     obs_dict = env_reset(env)
+    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -72,7 +74,6 @@ def evaluate():
     interrupted = False
     episode_metrics = []
 
-    observation_list = []
     try:
         while True:
 
@@ -82,12 +83,14 @@ def evaluate():
 
             observations, _, done, _ = env.step(actions)
 
-            observation_list.append(observations)
-
             if done:
                 episodes_completed += 1
-                # metrics_t = env.evaluate()
-                metrics_t = evaluate_observation(observation_list)
+
+                # TODO: explain / fix difference between env.evaluate and evaluate_observation
+                metrics_t = env.evaluate()
+
+                # metrics_t = evaluate_observation(observation_list)
+
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -102,6 +105,8 @@ def evaluate():
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+                # observation_list.append(observations)
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
@@ -129,9 +134,19 @@ def evaluate():
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
 
-    return evaluate_observation(observation_list)
+    return average_cost
 
 if __name__ == '__main__':
-    print(evaluate())
+    import time
+
+    times = []
+    for i in range(5):
+        start = time.time()
+        evaluate()
+        end = time.time()
+        times.append(end-start)
+
+    print(np.mean(times))
+
 
 
