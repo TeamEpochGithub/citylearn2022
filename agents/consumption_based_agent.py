@@ -14,7 +14,7 @@ def combined_policy(observation, action_space, consumptions, agent_id, timestep,
     if timestep != len(consumptions) - 1:
         next_consumption = consumptions[timestep + 1]
     else:
-        next_consumption = -10
+        next_consumption = 10
 
     building_charge = next_consumption / num_buildings / max_charge
     action = -building_charge
@@ -38,14 +38,16 @@ class ConsumptionBasedAgent:
         with open(consumptions_path, 'rb') as file:
             self.consumptions = pickle.load(file)
 
-        self.max_charge = 0
-        schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
-        with open(schema_path) as json_file:
-            schema_data = json.load(json_file)
-            for k, v in schema_data["buildings"].items():
-                charge_val = v["electrical_storage"]["attributes"]["capacity"]
-                if charge_val > self.max_charge:
-                    self.max_charge = charge_val
+        self.max_charge = 6.4
+        # According to the forms, the unknown buildings have the same battery capacity
+        # self.max_charge = 0
+        # schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
+        # with open(schema_path) as json_file:
+        #     schema_data = json.load(json_file)
+        #     for k, v in schema_data["buildings"].items():
+        #         charge_val = v["electrical_storage"]["attributes"]["capacity"]
+        #         if charge_val > self.max_charge:
+        #             self.max_charge = charge_val
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
