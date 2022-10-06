@@ -1,6 +1,7 @@
 import itertools
 import sys
 
+import pandas as pd
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
@@ -73,7 +74,7 @@ def evaluate():
     interrupted = False
     episode_metrics = []
 
-    observation_list = []
+    observation_list = [[], [], [], [], []]
     try:
         while True:
 
@@ -83,15 +84,13 @@ def evaluate():
 
             observations, _, done, _ = env.step(actions)
 
-            observation_list.append(observations)
+            for index, b_obs in enumerate(observations):
+
+                observation_list[index].append(b_obs)
 
             if done:
                 episodes_completed += 1
                 metrics_t = env.evaluate()
-                # print(metrics_t)
-                # metrics_t = evaluate_observation(observation_list)
-                # print(metrics_t)
-                # sys.exit()
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -134,6 +133,63 @@ def evaluate():
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+
+    test = ["month", # 0
+            "day_type", # 1
+            "hour", # 2
+            "outdoor_dry_bulb", # 3
+            "outdoor_dry_bulb_temperature_predicted_6h", # 4
+            "outdoor_dry_bulb_temperature_predicted_12h", # 5
+            "outdoor_dry_bulb_temperature_predicted_24h", # 6
+            "outdoor_relative_humidity", # 7
+            "outdoor_relative_humidity_predicted_6h", # 8
+            "outdoor_relative_humidity_predicted_12h", # 9
+            "outdoor_relative_humidity_predicted_24h", # 10
+            "diffuse_solar_irradiance", # 11
+            "diffuse_solar_irradiance_predicted_6h", # 12
+            "diffuse_solar_irradiance_predicted_12h", # 13
+            "diffuse_solar_irradiance_predicted_24h", # 14
+            "direct_solar_irradiance", # 15
+            "direct_solar_irradiance_predicted_6h", # 16
+            "direct_solar_irradiance_predicted_12h", # 17
+            "direct_solar_irradiance_predicted_24h", # 18
+            "carbon_intensity", # 19
+            "non_shiftable_load", # 20
+            "solar_generation", # 21
+            "electrical_storage_soc", # 22
+            "net_electricity_consumption", # 23
+            "electricity_pricing", # 24
+            "electricity_pricing_predicted_6h", # 25
+            "electricity_pricing_predicted_12h", # 26
+            "electricity_pricing_predicted_24h"] # 27
+
+    pd.set_option('display.max_columns', None)
+
+    df_list_solar = []
+    df_list_load = []
+
+    for i in range(5):
+        observation_df = pd.DataFrame(data=np.asarray(observation_list[i]), columns=test)
+        observation_df = observation_df.drop(["net_electricity_consumption"], axis=1)
+        observation_df = observation_df.drop(["electrical_storage_soc"], axis=1)
+        observation_df["non_shiftable_load_future"] = observation_df["non_shiftable_load"].shift(-1)
+        observation_df["solar_generation_future"] = observation_df["solar_generation"].shift(-1)
+        observation_df.drop(observation_df.tail(1).index, inplace=True)
+
+        df_list_solar.append(observation_df.drop(["non_shiftable_load", "non_shiftable_load_future"], axis=1))
+        df_list_load.append(observation_df.drop(["solar_generation", "solar_generation_future"], axis=1))
+
+
+    solar = pd.concat(df_list_solar)
+    solar.to_csv(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv", index=False)
+
+    load = pd.concat(df_list_load)
+    load.to_csv(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\load_data.csv", index=False)
+
+
+    sys.exit()
+
+    observation_list = np.asarray(observation_list)
 
     return evaluate_observation(observation_list)
 
