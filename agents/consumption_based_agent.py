@@ -60,4 +60,4 @@ class ConsumptionBasedAgent:
         """Get observation return action"""
         self.timestep += 1
         return combined_policy(observation, self.action_space[agent_id], self.consumptions, agent_id,
-                               self.timestep // 5, self.max_charge)
+                               self.timestep // len(observation), self.max_charge)
