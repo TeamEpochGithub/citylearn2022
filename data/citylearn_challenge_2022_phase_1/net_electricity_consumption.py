@@ -7,10 +7,10 @@ def net_electricity_consumption(non_shiftable_load, electrical_storage_electrici
     return non_shiftable_load + electrical_storage_electricity_consumption - solar_generation_obs
 
 
-def solar_generation_obs(nominal_power, solar_generation_data):
-    #nominal_power[i] = list(env.get_building_information().values())[i]["solar_power"], for building i → (4, 4, 4, 5, 4)
+def solar_generation_obs(solar_nominal_power, solar_generation_data):
+    #solar_nominal_power[i] = list(env.get_building_information().values())[i]["solar_power"], for building i → (4, 4, 4, 5, 4)
     #solar_generation_data from csv data
-    return nominal_power*solar_generation_data/1000
+    return solar_nominal_power*solar_generation_data/1000
 
 
 def electrical_storage_soc(soc, previous_capacity):
@@ -66,8 +66,8 @@ def last_energy_balance(soc, previous_soc, efficiency):
     return energy_balance
 
 
-def efficiency(energy_normed):
-    nominal_power = 5.0
+def efficiency(energy_normed, nominal_power):
+    #nominal_power[i] = env.buildings[i].electrical_storage.nominal_power, 5.0 for all buildings
     power_efficiency_curve = [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
     power_efficiency_curve = np.array(power_efficiency_curve).T
     efficiency_scaling = 0.5
@@ -89,10 +89,11 @@ action = 0.638
 
 previous_capacity = 6.4
 previous_soc = 0
+nominal_power = 5.0
 
 
 # Electrical storage consumption is -previous_soc*efficiency <= energy_normed <= (previous_capacity-previous_soc)/efficiency
-# and if we take |action| <= 5/previous_capacity, energy_normed = action*previous_capacity.
+# and if we take |action| <= nominal_power/previous_capacity, energy_normed = action*previous_capacity.
 # We can take -sqrt(0.83)*previous_soc <= action*previous_capacity <= (previous_capacity-previous_soc)/sqrt(0.9) and we are safe
 
 
@@ -103,7 +104,7 @@ previous_soc = 0
 
 energy_normed = energy_normed(energy=energy(action=action, previous_capacity=previous_capacity))
 
-efficiency = efficiency(energy_normed=energy_normed)
+efficiency = efficiency(energy_normed=energy_normed, nominal_power=nominal_power)
 
 # if energy_normed >= 0:
 #     consumption = min((previous_capacity-previous_soc)/efficiency, energy_normed)
@@ -125,9 +126,12 @@ print(f"Battery observation: {battery}")
 
 #For building 1:
 
-solar_generation_obs = solar_generation_obs(nominal_power=4, solar_generation_data=0)
-
+solar_nominal_power = 4
+solar_generation_data = 0
 non_shiftable_load = 0.8511666666666671
+
+
+solar_generation_obs = solar_generation_obs(solar_nominal_power=solar_nominal_power, solar_generation_data=solar_generation_data)
 
 net_electricity_consumption = net_electricity_consumption(non_shiftable_load, last_energy_balance, solar_generation_obs)
 
@@ -141,18 +145,18 @@ def ranging(number, vmax, vmin):
 
 positive = 1 if action >= 0 else -1
 
-action = ranging(action, 5/previous_capacity, -5/previous_capacity)
+action = ranging(action, nominal_power/previous_capacity, -nominal_power/previous_capacity)
 energy = action*previous_capacity
 
-x = np.abs(action*previous_capacity/5)
+x = np.abs(action*previous_capacity/nominal_power)
 
-if 0 <= np.abs(action) <= 1.5/previous_capacity:
+if 0 <= np.abs(action) <= 0.3*nominal_power/previous_capacity:
     efficiency = np.sqrt(0.83)
-elif 1.5/previous_capacity < np.abs(action) < 3.5/previous_capacity:
+elif 0.3*nominal_power/previous_capacity < np.abs(action) < 0.7*nominal_power/previous_capacity:
     efficiency = np.sqrt(0.7775 + 0.175*x)
-elif 3.5/previous_capacity <= np.abs(action) <= 4/previous_capacity: #Optimal efficiency
+elif 0.7*nominal_power/previous_capacity <= np.abs(action) <= 0.8*nominal_power/previous_capacity: #Optimal efficiency
     efficiency = np.sqrt(0.9)
-elif 4/previous_capacity < np.abs(action) <= 5/previous_capacity:
+elif 0.8*nominal_power/previous_capacity < np.abs(action) <= nominal_power/previous_capacity:
     efficiency = np.sqrt(1.1-0.25*x)
 
 -previous_soc*efficiency/previous_capacity <= action <= (previous_capacity-previous_soc)/(efficiency*previous_capacity)
