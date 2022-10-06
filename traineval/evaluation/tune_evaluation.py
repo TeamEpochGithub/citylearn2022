@@ -183,6 +183,25 @@ def get_observation_weights_search_space():
     return search_space
 
 
+def get_observation_weights_search_space_non_ranges():
+    search_space = {"price_1": hp.uniform("price_1", -1, 1),
+                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
+                    "carbon_1": hp.uniform("carbon_1", -1, 1),
+                    "solar_1": hp.uniform("solar_1", -1, 1),
+                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
+                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
+                    "hour_1": hp.uniform("hour_1", -1, 1),
+                    "hour_2": hp.uniform("hour_2", -1, 1),
+                    "hour_3": hp.uniform("hour_3", -1, 1),
+                    "storage_1": hp.uniform("storage_1", -1, 1),
+                    "consumption_1": hp.uniform("consumption_1", -1, 1),
+                    "load_1": hp.uniform("load_1", -1, 1),
+                    "temp_1": hp.uniform("temp_1", -1, 1),
+                    "humidity_1": hp.uniform("humidity_1", -1, 1),
+                    }
+    return search_space
+
+
 def get_specific_action_values():
     search_space = {}
     for i in range(1, 25):
@@ -206,7 +225,7 @@ def dict_to_csv(dict_list, name):
 
 if __name__ == '__main__':
     # best_params = fmin(
-    #     fn=evaluate,
+    #     fn=evaluate,`
     #     space=get_observation_weights_search_space(),
     #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
     #     max_evals=8000,

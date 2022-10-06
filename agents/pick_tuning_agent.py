@@ -10,4 +10,4 @@ from agents.tuning_year_agent import TuningYearAgent
 # TuningAgent = MultiPolicyAgent
 # TuningAgent = MultiPolicyDayAgent
 # TuningAgent = TuningYearAgent
-TuningAgent = TunableDayActionsAgent
+TuningAgent = TunableMonthAgent

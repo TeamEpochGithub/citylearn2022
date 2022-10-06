@@ -73,6 +73,7 @@ def combined_policy(observation, action_space, args, day):
         hour_action *= args["hour_2"]
     else:
         hour_action *= args["hour_3"]
+
     storage_action = args["storage_1"] * electrical_storage_soc
     consumption_action = args["consumption_1"] * net_electricity_consumption
     load_action = args["load_1"] * non_shiftable_load

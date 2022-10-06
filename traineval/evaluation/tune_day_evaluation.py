@@ -8,6 +8,9 @@ import csv
 
 from tqdm import tqdm
 
+from traineval.evaluation.tune_evaluation import get_specific_action_values, get_observation_weights_search_space, \
+    get_observation_weights_search_space_non_ranges
+
 """
 Please do not make changes to this file. 
 This is only a reference script provided to allow you 
@@ -146,54 +149,6 @@ def evaluate(args, verbose=False):
     return {'loss': avg, 'status': STATUS_OK}
 
 
-def retrieve_search_space():
-    search_space = {"price_1": hp.uniform("price_1", -1, 1),
-                    "price_2": hp.uniform("price_2", -1, 1),
-                    "price_3": hp.uniform("price_3", -1, 1),
-                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
-                    "price_pred_2": hp.uniform("price_pred_2", -1, 1),
-                    "price_pred_3": hp.uniform("price_pred_3", -1, 1),
-                    "carbon_1": hp.uniform("carbon_1", -1, 1),
-                    "carbon_2": hp.uniform("carbon_2", -1, 1),
-                    "carbon_3": hp.uniform("carbon_3", -1, 1),
-                    "solar_1": hp.uniform("solar_1", -1, 1),
-                    "solar_2": hp.uniform("solar_2", -1, 1),
-                    "solar_3": hp.uniform("solar_3", -1, 1),
-                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
-                    "solar_diffused_2": hp.uniform("solar_diffused_2", -1, 1),
-                    "solar_diffused_3": hp.uniform("solar_diffused_3", -1, 1),
-                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
-                    "solar_direct_2": hp.uniform("solar_direct_2", -1, 1),
-                    "solar_direct_3": hp.uniform("solar_direct_3", -1, 1),
-                    "hour_1": hp.uniform("hour_1", -1, 1),
-                    "hour_2": hp.uniform("hour_2", -1, 1),
-                    "hour_3": hp.uniform("hour_3", -1, 1),
-                    "storage_1": hp.uniform("storage_1", -1, 1),
-                    "storage_2": hp.uniform("storage_2", -1, 1),
-                    "storage_3": hp.uniform("storage_3", -1, 1),
-                    "consumption_1": hp.uniform("consumption_1", -1, 1),
-                    "consumption_2": hp.uniform("consumption_2", -1, 1),
-                    "consumption_3": hp.uniform("consumption_3", -1, 1),
-                    "load_1": hp.uniform("load_1", -1, 1),
-                    "load_2": hp.uniform("load_2", -1, 1),
-                    "load_3": hp.uniform("load_3", -1, 1),
-                    "temp_1": hp.uniform("temp_1", -1, 1),
-                    "temp_2": hp.uniform("temp_2", -1, 1),
-                    "temp_3": hp.uniform("temp_3", -1, 1),
-                    "humidity_1": hp.uniform("humidity_1", -1, 1),
-                    "humidity_2": hp.uniform("humidity_2", -1, 1),
-                    "humidity_3": hp.uniform("humidity_3", -1, 1),
-                    }
-    return search_space
-
-
-def get_specific_action_values():
-    search_space = {}
-    for i in range(1, 25):
-        search_space[f"hour_{i}"] = hp.uniform(f"hour_{i}", -1, 1)
-    return search_space
-
-
 def dict_to_csv(dict_list, name):
     observation_values = []
 
@@ -218,23 +173,43 @@ if __name__ == '__main__':
     # )
     # print(best_params)
 
-    search_space = get_specific_action_values()
-    daily_actions = []
-    for day in range(1, 366):
+    ## DAILY WEIGHTED OBSERVATIONS NON-RANGES
+    search_space = get_observation_weights_search_space_non_ranges()
+    day_params = []
+    for day in range(1, 366):  # 13
         search_space["day"] = day
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=12,
+            max_evals=50,
             trials=SparkTrials()
         )
         best_params["day"] = day
-        daily_actions.append(best_params)
-    dict_to_csv(daily_actions, "daily_overfit")
-    print(daily_actions)
+        day_params.append(best_params)
 
-    # search_space = retrieve_search_space()
+        print(day)
+    dict_to_csv(day_params, "day")
+
+    ### DAILY WEIGHTED OBSERVATIONS ACTIONS
+    # search_space = get_specific_action_values()
+    # daily_actions = []
+    # for day in range(1, 366):
+    #     search_space["day"] = day
+    #     best_params = fmin(
+    #         fn=evaluate,
+    #         space=search_space,
+    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #         max_evals=12,
+    #         trials=SparkTrials()
+    #     )
+    #     best_params["day"] = day
+    #     daily_actions.append(best_params)
+    # dict_to_csv(daily_actions, "daily_overfit")
+    # print(daily_actions)
+
+    ### DAILY WEIGHTED OBSERVATIONS RANGES
+    # search_space = get_observation_weights_search_space()
     # day_params = []
     # for day in range(1, 366):  # 13
     #     search_space["day"] = day
@@ -250,4 +225,3 @@ if __name__ == '__main__':
     #
     #     print(day)
     # dict_to_csv(day_params, "day")
-
