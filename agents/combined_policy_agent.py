@@ -150,7 +150,7 @@ def combine_policies(observation, action_space):
     return action
 
 
-class ZeroGridAgent:
+class MultiPolicyAgent:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23

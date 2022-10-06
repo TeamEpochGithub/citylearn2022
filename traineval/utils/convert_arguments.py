@@ -14,35 +14,45 @@ def environment_convert_scalars(argument_list):
     return np.array(max_scalars)[argument_list]
 
 
+def get_max_scalars():
+    return [12, 7, 24, 32.2, 32.2, 32.2, 32.2, 100, 100, 100, 100, 1017, 1017, 1017, 1017, 953, 953, 953, 953, 0.2818,
+            8, 4, 1, 12, 0.54, 0.54, 0.54, 0.54]
+
+
+def get_min_scalars():
+    return [1, 1, 1, 5.6, 5.6, 5.6, 5.6, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0.0703, 0, 0, 0, -8.2, 0.27,
+            0.27, 0.27, 0.27]
+
+
 def environment_convert_argument(argument_list):
-    argument_string_list = ["month",
-                            "day_type",
-                            "hour",
-                            "outdoor_dry_bulb",
-                            "outdoor_dry_bulb_temperature_predicted_6h",
-                            "outdoor_dry_bulb_temperature_predicted_12h",
-                            "outdoor_dry_bulb_temperature_predicted_24h",
-                            "outdoor_relative_humidity",
-                            "outdoor_relative_humidity_predicted_6h",
-                            "outdoor_relative_humidity_predicted_12h",
-                            "outdoor_relative_humidity_predicted_24h",
-                            "diffuse_solar_irradiance",
-                            "diffuse_solar_irradiance_predicted_6h",
-                            "diffuse_solar_irradiance_predicted_12h",
-                            "diffuse_solar_irradiance_predicted_24h",
-                            "direct_solar_irradiance",
-                            "direct_solar_irradiance_predicted_6h",
-                            "direct_solar_irradiance_predicted_12h",
-                            "direct_solar_irradiance_predicted_24h",
-                            "carbon_intensity",
-                            "non_shiftable_load",
-                            "solar_generation",
-                            "electrical_storage_soc",
-                            "net_electricity_consumption",
-                            "electricity_pricing",
-                            "electricity_pricing_predicted_6h",
-                            "electricity_pricing_predicted_12h",
-                            "electricity_pricing_predicted_24h"]
+    argument_string_list = ["month",  # 0
+                            "day_type",  # 1
+                            "hour",  # 2
+                            "outdoor_dry_bulb",  # 3
+                            "outdoor_dry_bulb_temperature_predicted_6h",  # 4
+                            "outdoor_dry_bulb_temperature_predicted_12h",  # 5
+                            "outdoor_dry_bulb_temperature_predicted_24h",  # 6
+                            "outdoor_relative_humidity",  # 7
+                            "outdoor_relative_humidity_predicted_6h",  # 8
+                            "outdoor_relative_humidity_predicted_12h",  # 9
+                            "outdoor_relative_humidity_predicted_24h",  # 10
+                            "diffuse_solar_irradiance",  # 11
+                            "diffuse_solar_irradiance_predicted_6h",  # 12
+                            "diffuse_solar_irradiance_predicted_12h",  # 13
+                            "diffuse_solar_irradiance_predicted_24h",  # 14
+                            "direct_solar_irradiance",  # 15
+                            "direct_solar_irradiance_predicted_6h",  # 16
+                            "direct_solar_irradiance_predicted_12h",  # 17
+                            "direct_solar_irradiance_predicted_24h",  # 18
+                            "carbon_intensity",  # 19
+                            "non_shiftable_load",  # 20
+                            "solar_generation",  # 21
+                            "electrical_storage_soc",  # 22
+                            "net_electricity_consumption",  # 23
+                            "electricity_pricing",  # 24
+                            "electricity_pricing_predicted_6h",  # 25
+                            "electricity_pricing_predicted_12h",  # 26
+                            "electricity_pricing_predicted_24h"]  # 27
 
     toggle_int_to_string = False
     if len(argument_list) == 0:

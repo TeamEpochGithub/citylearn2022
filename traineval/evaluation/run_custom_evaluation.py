@@ -1,13 +1,14 @@
 import itertools
 
-import pandas as pd
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
-import pyspark
+#import pyspark
 import csv
 
 from tqdm import tqdm
+
+from dynamic_programming.custom_evaluation import evaluate_observation
 
 """
 Please do not make changes to this file. 
@@ -25,6 +26,7 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 class Constants:
     episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
+    lowest_average_cost = 2
 
 
 def action_space_to_dict(aspace):
@@ -57,7 +59,9 @@ def evaluate():
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent()
 
+    # observation_list = []
     obs_dict = env_reset(env)
+    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -69,6 +73,7 @@ def evaluate():
     num_steps = 0
     interrupted = False
     episode_metrics = []
+
     try:
         while True:
 
@@ -77,9 +82,15 @@ def evaluate():
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
             if done:
                 episodes_completed += 1
+
+                # TODO: explain / fix difference between env.evaluate and evaluate_observation
                 metrics_t = env.evaluate()
+
+                # metrics_t = evaluate_observation(observation_list)
+
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -94,6 +105,8 @@ def evaluate():
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+                # observation_list.append(observations)
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
@@ -120,10 +133,20 @@ def evaluate():
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+
     return average_cost
 
-
 if __name__ == '__main__':
-    evaluate()
+    import time
+
+    times = []
+    for i in range(5):
+        start = time.time()
+        evaluate()
+        end = time.time()
+        times.append(end-start)
+
+    print(np.mean(times))
+
 
 

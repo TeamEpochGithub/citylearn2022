@@ -1,10 +1,7 @@
-from agents.random_agent import RandomAgent
-from agents.rbc_agent import BasicRBCAgent, BasicRBCAgent2
-from agents.basic_reward_agent import BasicRewardAgent
-from agents.weather_agent import BasicWeatherAgent
-from agents.sac_agent import SAC
-from agents.rlc_agent import RLCAgent
-from agents.spinning_up_agent import BasicPPOAgent
+from agents.combined_policy_agent import MultiPolicyAgent
+from agents.consumption_based_agent import ConsumptionBasedAgent
+from agents.month_tuned_agent import MonthTunedAgent
+
 
 ###################################################################
 #####                Specify your agent here                  #####
@@ -15,6 +12,7 @@ from agents.spinning_up_agent import BasicPPOAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
-from agents.zero_grid_agent import ZeroGridAgent
+UserAgent = ConsumptionBasedAgent
+# UserAgent = DayTunedAgent
 
-UserAgent = BasicRBCAgent2
+# Changen naar MonthTunedAgent en dan weer submission maken

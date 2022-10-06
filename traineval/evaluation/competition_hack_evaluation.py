@@ -8,6 +8,7 @@ import sys
 import time
 import json
 import itertools
+from gymenv_stablebaseline.dataloader import DataLoader
 
 # import stable_baselines3
 from stable_baselines3 import PPO, A2C, DDPG, TD3
@@ -69,78 +70,57 @@ len_tot_index = len(index_commun) + len(index_particular) * 5
 
 ## env wrapper for stable baselines
 class EnvCityGym(gym.Env):
-    """
-    Env wrapper coming from the gym library.
-    """
+    metadata = {'render.modes': ['human']}
 
-    def __init__(self, env):
-        self.citylearnenv = None
-        self.env = env
+    def __init__(self):
+        super(EnvCityGym, self).__init__()
+        self.hour = -1.0
+        dl = DataLoader()
+        self.costs = dl.get_cost_list()
+        # self.usage = dl.get_usage_list(0)
+        self.battery = 0.0
 
-        # get the number of buildings
-        self.num_buildings = len(env.action_space)
+        self.action_space = gym.spaces.Box(np.array([-1]), np.array([+1]), shape=(1,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(np.array([-1.0, 0.0, 0.0]), np.array([8760.0, 1.0, 1.0]),
+                                                shape=(3,), dtype=np.float32)
 
-        # define action and observation space
-        self.action_space = gym.spaces.Box(low=np.array([-1] * self.num_buildings),
-                                           high=np.array([1] * self.num_buildings), dtype=np.float32)
+    def render(self, mode="human"):
+        return None
 
-        # define the observation space
-        self.observation_space = gym.spaces.Box(low=np.array([0] * len_tot_index), high=np.array([1] * len_tot_index),
-                                                dtype=np.float32)
+    def step(self, action: np.ndarray):
+        self.hour += 1.0
+        observation = np.array([self.hour, self.costs[int(self.hour)], self.battery])
 
-        # TO THINK : normalize the observation space
+        # Constraint 1: Discharge can not be higher than current charge
+        if -action[0] > self.battery:
+            temp_action = -max(self.battery, -action[0])
+            print(temp_action)
+        # Constraint 2: You can not charge the battery more than full capacity minus current capacity
+        elif action[0] > (1.0 - self.battery):
+            temp_action = 1.0 - self.battery
 
-        self.counter = 0
+        # Action matches constraints
+        else:
+            temp_action = action[0]
 
+        # Finally, reward is action times current costs
+        reward = -(self.costs[int(self.hour)] + (temp_action * self.costs[int(self.hour)]))
+        self.battery += temp_action
+
+        # input(f"Action: {temp_action}, cost: {self.costs[int(self.hour)]}, reward: {reward}, battery: {self.battery}")
+
+        done = int(self.hour) == (365 * 24) - 2
+        info = {}
+
+        return np.array(observation, dtype=np.float32), float(reward), done, info
 
     def reset(self):
-        obs_dict = env_reset(self.env)
-        obs = self.env.reset()
+        self.hour = -1.0
+        return np.array([self.hour, 0.0, 0.0], dtype=np.float32)
 
-        observation = self.get_observation(obs)
+    def close(self):
+        pass
 
-        return observation
-
-    def get_observation(self, obs):
-        """
-        We retrieve new observation from the building observation to get a proper array of observation
-        Basicly the observation array will be something like obs[0][index_commun] + obs[i][index_particular] for i in range(5)
-
-        The first element of the new observation will be "commun observation" among all building like month / hour / carbon intensity / outdoor_dry_bulb_temperature_predicted_6h ...
-        The next element of the new observation will be the concatenation of certain observation specific to buildings non_shiftable_load / solar_generation / ...
-        """
-
-        # we get the observation commun for each building (index_commun)
-        observation_commun = [obs[0][i] / n for i, n in zip(index_commun, normalization_value_commun)]
-        observation_particular = [[o[i] / n for i, n in zip(index_particular, normalization_value_particular)] for o in
-                                  obs]
-
-        observation_particular = list(itertools.chain(*observation_particular))
-        # we concatenate the observation
-        observation = observation_commun + observation_particular
-
-        return observation
-
-    def step(self, action):
-        """
-        we apply the same action for all the buildings
-        """
-        # reprocessing action
-        action = [[act] for act in action]
-
-        # we do a step in the environment
-        obs, reward, done, info = self.env.step(action)
-
-        observation = self.get_observation(obs)
-        self.counter += 1
-
-        if self.counter % 8759 == 0:
-            print(sum(self.env.evaluate()) / 2, str(self.counter / 8759) + " episodes")
-
-        return observation, reward, done, info
-
-    def render(self, mode='human'):
-        return self.env.render(mode)
 
 
 # function to train the policy with PPO algorithm
@@ -283,8 +263,8 @@ def train_td3(train_timesteps):
 
 
 def evaluate_print_results(model, print_substeps=False):
-    env = CityLearnEnv(schema=Constants.schema_path)
-    env = EnvCityGym(env)
+    # env = CityLearnEnv(schema=Constants.schema_path)
+    env = EnvCityGym()
 
     obs = env.reset()
 
@@ -313,7 +293,7 @@ def evaluate_print_results(model, print_substeps=False):
 if __name__ == "__main__":
     t1_start = time.perf_counter()
 
-    timesteps = 10000
+    timesteps = 10000000
 
     print(f"Training for {timesteps} steps... (might take minutes/hours)")
 
