@@ -1,4 +1,6 @@
 import numpy as np
+from numpy import float_power as pw
+from numpy import sqrt
 
 def net_electricity_consumption(non_shiftable_load, electrical_storage_electricity_consumption, solar_generation_obs):
     #non_shiftable_load from csv data
@@ -49,7 +51,7 @@ def energy(action, previous_capacity):
 
 
 def new_capacity(previous_capacity, last_energy_balance):
-    capacity_loss_coefficient = np.power(10.0, -5)
+    capacity_loss_coefficient = pw(10.0, -5)
     initial_capacity = 6.4
     capacity_degrade = capacity_loss_coefficient*initial_capacity*np.abs(last_energy_balance)/(2*previous_capacity)
     return previous_capacity - capacity_degrade
@@ -91,25 +93,14 @@ previous_capacity = 6.4
 previous_soc = 0
 nominal_power = 5.0
 
-
-# Electrical storage consumption is -previous_soc*efficiency <= energy_normed <= (previous_capacity-previous_soc)/efficiency
-# and if we take |action| <= nominal_power/previous_capacity, energy_normed = action*previous_capacity.
-# We can take -sqrt(0.83)*previous_soc <= action*previous_capacity <= (previous_capacity-previous_soc)/sqrt(0.9) and we are safe
-
-
-# if action >= 0:
-#     action = min(5/previous_capacity, action)
-# else:
-#     action = max(-5/previous_capacity, action)
-
 energy_normed = energy_normed(energy=energy(action=action, previous_capacity=previous_capacity))
 
 efficiency = efficiency(energy_normed=energy_normed, nominal_power=nominal_power)
 
 # if energy_normed >= 0:
-#     consumption = min((previous_capacity-previous_soc)/efficiency, energy_normed)
+#     soc_consumption = min((previous_capacity-previous_soc)/efficiency, energy_normed)
 # else:
-#     consumption = max(-1*previous_soc, energy_normed)
+#     soc_consumption = max(-1*previous_soc, energy_normed)
 
 soc = soc(energy_normed=energy_normed, soc_init=soc_init(previous_soc=previous_soc), efficiency=efficiency, previous_capacity=previous_capacity)
 
@@ -138,32 +129,11 @@ net_electricity_consumption = net_electricity_consumption(non_shiftable_load, la
 #Correct result: 4.051166666666667
 
 
+#consumption = energy + non_shiftable_load - solar_generation_obs
 
 
-def ranging(number, vmax, vmin):
-    return max(min(vmax, number), vmin)
 
-positive = 1 if action >= 0 else -1
 
-action = ranging(action, nominal_power/previous_capacity, -nominal_power/previous_capacity)
-energy = action*previous_capacity
-
-x = np.abs(action*previous_capacity/nominal_power)
-
-if 0 <= np.abs(action) <= 0.3*nominal_power/previous_capacity:
-    efficiency = np.sqrt(0.83)
-elif 0.3*nominal_power/previous_capacity < np.abs(action) < 0.7*nominal_power/previous_capacity:
-    efficiency = np.sqrt(0.7775 + 0.175*x)
-elif 0.7*nominal_power/previous_capacity <= np.abs(action) <= 0.8*nominal_power/previous_capacity: #Optimal efficiency
-    efficiency = np.sqrt(0.9)
-elif 0.8*nominal_power/previous_capacity < np.abs(action) <= nominal_power/previous_capacity:
-    efficiency = np.sqrt(1.1-0.25*x)
-
--previous_soc*efficiency/previous_capacity <= action <= (previous_capacity-previous_soc)/(efficiency*previous_capacity)
-
-energy = ranging(energy, (previous_capacity-previous_soc)/efficiency, -1*previous_soc/efficiency)
-
-consumption = energy + non_shiftable_load - solar_generation_obs
-
+#action_low = -(pw(previous_soc, 2)*b+sqrt(pw(previous_soc, 4)*pw(b, 2) + 4*a*pw(n^2)))
 
 

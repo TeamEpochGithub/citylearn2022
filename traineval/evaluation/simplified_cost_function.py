@@ -3,13 +3,13 @@ from data.citylearn_challenge_2022_phase_1.net_electricity_consumption import ne
 
 def price_cost(net_electricity_consumption_prices, net_electricity_consumption_prices_wout_storage):
     consumption_price = sum(net_electricity_consumption_prices)
-    consumption_price_wout_storage = sum(net_electricity_consumption_prices_wout_storage)
+    consumption_price_wout_storage = sum(net_electricity_consumption_prices_wout_storage) #8277.733108897906
     #Adding the money spent per hour on all buildings, for all hours
 
     return consumption_price/consumption_price_wout_storage
 
 def emission_cost(net_electricity_consumption_emissions, net_electricity_consumption_emissions_wout_storage):
-    return price_cost(net_electricity_consumption_emissions, net_electricity_consumption_emissions_wout_storage)
+    return price_cost(net_electricity_consumption_emissions, net_electricity_consumption_emissions_wout_storage) #4627.487397661689
     #Adding the emission per hour for all buildings, for all hours
 
 def net_electricity_consumption_prices(net_building_hourly_electricity_consumptions, elecitricity_pricing):
@@ -67,7 +67,7 @@ def ramping_cost(net_building_hourly_electricity_consumptions):
     #Hourly differences in total district net_electricity_consumption
 
     ramping = sum(ramping)
-    ramping_wout_storage = sum(ramping_wout_storage)
+    ramping_wout_storage = sum(ramping_wout_storage) #14807.707606563112
 
     return ramping/ramping_wout_storage
 
@@ -90,7 +90,7 @@ def load_factor_cost(net_building_hourly_electricity_consumptions):
 
         load_factor_costs.append(np.array(load_factors).mean())
 
-    return load_factor_costs[0]/load_factor_costs[1]
+    return load_factor_costs[0]/load_factor_costs[1] #0.869759047619068
 
 def grid_cost(ramping_cost, load_factor_cost):
     return np.mean([ramping_cost, load_factor_cost])

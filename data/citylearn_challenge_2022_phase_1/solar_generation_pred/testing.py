@@ -6,6 +6,7 @@ import csv
 
 
 
+
 class Constants:
     episodes = 5
     schema_path = './data/citylearn_challenge_2022_phase_1/schema.json'
@@ -26,6 +27,7 @@ solar = []
 loadsums = []
 loads = []
 prices = []
+emissions = []
 
 r = 24*7
 
@@ -35,6 +37,7 @@ for k in range(r):
     solar_sum = sum([observations[i][21] for i in range(5)])
     load_sum = sum([observations[i][20] for i in range(5)])
     price = observations[0][24]
+    emissions.append(observations[0][19])
 
     hourly_loads = []
     for building in range(5):
@@ -48,7 +51,7 @@ for k in range(r):
     loadsums.append(load_sum)
     prices.append(price)
 
-# consumptions = [i/4 for i in consumptions] #scaling
+scaled_consumptions = [i/4 for i in consumptions] #scaling
 
 clipped_consumptions = list(np.array(consumptions).clip(min=0))
 
@@ -68,12 +71,17 @@ def daily_average(array):
 #     write.writerow("Load - Solar")
 #     write.writerows([consumptions])
 
-plt.plot(range(r), consumptions, color= "blue")
-# plt.plot(range(r), clipped_consumptions, color="red")
-# plt.plot(range(r), prices, color="green")
+plt.plot(range(r), scaled_consumptions, color= "blue")
+plt.scatter(range(5,r,24), [0 for i in range(5,r,24)], color="red") #Marking day at 6am
+plt.plot(range(r), [prices[i]*consumptions[i] for i in range(r)], color = "green")
+plt.plot(range(r), [emissions[i]*consumptions[i] for i in range(r)], color = "black")
 
-plt.plot(range(r), solar, color = "red")
-plt.plot(range(r), loadsums, color = "green")
+# plt.plot(range(r), clipped_consumptions, color="red")
+plt.plot(range(r), prices, color="green")
+plt.plot(range(r), emissions, color="black")
+
+# plt.plot(range(r), solar, color = "red")
+# plt.plot(range(r), loadsums, color = "green")
 
 
 
