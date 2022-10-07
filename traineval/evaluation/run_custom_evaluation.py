@@ -1,5 +1,7 @@
 import itertools
+import sys
 
+import pandas as pd
 from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
@@ -137,16 +139,6 @@ def evaluate():
     return average_cost
 
 if __name__ == '__main__':
-    import time
-
-    times = []
-    for i in range(5):
-        start = time.time()
-        evaluate()
-        end = time.time()
-        times.append(end-start)
-
-    print(np.mean(times))
-
+    print(evaluate())
 
 
