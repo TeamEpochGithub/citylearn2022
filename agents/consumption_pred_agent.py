@@ -3,6 +3,8 @@ import pickle
 
 import keras
 import numpy as np
+import pandas as pd
+
 from data import citylearn_challenge_2022_phase_1 as competition_data
 import os.path as osp
 import prediction_models
@@ -20,8 +22,8 @@ def combined_policy(observation, action_space, next_consumption, agent_id, times
     # else:
     #     next_consumption = 10
 
-
-    building_charge = next_consumption / num_buildings / max_charge
+    # building_charge = next_consumption / num_buildings / max_charge
+    building_charge = next_consumption
     action = -building_charge
 
     action = np.array([action], dtype=action_space.dtype)
@@ -38,7 +40,6 @@ class ConsumptionPredAgent:
     def __init__(self):
         self.action_space = {}
         self.timestep = -1
-
 
         load_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_model.h5")
         solar_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_model.h5")
@@ -2171,6 +2172,7 @@ class ConsumptionPredAgent:
 
         self.max_charge = 6.4
 
+        self.last_24hours_load = []
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -2190,10 +2192,32 @@ class ConsumptionPredAgent:
         electrical_storage_soc = obs[22]
         net_electricity_consumption = obs[23]
 
-        print(self.non_shiftable_load_model)
+        load_input = [outdoor_dry_bulb_temperature, non_shiftable_load]
+        self.last_24hours_load.append(load_input)
 
-        # self.non_shiftable_load_scaler.transform()
+        if self.timestep <= 24:
+            self.next_consumption = net_electricity_consumption
+        else:
+            df_last_24hours_load = pd.DataFrame(self.last_24hours_load)
 
+            df_last_24hours_load_scaled = self.non_shiftable_load_scaler.transform(df_last_24hours_load)
+
+            no_records = self.timestep
+            hops = 24
+            X_train = []
+            y_train = []
+            for i in range(hops, no_records):
+                X_train.append(df_last_24hours_load_scaled[i - hops:i])
+                y_train.append(df_last_24hours_load_scaled[i][0])
+            X_train, y_train = np.array(X_train), np.array(y_train)
+            print("x", X_train)
+
+            X_train_reshaped = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], X_train.shape[2]))
+            print(X_train_reshaped.shape)
+            self.next_consumption = self.non_shiftable_load_model.predict(X_train_reshaped)
+            print(self.next_consumption)
+
+            self.last_24hours_load = self.last_24hours_load[1:]
 
         return combined_policy(observation, self.action_space[agent_id], self.next_consumption, agent_id,
                                self.timestep // len(observation), self.max_charge)
