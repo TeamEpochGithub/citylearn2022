@@ -92,16 +92,16 @@ def nothing_policy(observation, action_space, agent_id):
 def smart_policy(action_space, time_step, agent_id):
     consumption = consumptions[agent_id][time_step]
     # hour = observation[2]
-    # action = -consumption/6.4
-    if consumption < 0:
-        action = -consumption/6.4
-    else:
-        action = 0
-    #     action = -1
-    # elif 20 < hour <= 24:
-    #     action = -0.5
+    action = -consumption/6.4
+    # if consumption < 0:
+    #     action = -consumption/6.4
     # else:
     #     action = 0
+    # #     action = -1
+    # # elif 20 < hour <= 24:
+    # #     action = -0.5
+    # # else:
+    # #     action = 0
     print([f"{agent_id} Action: {action}, Consumption: {consumption}, Time: {time_step}"])
     action = np.array([action], dtype=action_space.dtype)
 
