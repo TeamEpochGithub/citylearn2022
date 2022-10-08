@@ -13,7 +13,5 @@ from agents.month_tuned_agent_nonranges import MonthTunedAgentNoRanges
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent
 # UserAgent = MonthTunedAgent
-UserAgent = MonthTunedAgentNoRanges
-# UserAgent = DayTunedAgent
-
-# Changen naar MonthTunedAgent en dan weer submission maken
+# UserAgent = MonthTunedAgentNoRanges
+UserAgent = ConsumptionBasedAgent
