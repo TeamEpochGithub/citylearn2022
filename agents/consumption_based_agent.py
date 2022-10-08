@@ -1,5 +1,3 @@
-import json
-import pickle
 
 import numpy as np
 from data import citylearn_challenge_2022_phase_1 as competition_data
