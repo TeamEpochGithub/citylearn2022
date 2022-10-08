@@ -61,8 +61,8 @@ class OrderEnforcingAgent:
             # reward = rewards[agent_id]
 
 
-            # actions.append(self.agent.compute_action(observation, agent_id))
-            actions.append(self.agent.compute_action(observation[agent_id], agent_id))
+            actions.append(self.agent.compute_action(observation, agent_id))
+            # actions.append(self.agent.compute_action(observation[agent_id], agent_id))
 
         # If you want a single central agent setup, change this function as needed
 
