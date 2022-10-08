@@ -7,6 +7,7 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 import os.path as osp
 import prediction_models
 from pickle import load
+from keras.models import load_model
 
 
 # Should receive all observations
@@ -39,14 +40,14 @@ class ConsumptionPredAgent:
         self.timestep = -1
 
 
-        load_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_model.pkl")
-        solar_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_model.pkl")
+        load_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_model.h5")
+        solar_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_model.h5")
 
         load_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_scaler.pkl")
         solar_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_scaler.pkl")
 
-        self.non_shiftable_load_model = load(open(load_path, 'rb'))
-        self.solar_generation_model = load(open(solar_path, 'rb'))
+        self.non_shiftable_load_model = load_model(load_path)
+        self.solar_generation_model = load_model(solar_path)
 
         self.non_shiftable_load_scaler = load(open(load_scaler_path, 'rb'))
         self.solar_generation_scaler = load(open(solar_scaler_path, 'rb'))
