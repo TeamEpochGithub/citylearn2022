@@ -83,8 +83,6 @@ def nothing_policy(observation, action_space):
 
     action = np.array([action], dtype=action_space.dtype)
 
-    print(action_space)
-
     return action
 
 
