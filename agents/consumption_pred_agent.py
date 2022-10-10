@@ -47,11 +47,17 @@ class ConsumptionPredAgent:
         load_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_scaler.pkl")
         solar_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_scaler.pkl")
 
+        load_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_scaler_result.pkl")
+        solar_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_scaler_result.pkl")
+
         self.non_shiftable_load_model = load_model(load_path)
         self.solar_generation_model = load_model(solar_path)
 
         self.non_shiftable_load_scaler = load(open(load_scaler_path, 'rb'))
         self.solar_generation_scaler = load(open(solar_scaler_path, 'rb'))
+
+        self.non_shiftable_load_scaler_result = load(open(load_scaler_path_result, 'rb'))
+        self.solar_generation_scaler_result = load(open(solar_scaler_path_result, 'rb'))
 
         self.consumptions = [8.055133434295655, 4.66588343518575, 2.9147167675018317, 2.375566767374676,
                              2.9799001015981044, 3.537733432769775, 3.1261834378043813, 1.7603501000980544,
@@ -2168,18 +2174,26 @@ class ConsumptionPredAgent:
                              -1.9015333323160823, 0.04492222290039072, 1.4047666620890291, 0.8528500030517554,
                              5.951850001144409, 7.496574995740255, 8.541149999904633, 5.770333338333333,
                              9.850716666666665, 11.057416666666665, 9.5495]
+        self.next_load = 0
+        self.next_solar = 0
         self.next_consumption = 10
 
         self.max_charge = 6.4
 
-        self.last_24hours_load = []
+        self.last_24hours_load = {}
+        self.last_24hours_solar = {}
+
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
+
         self.timestep += 1
+
+        actual_timestep = self.timestep // len(observation)
+        print(actual_timestep)
 
         obs = observation[agent_id]
 
@@ -2192,32 +2206,66 @@ class ConsumptionPredAgent:
         electrical_storage_soc = obs[22]
         net_electricity_consumption = obs[23]
 
+        load_24hours_ago = 0
+        solar_24hours_ago = 0
+
+
         load_input = [outdoor_dry_bulb_temperature, non_shiftable_load]
-        self.last_24hours_load.append(load_input)
-
-        if self.timestep <= 24:
-            self.next_consumption = net_electricity_consumption
+        if str(agent_id) in self.last_24hours_load:
+            self.last_24hours_load[str(agent_id)].append(load_input)
         else:
-            df_last_24hours_load = pd.DataFrame(self.last_24hours_load)
+            self.last_24hours_load[str(agent_id)] = []
 
+        if actual_timestep < 24:
+            self.next_load = non_shiftable_load
+        else:
+            df_last_24hours_load = pd.DataFrame(self.last_24hours_load[str(agent_id)])
             df_last_24hours_load_scaled = self.non_shiftable_load_scaler.transform(df_last_24hours_load)
 
-            no_records = self.timestep
-            hops = 24
-            X_train = []
-            y_train = []
-            for i in range(hops, no_records):
-                X_train.append(df_last_24hours_load_scaled[i - hops:i])
-                y_train.append(df_last_24hours_load_scaled[i][0])
-            X_train, y_train = np.array(X_train), np.array(y_train)
-            print("x", X_train)
-
+            X_train = np.array([df_last_24hours_load_scaled])
             X_train_reshaped = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], X_train.shape[2]))
-            print(X_train_reshaped.shape)
-            self.next_consumption = self.non_shiftable_load_model.predict(X_train_reshaped)
-            print(self.next_consumption)
 
-            self.last_24hours_load = self.last_24hours_load[1:]
+            self.next_load = self.non_shiftable_load_model.predict(X_train_reshaped, verbose=0)
+            self.next_load = self.non_shiftable_load_scaler_result.inverse_transform(self.next_load)
+            load_24hours_ago = df_last_24hours_load[1][0]
+            self.last_24hours_load[str(agent_id)] = self.last_24hours_load[str(agent_id)][1:]
+
+        solar_input = [diffuse_solar_irradiance, direct_solar_irradiance, solar_generation]
+        if str(agent_id) in self.last_24hours_solar:
+            self.last_24hours_solar[str(agent_id)].append(solar_input)
+        else:
+            self.last_24hours_solar[str(agent_id)] = []
+
+        if actual_timestep < 24:
+            self.next_solar = solar_generation
+        else:
+            df_last_24hours_solar = pd.DataFrame(self.last_24hours_solar[str(agent_id)])
+            df_last_24hours_solar_scaled = self.solar_generation_scaler.transform(df_last_24hours_solar)
+
+            X_train = np.array([df_last_24hours_solar_scaled])
+            X_train_reshaped = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], X_train.shape[2]))
+
+            self.next_solar = self.solar_generation_model.predict(X_train_reshaped, verbose=0)
+            self.next_solar = self.solar_generation_scaler_result.inverse_transform(self.next_solar)
+            solar_24hours_ago = df_last_24hours_solar[2][0]
+            self.last_24hours_solar[str(agent_id)] = self.last_24hours_solar[str(agent_id)][1:]
+
+        if self.next_load < 0:
+            self.next_load = 0
+        if self.next_solar < 0:
+            self.next_solar = 0
+
+        print("current load: ", non_shiftable_load, " current solar: ", solar_generation)
+        print("24hours load: ", load_24hours_ago, " 24hours solar: ", solar_24hours_ago)
+        print("predict load: ", self.next_load, " predict solar: ", self.next_solar)
+
+        self.next_consumption = self.next_load - self.next_solar
+        # self.next_consumption = load_24hours_ago - solar_24hours_ago
+        # self.next_consumption = non_shiftable_load - solar_generation
+
+        # averaged_custom_load = np.mean([self.next_load, load_24hours_ago, non_shiftable_load])
+        # averaged_custom_solar = np.mean([self.next_solar, solar_24hours_ago, solar_generation])
+        # self.next_consumption = averaged_custom_load - averaged_custom_solar
 
         return combined_policy(observation, self.action_space[agent_id], self.next_consumption, agent_id,
                                self.timestep // len(observation), self.max_charge)
