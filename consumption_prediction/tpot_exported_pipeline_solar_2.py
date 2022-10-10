@@ -7,12 +7,13 @@ from sklearn.pipeline import make_pipeline, make_union
 from sklearn.preprocessing import StandardScaler
 from tpot.builtins import StackingEstimator
 from tpot.export_utils import set_param_recursive
+from joblib import dump, load
 
 
 
 if __name__ == '__main__':
     solar_df = pd.read_csv(
-        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv")
+        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv")
 
     solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
     solar_df_target = solar_df["solar_generation_future"]
@@ -40,3 +41,4 @@ if __name__ == '__main__':
 
     print(exported_pipeline.score(X_test, y_test))
     print(mse)
+    print(results)

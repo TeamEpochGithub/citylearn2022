@@ -25,12 +25,12 @@ def predict():
     X_train, X_test, y_train, y_test = train_test_split(load_df_data.to_numpy(), load_df_target.to_numpy(),
                                                         train_size=0.8, test_size=0.2)
 
-    pipeline_optimizer = TPOTRegressor(generations=5, population_size=20, cv=5,
-                                        random_state=42, verbosity=2)
+    pipeline_optimizer = TPOTRegressor(generations=20, population_size=20, cv=5,
+                                        random_state=42, verbosity=2, n_jobs=-1)
 
     pipeline_optimizer.fit(X_train, y_train)
     print(pipeline_optimizer.score(X_test, y_test))
-    pipeline_optimizer.export('tpot_exported_pipeline_load_1.py')
+    pipeline_optimizer.export('./building_specific_models/tpot_exported_pipeline_solar_building_5.py')
 
 
 if __name__ == '__main__':
