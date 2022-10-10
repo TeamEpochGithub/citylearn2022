@@ -35,9 +35,6 @@ if __name__ == '__main__':
     set_param_recursive(exported_pipeline.steps, 'random_state', 42)
 
     exported_pipeline.fit(X_train, y_train)
-
-    dump(exported_pipeline, 'solar_model.joblib')
-
     results = exported_pipeline.predict(X_test)
 
     mse = (np.square(results - y_test)).mean()
