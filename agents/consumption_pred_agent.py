@@ -2197,20 +2197,40 @@ class ConsumptionPredAgent:
 
         obs = observation[agent_id]
 
+        month = obs[0]
+        day_type = obs[1]
+        hour = obs[2]
         outdoor_dry_bulb_temperature = obs[3]
+        outdoor_dry_bulb_temperature_predicted_6h = obs[4]
+        outdoor_dry_bulb_temperature_predicted_12h = obs[5]
+        outdoor_dry_bulb_temperature_predicted_24h = obs[6]
         outdoor_relative_humidity = obs[7]
+        outdoor_relative_humidity_predicted_6h = obs[8]
+        outdoor_relative_humidity_predicted_12h = obs[9]
+        outdoor_relative_humidity_predicted_24h = obs[10]
         diffuse_solar_irradiance = obs[11]
+        diffuse_solar_irradiance_predicted_6h = obs[12]
+        diffuse_solar_irradiance_predicted_12h = obs[13]
+        diffuse_solar_irradiance_predicted_24h = obs[14]
         direct_solar_irradiance = obs[15]
+        direct_solar_irradiance_predicted_6h = obs[16]
+        direct_solar_irradiance_predicted_12h = obs[17]
+        direct_solar_irradiance_predicted_24h = obs[18]
+        carbon_intensity = obs[19]
         non_shiftable_load = obs[20]
         solar_generation = obs[21]
         electrical_storage_soc = obs[22]
         net_electricity_consumption = obs[23]
+        electricity_pricing = obs[24]
+        electricity_pricing_predicted_6h = obs[25]
+        electricity_pricing_predicted_12h = obs[26]
+        electricity_pricing_predicted_24h = obs[27]
 
         load_24hours_ago = 0
         solar_24hours_ago = 0
 
 
-        load_input = [outdoor_dry_bulb_temperature, non_shiftable_load]
+        load_input = [outdoor_relative_humidity, outdoor_dry_bulb_temperature_predicted_6h, outdoor_dry_bulb_temperature, outdoor_dry_bulb_temperature_predicted_6h, hour, diffuse_solar_irradiance, diffuse_solar_irradiance_predicted_24h, month, diffuse_solar_irradiance_predicted_6h, direct_solar_irradiance_predicted_6h, direct_solar_irradiance_predicted_24h, direct_solar_irradiance]
         if str(agent_id) in self.last_24hours_load:
             self.last_24hours_load[str(agent_id)].append(load_input)
         else:
@@ -2230,7 +2250,7 @@ class ConsumptionPredAgent:
             load_24hours_ago = df_last_24hours_load[1][0]
             self.last_24hours_load[str(agent_id)] = self.last_24hours_load[str(agent_id)][1:]
 
-        solar_input = [diffuse_solar_irradiance, direct_solar_irradiance, solar_generation]
+        solar_input = [solar_generation, direct_solar_irradiance_predicted_24h, diffuse_solar_irradiance, solar_generation, month, outdoor_dry_bulb_temperature, outdoor_relative_humidity, outdoor_dry_bulb_temperature_predicted_6h, direct_solar_irradiance_predicted_24h, hour, diffuse_solar_irradiance_predicted_6h, outdoor_relative_humidity_predicted_6h, direct_solar_irradiance, direct_solar_irradiance_predicted_6h]
         if str(agent_id) in self.last_24hours_solar:
             self.last_24hours_solar[str(agent_id)].append(solar_input)
         else:
