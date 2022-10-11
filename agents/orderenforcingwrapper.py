@@ -1,5 +1,5 @@
 from gym.spaces import Box
-from agents.pick_normal_agent import UserAgent
+from agents.user_agent import UserAgent
 from rewards.user_reward import UserReward
 
 
@@ -49,7 +49,7 @@ class OrderEnforcingAgent:
         please make sure the actions are in same order as the observations
 
         Reward preprocesing - You can use your custom reward function here
-        please specify your reward function in agents/pick_normal_agent.py
+        please specify your reward function in agents/user_agent.py
 
         """
         assert self.num_buildings is not None
@@ -59,7 +59,10 @@ class OrderEnforcingAgent:
 
         for agent_id in range(self.num_buildings):
             # reward = rewards[agent_id]
-            actions.append(self.agent.compute_action(observation[agent_id], agent_id))
+
+
+            actions.append(self.agent.compute_action(observation, agent_id))
+            # actions.append(self.agent.compute_action(observation[agent_id], agent_id))
 
         # If you want a single central agent setup, change this function as needed
 

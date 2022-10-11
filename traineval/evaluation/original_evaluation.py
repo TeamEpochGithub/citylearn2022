@@ -1,9 +1,10 @@
 import itertools
 
-from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
+import pandas as pd
+# from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
 import time
-import pyspark
+# import pyspark
 import csv
 
 from tqdm import tqdm
@@ -15,7 +16,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.original_wrapper import OrderEnforcingAgent
+from agents.orderenforcingwrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
@@ -24,7 +25,6 @@ from data import citylearn_challenge_2022_phase_1 as competition_data
 class Constants:
     episodes = 1
     schema_path = osp.join(osp.dirname(competition_data.__file__), "schema.json")
-    lowest_average_cost = 2
 
 
 def action_space_to_dict(aspace):
@@ -120,7 +120,10 @@ def evaluate():
                                 np.mean([e['grid_cost'] for e in episode_metrics])])
         print("Average cost", average_cost)
     print(f"Total time taken by agent: {agent_time_elapsed}s")
+    return average_cost
 
 
 if __name__ == '__main__':
     evaluate()
+
+

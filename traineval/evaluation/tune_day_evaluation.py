@@ -1,9 +1,15 @@
-import csv
-import time
+import itertools
 
+from hyperopt import fmin, hp, atpe, tpe, SparkTrials, space_eval, STATUS_OK
 import numpy as np
-from hyperopt import fmin, hp, tpe, SparkTrials, STATUS_OK
+import time
+import pyspark
+import csv
+
 from tqdm import tqdm
+
+from traineval.evaluation.tune_evaluation import get_specific_action_values, get_observation_weights_search_space, \
+    get_observation_weights_search_space_non_ranges
 
 """
 Please do not make changes to this file. 
@@ -12,12 +18,11 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.tuning_wrapper import OrderEnforcingAgent
+from agents.tuning_day_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
-import warnings
-warnings.filterwarnings('ignore')
+
 
 class Constants:
     episodes = 1
@@ -56,9 +61,7 @@ def evaluate(args, verbose=False):
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent(args)
 
-    # observation_list = []
     obs_dict = env_reset(env)
-    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -66,11 +69,14 @@ def evaluate(args, verbose=False):
     actions = agent.register_reset(obs_dict)
     agent_time_elapsed += time.perf_counter() - step_start
 
+    counter = 1
+    day = 1
+    avg = 100
+
     episodes_completed = 0
     num_steps = 0
     interrupted = False
     episode_metrics = []
-
     try:
         while True:
 
@@ -80,12 +86,14 @@ def evaluate(args, verbose=False):
 
             observations, _, done, _ = env.step(actions)
 
+            # check which day it is for day_tuning
+            counter += 1
+            if counter % 24 == 0:
+                day += 1
+
             if done:
                 episodes_completed += 1
-
                 metrics_t = env.evaluate()
-                # metrics_t = evaluate_observation(observation_list)
-
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -102,10 +110,8 @@ def evaluate(args, verbose=False):
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
-                # observation_list.append(observations)
-
                 step_start = time.perf_counter()
-                actions = agent.compute_action(observations)
+                actions = agent.compute_action(observations, day)
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
@@ -143,73 +149,6 @@ def evaluate(args, verbose=False):
     return {'loss': avg, 'status': STATUS_OK}
 
 
-def get_observation_weights_search_space():
-    search_space = {"price_1": hp.uniform("price_1", -1, 1),
-                    "price_2": hp.uniform("price_2", -1, 1),
-                    "price_3": hp.uniform("price_3", -1, 1),
-                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
-                    "price_pred_2": hp.uniform("price_pred_2", -1, 1),
-                    "price_pred_3": hp.uniform("price_pred_3", -1, 1),
-                    "carbon_1": hp.uniform("carbon_1", -1, 1),
-                    "carbon_2": hp.uniform("carbon_2", -1, 1),
-                    "carbon_3": hp.uniform("carbon_3", -1, 1),
-                    "solar_1": hp.uniform("solar_1", -1, 1),
-                    "solar_2": hp.uniform("solar_2", -1, 1),
-                    "solar_3": hp.uniform("solar_3", -1, 1),
-                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
-                    "solar_diffused_2": hp.uniform("solar_diffused_2", -1, 1),
-                    "solar_diffused_3": hp.uniform("solar_diffused_3", -1, 1),
-                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
-                    "solar_direct_2": hp.uniform("solar_direct_2", -1, 1),
-                    "solar_direct_3": hp.uniform("solar_direct_3", -1, 1),
-                    "hour_1": hp.uniform("hour_1", -1, 1),
-                    "hour_2": hp.uniform("hour_2", -1, 1),
-                    "hour_3": hp.uniform("hour_3", -1, 1),
-                    "storage_1": hp.uniform("storage_1", -1, 1),
-                    "storage_2": hp.uniform("storage_2", -1, 1),
-                    "storage_3": hp.uniform("storage_3", -1, 1),
-                    "consumption_1": hp.uniform("consumption_1", -1, 1),
-                    "consumption_2": hp.uniform("consumption_2", -1, 1),
-                    "consumption_3": hp.uniform("consumption_3", -1, 1),
-                    "load_1": hp.uniform("load_1", -1, 1),
-                    "load_2": hp.uniform("load_2", -1, 1),
-                    "load_3": hp.uniform("load_3", -1, 1),
-                    "temp_1": hp.uniform("temp_1", -1, 1),
-                    "temp_2": hp.uniform("temp_2", -1, 1),
-                    "temp_3": hp.uniform("temp_3", -1, 1),
-                    "humidity_1": hp.uniform("humidity_1", -1, 1),
-                    "humidity_2": hp.uniform("humidity_2", -1, 1),
-                    "humidity_3": hp.uniform("humidity_3", -1, 1),
-                    }
-    return search_space
-
-
-def get_observation_weights_search_space_non_ranges():
-    search_space = {"price_1": hp.uniform("price_1", -1, 1),
-                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
-                    "carbon_1": hp.uniform("carbon_1", -1, 1),
-                    "solar_1": hp.uniform("solar_1", -1, 1),
-                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
-                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
-                    "hour_1": hp.uniform("hour_1", -1, 1),
-                    "hour_2": hp.uniform("hour_2", -1, 1),
-                    "hour_3": hp.uniform("hour_3", -1, 1),
-                    "storage_1": hp.uniform("storage_1", -1, 1),
-                    "consumption_1": hp.uniform("consumption_1", -1, 1),
-                    "load_1": hp.uniform("load_1", -1, 1),
-                    "temp_1": hp.uniform("temp_1", -1, 1),
-                    "humidity_1": hp.uniform("humidity_1", -1, 1),
-                    }
-    return search_space
-
-
-def get_specific_action_values():
-    search_space = {}
-    for i in range(1, 25):
-        search_space[f"hour_{i}"] = hp.uniform(f"hour_{i}", -1, 1)
-    return search_space
-
-
 def dict_to_csv(dict_list, name):
     observation_values = []
 
@@ -226,27 +165,63 @@ def dict_to_csv(dict_list, name):
 
 if __name__ == '__main__':
     # best_params = fmin(
-    #     fn=evaluate,`
-    #     space=get_observation_weights_search_space(),
+    #     fn=evaluate,
+    #     space=retrieve_search_space(),
     #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #     max_evals=8000,
+    #     max_evals=10,
     #     trials=SparkTrials()
     # )
-    # dict_to_csv([best_params], "year")
     # print(best_params)
 
+    ## DAILY WEIGHTED OBSERVATIONS NON-RANGES
     search_space = get_observation_weights_search_space_non_ranges()
-    month_params = []
-    for month in range(1, 13):  # 13
-        search_space["month"] = month
+    day_params = []
+    for day in range(1, 366):  # 13
+        search_space["day"] = day
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=5000,
+            max_evals=50,
             trials=SparkTrials()
         )
-        best_params["month"] = month
-        month_params.append(best_params)
+        best_params["day"] = day
+        day_params.append(best_params)
 
-    dict_to_csv(month_params, "month")
+        print(day)
+    dict_to_csv(day_params, "day")
+
+    ### DAILY WEIGHTED OBSERVATIONS ACTIONS
+    # search_space = get_specific_action_values()
+    # daily_actions = []
+    # for day in range(1, 366):
+    #     search_space["day"] = day
+    #     best_params = fmin(
+    #         fn=evaluate,
+    #         space=search_space,
+    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #         max_evals=12,
+    #         trials=SparkTrials()
+    #     )
+    #     best_params["day"] = day
+    #     daily_actions.append(best_params)
+    # dict_to_csv(daily_actions, "daily_overfit")
+    # print(daily_actions)
+
+    ### DAILY WEIGHTED OBSERVATIONS RANGES
+    # search_space = get_observation_weights_search_space()
+    # day_params = []
+    # for day in range(1, 366):  # 13
+    #     search_space["day"] = day
+    #     best_params = fmin(
+    #         fn=evaluate,
+    #         space=search_space,
+    #         algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
+    #         max_evals=50,
+    #         trials=SparkTrials()
+    #     )
+    #     best_params["day"] = day
+    #     day_params.append(best_params)
+    #
+    #     print(day)
+    # dict_to_csv(day_params, "day")

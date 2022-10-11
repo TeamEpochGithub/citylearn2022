@@ -1,6 +1,8 @@
 import argparse
 import os.path as osp
+import warnings
 
+warnings.filterwarnings('ignore')
 import gym
 import torch
 from gym.envs.registration import register

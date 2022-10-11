@@ -48,54 +48,14 @@ def combined_policy(observation, action_space):
     electricity_pricing_predicted_24h = observation[27]
 
     ### PRICE
-    pricing_action = 1
-    if 0 < electricity_pricing <= 0.21:
-        pricing_action *= args["price_1"]
-    elif 0.21 < electricity_pricing <= 0.22:
-        pricing_action *= args["price_2"]
-    else:
-        pricing_action *= args["price_3"]
-
-    pricing_pred_action = 1
-    if 0 < electricity_pricing_predicted_6h <= 0.21:
-        pricing_pred_action *= args["price_pred_1"]
-    elif 0.21 < electricity_pricing_predicted_6h <= 0.22:
-        pricing_pred_action *= args["price_pred_2"]
-    else:
-        pricing_pred_action *= args["price_pred_3"]
+    pricing_action = args["price_1"] * electricity_pricing
+    pricing_pred_action = args["price_pred_1"] * electricity_pricing_predicted_6h
 
     ### EMISSION
-    carbon_action = 1
-    if 0 < carbon_intensity <= 0.139231:
-        carbon_action *= args["carbon_1"]
-    elif 0.139231 < carbon_intensity <= 0.169461:
-        carbon_action *= args["carbon_2"]
-    else:
-        carbon_action *= args["carbon_3"]
-
-    generation_action = 1
-    if 0 < solar_generation <= 0:
-        generation_action *= args["solar_1"]
-    elif 0 < solar_generation <= 163.14452:
-        generation_action *= args["solar_2"]
-    else:
-        generation_action *= args["solar_3"]
-
-    diffuse_action = 1
-    if 0 < diffuse_solar_irradiance <= 0:
-        diffuse_action *= args["solar_diffused_1"]
-    elif 0 < diffuse_solar_irradiance <= 216:
-        diffuse_action *= args["solar_diffused_2"]
-    else:
-        diffuse_action *= args["solar_diffused_3"]
-
-    direct_action = 1
-    if 0 < direct_solar_irradiance <= 0:
-        direct_action *= args["solar_direct_1"]
-    elif 0 < direct_solar_irradiance <= 141:
-        direct_action *= args["solar_direct_2"]
-    else:
-        direct_action *= args["solar_direct_3"]
+    carbon_action = args["carbon_1"] * carbon_intensity
+    generation_action = args["solar_1"] * solar_generation
+    diffuse_action = args["solar_diffused_1"] * diffuse_solar_irradiance
+    direct_action = args["solar_direct_1"] * direct_solar_irradiance
 
     ### GRID
     hour_action = 1
@@ -106,45 +66,11 @@ def combined_policy(observation, action_space):
     else:
         hour_action *= args["hour_3"]
 
-    storage_action = 1
-    if 0 < electrical_storage_soc <= 0.33:
-        storage_action *= args["storage_1"]
-    elif 0.33 < electrical_storage_soc <= 0.66:
-        storage_action *= args["storage_2"]
-    else:
-        storage_action *= args["storage_3"]
-
-    consumption_action = 1
-    if 0 < net_electricity_consumption <= 0.6:
-        consumption_action *= args["consumption_1"]
-    elif 0.6 < net_electricity_consumption <= 1.2:
-        consumption_action *= args["consumption_2"]
-    else:
-        consumption_action *= args["consumption_3"]
-
-    load_action = 1
-    if 0 < non_shiftable_load <= 0.726493:
-        load_action *= args["load_1"]
-    elif 0.726493 < non_shiftable_load <= 1.185376:
-        load_action *= args["load_2"]
-    else:
-        load_action *= args["load_3"]
-
-    temp_action = 1
-    if 0 < outdoor_dry_bulb_temperature <= 15.6:
-        temp_action *= args["temp_1"]
-    elif 15.6 < outdoor_dry_bulb_temperature <= 18.3:
-        temp_action *= args["temp_2"]
-    else:
-        temp_action *= args["temp_3"]
-
-    humidity_action = 1
-    if 0 < outdoor_relative_humidity <= 69:
-        humidity_action *= args["humidity_1"]
-    elif 69 < outdoor_relative_humidity <= 81:
-        humidity_action *= args["humidity_2"]
-    else:
-        humidity_action *= args["humidity_3"]
+    storage_action = args["storage_1"] * electrical_storage_soc
+    consumption_action = args["consumption_1"] * net_electricity_consumption
+    load_action = args["load_1"] * non_shiftable_load
+    temp_action = args["temp_1"] * outdoor_dry_bulb_temperature
+    humidity_action = args["humidity_1"] * outdoor_relative_humidity
 
     price_action = np.average([pricing_action, pricing_pred_action])
     emission_action = np.average([carbon_action, generation_action, diffuse_action, direct_action])
@@ -158,7 +84,7 @@ def combined_policy(observation, action_space):
     return action
 
 
-class MonthTunedAgent:
+class MonthTunedAgentNoRanges:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23

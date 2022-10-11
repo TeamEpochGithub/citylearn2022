@@ -33,12 +33,12 @@ class OrderEnforcingAgent:
             action_space = self.action_space[agent_id]
             self.agent.set_action_space(agent_id, action_space)
 
-        return self.compute_action(obs)
+        return self.compute_action(obs, 1)
 
     def raise_aicrowd_error(self, msg):
         raise NameError(msg)
 
-    def compute_action(self, observation):
+    def compute_action(self, observation, day):
         """
         Inputs:
             observation - List of observations from the env
@@ -49,7 +49,7 @@ class OrderEnforcingAgent:
         please make sure the actions are in same order as the observations
 
         Reward preprocesing - You can use your custom reward function here
-        please specify your reward function in agents/user_agent.py
+        please specify your reward function in agents/pick_normal_agent.py
 
         """
         assert self.num_buildings is not None
@@ -59,7 +59,7 @@ class OrderEnforcingAgent:
 
         for agent_id in range(self.num_buildings):
             # reward = rewards[agent_id]
-            actions.append(self.agent.compute_action(observation[agent_id], agent_id))
+            actions.append(self.agent.compute_action(observation[agent_id], agent_id, day))
 
         # If you want a single central agent setup, change this function as needed
 
