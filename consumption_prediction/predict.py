@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
+from joblib import dump
 
 def predict():
 
@@ -18,11 +19,15 @@ def predict():
     # solar_df_target = solar_df["solar_generation_future"]
 
     load_df = pd.read_csv(
-        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\building_specific_models\building5_load.csv")
+        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\load_data.csv")
 
-    load_df[load_df.columns] = MinMaxScaler().fit_transform(load_df[load_df.columns])
-
+    # Scaler training data
+    ms = MinMaxScaler()
     load_df_data = load_df.drop(["non_shiftable_load_future"], axis=1)
+    load_df_data[load_df_data.columns] = ms.fit_transform(load_df_data[load_df_data.columns])
+
+    ms_result = MinMaxScaler()
+    load_df[["non_shiftable_load_future"]] = ms_result.fit_transform(load_df[["non_shiftable_load_future"]])
     load_df_target = load_df["non_shiftable_load_future"]
 
     X_train, X_test, y_train, y_test = train_test_split(load_df_data.to_numpy(), load_df_target.to_numpy(),
@@ -33,7 +38,10 @@ def predict():
 
     pipeline_optimizer.fit(X_train, y_train)
     print(pipeline_optimizer.score(X_test, y_test))
-    pipeline_optimizer.export('./building_specific_models/tpot_exported_pipeline_load_building_5.py')
+    pipeline_optimizer.export('./tpot_exported_pipeline_load_1.py')
+
+    dump(ms, 'ms_load_data')
+    dump(ms_result, 'ms_load_result')
 
 
 if __name__ == '__main__':
