@@ -23,12 +23,12 @@ building_5 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_5.cs
 
 
 if __name__ == "__main__":
-    # print(price_df.quantile([.33, .66]).to_string())
+    print(price_df.quantile([.33, .66]).to_string())
     # print(carbon_df.quantile([.33, .66]).to_string())
-    print(weather_df.quantile([.33, .66]).to_string())
-
-    buildings_df = pd.concat([building_1, building_2, building_3, building_4, building_5]).groupby(level=0).mean()
-    print(buildings_df.quantile([.33, .66]).to_string())
+    # print(weather_df.quantile([.33, .66]).to_string())
+    #
+    # buildings_df = pd.concat([building_1, building_2, building_3, building_4, building_5]).groupby(level=0).mean()
+    # print(buildings_df.quantile([.33, .66]).to_string())
 
     # print(buildings_df[0:100].to_string())
 

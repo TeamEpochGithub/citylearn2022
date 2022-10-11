@@ -16,7 +16,8 @@ from agents.tuning_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
-
+import warnings
+warnings.filterwarnings('ignore')
 
 class Constants:
     episodes = 1
@@ -55,7 +56,9 @@ def evaluate(args, verbose=False):
     env = CityLearnEnv(schema=Constants.schema_path)
     agent = OrderEnforcingAgent(args)
 
+    # observation_list = []
     obs_dict = env_reset(env)
+    # observation_list.append(obs_dict["observation"])
 
     agent_time_elapsed = 0
 
@@ -67,6 +70,7 @@ def evaluate(args, verbose=False):
     num_steps = 0
     interrupted = False
     episode_metrics = []
+
     try:
         while True:
 
@@ -75,9 +79,13 @@ def evaluate(args, verbose=False):
             ### use this script for orchestrating the evaluations.
 
             observations, _, done, _ = env.step(actions)
+
             if done:
                 episodes_completed += 1
+
                 metrics_t = env.evaluate()
+                # metrics_t = evaluate_observation(observation_list)
+
                 metrics = {"price_cost": metrics_t[0],
                            "emmision_cost": metrics_t[1],
                            "grid_cost": metrics_t[2]}
@@ -94,6 +102,8 @@ def evaluate(args, verbose=False):
                 actions = agent.register_reset(obs_dict)
                 agent_time_elapsed += time.perf_counter() - step_start
             else:
+                # observation_list.append(observations)
+
                 step_start = time.perf_counter()
                 actions = agent.compute_action(observations)
                 agent_time_elapsed += time.perf_counter() - step_start
@@ -133,7 +143,7 @@ def evaluate(args, verbose=False):
     return {'loss': avg, 'status': STATUS_OK}
 
 
-def retrieve_search_space():
+def get_observation_weights_search_space():
     search_space = {"price_1": hp.uniform("price_1", -1, 1),
                     "price_2": hp.uniform("price_2", -1, 1),
                     "price_3": hp.uniform("price_3", -1, 1),
@@ -174,12 +184,39 @@ def retrieve_search_space():
     return search_space
 
 
-def dict_to_csv(dict_list):
+def get_observation_weights_search_space_non_ranges():
+    search_space = {"price_1": hp.uniform("price_1", -1, 1),
+                    "price_pred_1": hp.uniform("price_pred_1", -1, 1),
+                    "carbon_1": hp.uniform("carbon_1", -1, 1),
+                    "solar_1": hp.uniform("solar_1", -1, 1),
+                    "solar_diffused_1": hp.uniform("solar_diffused_1", -1, 1),
+                    "solar_direct_1": hp.uniform("solar_direct_1", -1, 1),
+                    "hour_1": hp.uniform("hour_1", -1, 1),
+                    "hour_2": hp.uniform("hour_2", -1, 1),
+                    "hour_3": hp.uniform("hour_3", -1, 1),
+                    "storage_1": hp.uniform("storage_1", -1, 1),
+                    "consumption_1": hp.uniform("consumption_1", -1, 1),
+                    "load_1": hp.uniform("load_1", -1, 1),
+                    "temp_1": hp.uniform("temp_1", -1, 1),
+                    "humidity_1": hp.uniform("humidity_1", -1, 1),
+                    }
+    return search_space
+
+
+def get_specific_action_values():
+    search_space = {}
+    for i in range(1, 25):
+        search_space[f"hour_{i}"] = hp.uniform(f"hour_{i}", -1, 1)
+    return search_space
+
+
+def dict_to_csv(dict_list, name):
     observation_values = []
+
     for key in dict_list[0].keys():
         observation_values.append(key)
 
-    with open('tuned_values/optimal_values.csv', 'w') as csvfile:
+    with open(f'tuned_values/optimal_values_{name}.csv', 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=observation_values)
         writer.writeheader()
         writer.writerows(dict_list)
@@ -189,27 +226,27 @@ def dict_to_csv(dict_list):
 
 if __name__ == '__main__':
     # best_params = fmin(
-    #     fn=evaluate,
-    #     space=retrieve_search_space(),
+    #     fn=evaluate,`
+    #     space=get_observation_weights_search_space(),
     #     algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-    #     max_evals=10,
+    #     max_evals=8000,
     #     trials=SparkTrials()
     # )
+    # dict_to_csv([best_params], "year")
     # print(best_params)
 
-    search_space = retrieve_search_space()
+    search_space = get_observation_weights_search_space_non_ranges()
     month_params = []
-    for month in tqdm(range(1, 13)):  # 13
+    for month in range(1, 13):  # 13
         search_space["month"] = month
         best_params = fmin(
             fn=evaluate,
             space=search_space,
             algo=tpe.suggest,  # NOTE: You cannot use atpe.suggest with SparkTrials, then use tpe.suggest
-            max_evals=5,
+            max_evals=5000,
             trials=SparkTrials()
         )
         best_params["month"] = month
         month_params.append(best_params)
 
-        print(month)
-    dict_to_csv(month_params)
+    dict_to_csv(month_params, "month")

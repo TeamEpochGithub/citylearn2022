@@ -13,7 +13,7 @@ from joblib import dump, load
 
 if __name__ == '__main__':
     solar_df = pd.read_csv(
-        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv")
+        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\solar_data.csv")
 
     solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
     solar_df_target = solar_df["solar_generation_future"]

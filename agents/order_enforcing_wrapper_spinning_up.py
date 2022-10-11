@@ -53,7 +53,7 @@ class OrderEnforcingSpinningUpAgent:
         please make sure the actions are in same order as the observations
 
         Reward preprocesing - You can use your custom reward function here
-        please specify your reward function in agents/pick_normal_agent.py
+        please specify your reward function in agents/user_agent.py
 
         """
         assert self.num_buildings is not None
