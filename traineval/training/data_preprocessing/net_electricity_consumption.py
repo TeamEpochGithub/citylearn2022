@@ -102,13 +102,13 @@ efficiency = efficiency(energy_normed=energy_normed, nominal_power=nominal_power
 # else:
 #     soc_consumption = max(-1*previous_soc, energy_normed)
 
-soc = soc(energy_normed=energy_normed, soc_init=soc_init(previous_soc=previous_soc), efficiency=efficiency, previous_capacity=previous_capacity)
+v_soc = soc(energy_normed=energy_normed, soc_init=soc_init(previous_soc=previous_soc), efficiency=efficiency, previous_capacity=previous_capacity)
 
-last_energy_balance = last_energy_balance(soc=soc, previous_soc=previous_soc, efficiency=efficiency)
+v_last_energy_balance = last_energy_balance(soc=v_soc, previous_soc=previous_soc, efficiency=efficiency)
 
-capacity = new_capacity(previous_capacity=previous_capacity, last_energy_balance=last_energy_balance)
+v_capacity = new_capacity(previous_capacity=previous_capacity, last_energy_balance=v_last_energy_balance)
 
-battery = electrical_storage_soc(soc=soc, previous_capacity=previous_capacity)
+battery = electrical_storage_soc(soc=v_soc, previous_capacity=previous_capacity)
 
 print(f"Battery observation: {battery}")
 
@@ -124,7 +124,7 @@ non_shiftable_load = 0.8511666666666671
 
 solar_generation_obs = solar_generation_obs(solar_nominal_power=solar_nominal_power, solar_generation_data=solar_generation_data)
 
-net_electricity_consumption = net_electricity_consumption(non_shiftable_load, last_energy_balance, solar_generation_obs)
+net_electricity_consumption = net_electricity_consumption(non_shiftable_load, v_last_energy_balance, solar_generation_obs)
 
 #Correct result: 4.051166666666667
 

@@ -1,15 +1,12 @@
-from agents.combined_policy_agent import MultiPolicyAgent
-from agents.consumption_based_agent import ConsumptionBasedAgent
-from agents.month_tuned_agent import MonthTunedAgent
-from agents.new_agents.rbc_agent import BasicRBCAgent, BasicRBCAgent2
-
+#from agents.individual_consumption_agent import IndividualConsumptionAgent
+from agents.improved_individual_consumption import IndividualConsumptionAgent
 
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
 
 # UserAgent = RandomAgent
-UserAgent = BasicRBCAgent2
+UserAgent = IndividualConsumptionAgent
 # UserAgent = SAC(RLCAgent)
 # UserAgent = BasicRewardAgent
 # UserAgent = BasicWeatherAgent

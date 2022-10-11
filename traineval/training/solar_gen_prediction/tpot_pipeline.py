@@ -7,17 +7,17 @@ from sklearn.pipeline import make_pipeline, make_union
 from sklearn.svm import LinearSVR
 from tpot.builtins import StackingEstimator
 from tpot.export_utils import set_param_recursive
-from solar_generation_pred.TPOT import switched_data
+from TPOT import switched_data
 import os
 
 
 absolute_path = os.path.abspath(os.path.dirname('data.csv'))
 
-wthr = pd.read_csv("weather.csv")[
+wthr = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/weather.csv")[
     ["Outdoor Drybulb Temperature [C]", "Relative Humidity [%]", "Diffuse Solar Radiation [W/m2]",
      "Direct Solar Radiation [W/m2]"]]
 
-data = pd.concat([wthr, pd.read_csv("Building_1.csv")[["Month", "Hour"]]], axis=1)
+data = pd.concat([wthr, pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/Building_1.csv")[["Month", "Hour"]]], axis=1)
 
 (b1, b2, b3, b4, b5) = (pd.read_csv(f"Building_{i}.csv")["Solar Generation [W/kW]"] for i in range(1, 6))
 builds = [b1, b2, b3, b4, b5]

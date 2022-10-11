@@ -1,25 +1,25 @@
 import pandas as pd
 
-pricing = pd.read_csv("../pricing.csv")["Electricity Pricing [$]"]
-months = pd.read_csv("../Building_1.csv")[["Month", "Hour"]]
-
-
-concat = pd.concat([pricing, months], axis=1, ignore_index=True)
-
-for i in range(1, 13):
-    month = concat[concat[1] == i]
-    print(f"Month {i}\n{month[0].value_counts()} \n\n")
-    previous_hour = 0
-
-    for h in range(1, 25):
-        hour = month[month[2]==h]
-        values = dict(hour[0].value_counts())
-        if values != previous_hour:
-            print(f"Hour {h}: \n{hour[0].value_counts()} \n\n")
-        previous_hour = values
-
-        if len(values) > 1:
-            print(f"Hour {h}: \n{hour.head(35)}")
+# pricing = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/pricing.csv")["Electricity Pricing [$]"]
+# months = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/Building_1.csv")[["Month", "Hour"]]
+#
+#
+# concat = pd.concat([pricing, months], axis=1, ignore_index=True)
+#
+# for i in range(1, 13):
+#     month = concat[concat[1] == i]
+#     print(f"Month {i}\n{month[0].value_counts()} \n\n")
+#     previous_hour = 0
+#
+#     for h in range(1, 25):
+#         hour = month[month[2]==h]
+#         values = dict(hour[0].value_counts())
+#         if values != previous_hour:
+#             print(f"Hour {h}: \n{hour[0].value_counts()} \n\n")
+#         previous_hour = values
+#
+#         if len(values) > 1:
+#             print(f"Hour {h}: \n{hour.head(35)}")
 
 
 #January (31 days): Price = 0.21 for hour 1-15, 0.5 for hour 16-20, 0.21 for hour 21-24
@@ -57,3 +57,19 @@ def pricing(month, hour, day):
     return price
 
 
+def shift_date(hour, day, month, shifts):
+    date = [hour, day, month]
+
+    if hour + shifts <= 24:
+        date[0] = hour + shifts
+    else:
+        date[0] = hour + shifts - 24
+
+        if date[1] != 7:
+            date[1] += 1
+
+        else:
+            date[1] = 1
+            date[2] = date[2] + 1 if date[2] != 12 else 1
+
+    return date

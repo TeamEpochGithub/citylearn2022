@@ -1,5 +1,5 @@
 import numpy as np
-from data.citylearn_challenge_2022_phase_1.net_electricity_consumption import net_electricity_consumption, non_shiftable_load, last_energy_balance, solar_generation_obs
+from traineval.training.data_preprocessing.net_electricity_consumption import net_electricity_consumption, non_shiftable_load, v_last_energy_balance, solar_generation_obs
 
 def price_cost(net_electricity_consumption_prices, net_electricity_consumption_prices_wout_storage):
     consumption_price = sum(net_electricity_consumption_prices)
@@ -42,7 +42,7 @@ def net_building_hourly_electricity_consumptions():
         buildings_wout_storage = []
 
         for i in range(5):
-            buildings.append(net_electricity_consumption(non_shiftable_load, last_energy_balance, solar_generation_obs))
+            buildings.append(net_electricity_consumption(non_shiftable_load, v_last_energy_balance, solar_generation_obs))
             buildings_wout_storage.append(net_electricity_consumption(non_shiftable_load, 0, solar_generation_obs))
             # Introduce correct values
         #List of individual net_electricity_consumption for each building in a single hour
