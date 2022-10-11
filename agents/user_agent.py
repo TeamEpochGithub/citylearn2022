@@ -15,4 +15,4 @@ from agents.month_tuned_agent_nonranges import MonthTunedAgentNoRanges
 # UserAgent = BasicWeatherAgent
 # UserAgent = MonthTunedAgent
 # UserAgent = MonthTunedAgentNoRanges
-UserAgent = ConsumptionPredAgent
+UserAgent = ConsumptionBasedAgent

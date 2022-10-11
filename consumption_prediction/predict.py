@@ -6,6 +6,7 @@ from tpot import TPOTRegressor
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import MinMaxScaler
 
 def predict():
 
@@ -18,6 +19,8 @@ def predict():
 
     load_df = pd.read_csv(
         r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\building_specific_models\building5_load.csv")
+
+    load_df[load_df.columns] = MinMaxScaler().fit_transform(load_df[load_df.columns])
 
     load_df_data = load_df.drop(["non_shiftable_load_future"], axis=1)
     load_df_target = load_df["non_shiftable_load_future"]
