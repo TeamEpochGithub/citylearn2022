@@ -11,13 +11,13 @@ def predict():
 
     pipeline_optimizer = TPOTRegressor()
 
-    solar_df = pd.read_csv(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv")
-
-    solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
-    solar_df_target = solar_df["solar_generation_future"]
+    # solar_df = pd.read_csv(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\solar_data.csv")
+    #
+    # solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
+    # solar_df_target = solar_df["solar_generation_future"]
 
     load_df = pd.read_csv(
-        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\load_data.csv")
+        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\building_specific_models\building5_load.csv")
 
     load_df_data = load_df.drop(["non_shiftable_load_future"], axis=1)
     load_df_target = load_df["non_shiftable_load_future"]
@@ -30,7 +30,7 @@ def predict():
 
     pipeline_optimizer.fit(X_train, y_train)
     print(pipeline_optimizer.score(X_test, y_test))
-    pipeline_optimizer.export('./building_specific_models/tpot_exported_pipeline_solar_building_5.py')
+    pipeline_optimizer.export('./building_specific_models/tpot_exported_pipeline_load_building_5.py')
 
 
 if __name__ == '__main__':

@@ -31,5 +31,5 @@ if __name__ == '__main__':
 
     mse = (np.square(results - y_test)).mean()
 
-    print(exported_pipeline.score(X_train, y_train))
+    print(exported_pipeline.score(X_test, y_test))
     print(mse)
