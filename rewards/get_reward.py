@@ -24,8 +24,8 @@ from citylearn.cost_function import CostFunction
 #     return price_cost, emission_cost, grid_cost
 
 def calculate_values(net_electricity_consumption_price,
-                      net_electricity_consumption_emission,
-                      net_electricity_consumption):
+                     net_electricity_consumption_emission,
+                     net_electricity_consumption):
     price_cost = CostFunction.price(net_electricity_consumption_price)[-1]
     emission_cost = CostFunction.carbon_emissions(net_electricity_consumption_emission)[-1]
     ramping_cost = CostFunction.ramping(net_electricity_consumption)[-1]
@@ -33,6 +33,7 @@ def calculate_values(net_electricity_consumption_price,
     grid_cost = np.mean([ramping_cost, load_factor_cost])
 
     return price_cost, emission_cost, grid_cost
+
 
 def get_reward(electricity_consumption: List[float], carbon_emission: List[float], electricity_price: List[float],
                agent_ids: List[int]) -> List[float]:
