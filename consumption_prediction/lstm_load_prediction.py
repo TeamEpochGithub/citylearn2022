@@ -15,6 +15,10 @@ import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from sklearn.linear_model import Ridge
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import LinearRegression
+from xgboost import XGBRegressor
+
 from lightgbm import LGBMRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
@@ -53,10 +57,6 @@ def fix_data():
     load_df.to_csv(
         r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\load_data_fixed.csv",
         index=False)
-
-
-def predict_lstm():
-    pass
 
 
 def plot_and_save(title, xs, ys, xlabel, ylabel):
@@ -213,7 +213,7 @@ def average_difference():
 
 def auto_regressor_test_non_grid():
     load_df = pd.read_csv(
-        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\load_data.csv")
+        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\load_data.csv")
 
     load_df[load_df.columns] = MinMaxScaler().fit_transform(load_df[load_df.columns])
 
@@ -222,18 +222,23 @@ def auto_regressor_test_non_grid():
 
     total_records = 8758
 
-    test_fraction = 0.8
+    test_fraction = 0.2
     test_count = round(8758 * test_fraction)
 
     validation_fraction = 0.7
     validation_count = round(8758 * validation_fraction)
 
     metric_list = []
-    grid_list = []
+    non_backtest_metric = []
 
     for index, data in enumerate(np.split(load_df_target, 5)):
+
+        print(f"------House {index + 1}-----")
+
         data_train_val = data.iloc[:validation_count]
         data_train_test = data.iloc[:test_count]
+
+        encountered_data = list(data_train_test)
 
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
@@ -241,27 +246,43 @@ def auto_regressor_test_non_grid():
             transformer_y=StandardScaler()
         )
 
-        lags_grid = [[1,2,3,4,5], [1,2,3,23,24,25], [1,2,3,4,5,23,24,25,26,27], 5, 10, 15, 20, 25, [1,2,3,23,24,25, 48, 49, 50], [1,2,3,4,5,23,24,25,26,27, 48, 49, 50, 51, 52]]
+        forecaster.fit(pd.Series(data_train_test.values))
 
-        param_grid = {'alpha': np.logspace(-3, 5, 10)}
+        predictions = []
+        truth = []
 
-        # results_grid = grid_search_forecaster(
-        #     forecaster=forecaster,
-        #     y=data,
-        #     param_grid=param_grid,
-        #     lags_grid=lags_grid,
-        #     steps=24,
-        #     metric='mean_squared_error',
-        #     refit=False,
-        #     initial_train_size=len(data_train_val),
-        #     fixed_train_size=False,
-        #     return_best=True,
-        #     verbose=False
-        # )
+        for index, current in enumerate(data.iloc[test_count:]):
 
-        forecaster.fit(data_train_test)
-        #
-        metric, predictions = backtesting_forecaster(
+            if index % 200 == 0:
+                print(index)
+
+            # metric, predictions_train = backtesting_forecaster(
+            #     forecaster=forecaster,
+            #     y=pd.Series(encountered_data),
+            #     initial_train_size=len(encountered_data)-1,
+            #     steps=1,
+            #     metric='mean_squared_error',
+            #     refit=False,
+            #     verbose=False
+            # )
+            # predictions.append(np.asarray(predictions_train)[-1][0])
+
+            current_prediction = forecaster.predict(steps=1)
+
+            predictions.append(current_prediction.iloc[0])
+
+            truth.append(current)
+
+            encountered_data.append(current)
+
+            forecaster.fit(pd.Series(encountered_data))
+
+        mse = (np.square(np.asarray(predictions) - np.asarray(truth))).mean()
+        non_backtest_metric.append(mse)
+
+        print("Custom mse:", mse)
+
+        metric, predictions_backtest = backtesting_forecaster(
             forecaster=forecaster,
             y=data,
             initial_train_size=len(data_train_test),
@@ -273,24 +294,25 @@ def auto_regressor_test_non_grid():
         )
 
         metric_list.append(metric)
-        # grid_list.append(results_grid)
 
-        print(f"------House {index+1}-----")
+
         print(f'Backtest error: {metric}')
 
+
         fig, ax = plt.subplots(figsize=(12, 3.5))
-        data.loc[predictions.index].plot(ax=ax, linewidth=2, label='real')
-        predictions.plot(linewidth=2, label='prediction', ax=ax)
+        pd.Series(truth).plot(ax=ax, linewidth=2, label='real')
+        pd.Series(np.asarray(predictions)).plot(linewidth=2, label='prediction', ax=ax)
         ax.set_title(f'Prediction vs real non shiftable load of house {index+1}')
         ax.legend()
 
         plt.show()
 
     print(metric_list)
+    print(non_backtest_metric)
 
 def auto_regressor_test_grid():
     load_df = pd.read_csv(
-        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\consumption_prediction\load_data.csv")
+        r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\load_data.csv")
 
     load_df[load_df.columns] = MinMaxScaler().fit_transform(load_df[load_df.columns])
 
@@ -313,7 +335,7 @@ def auto_regressor_test_grid():
         data_train_test = data.iloc[:test_count]
 
         forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=XGBRegressor(),
             lags=[1,2,3,23,24,25, 48, 49, 50],
             transformer_y=StandardScaler()
         )
