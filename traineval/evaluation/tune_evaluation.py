@@ -16,7 +16,8 @@ from agents.tuning_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
-
+import warnings
+warnings.filterwarnings('ignore')
 
 class Constants:
     episodes = 1
@@ -139,7 +140,7 @@ def evaluate(args, verbose=False):
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': avg_emission, 'status': STATUS_OK}
+    return {'loss': avg, 'status': STATUS_OK}
 
 
 def get_observation_weights_search_space():
@@ -234,7 +235,7 @@ if __name__ == '__main__':
     # dict_to_csv([best_params], "year")
     # print(best_params)
 
-    search_space = get_observation_weights_search_space()
+    search_space = get_observation_weights_search_space_non_ranges()
     month_params = []
     for month in range(1, 13):  # 13
         search_space["month"] = month
