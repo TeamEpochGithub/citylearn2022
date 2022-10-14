@@ -116,7 +116,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
     return action, energies, steps, pos
 
 
-class IndividualConsumptionAgent:
+class ImprovedIndividualConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}

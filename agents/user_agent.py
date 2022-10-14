@@ -1,5 +1,5 @@
 #from agents.individual_consumption_agent import IndividualConsumptionAgent
-from agents.improved_individual_consumption import IndividualConsumptionAgent
+from agents.individual_consumption_agent import IndividualConsumptionAgent
 
 ###################################################################
 #####                Specify your agent here                  #####
