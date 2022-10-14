@@ -1,4 +1,3 @@
-import sys
 
 import numpy as np
 from data import citylearn_challenge_2022_phase_1 as competition_data
@@ -7,9 +6,6 @@ import os.path as osp
 
 # Should receive all observations
 def combined_policy(observation, action_space, consumptions, agent_id, timestep, max_charge):
-    # print(observation)
-    # print(len(consumptions))
-    # sys.exit()
     num_buildings = len(observation)
     total_consumption = sum([observation[i][23] for i in range(num_buildings)])
 
@@ -21,8 +17,15 @@ def combined_policy(observation, action_space, consumptions, agent_id, timestep,
     building_charge = next_consumption / num_buildings / max_charge
     action = -building_charge
 
-    if agent_id == 1:
-        print(timestep, action)
+    # print(observation[agent_id], action)
+    # observation[agent_id].append(action)
+    # row = observation[agent_id]
+    # action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
+    # action_file = open(action_file_path, 'a', newline="")
+    # writer = csv.writer(action_file)
+    # writer.writerow(row)
+    # action_file.close()
+
     action = np.array([action], dtype=action_space.dtype)
 
     return action
