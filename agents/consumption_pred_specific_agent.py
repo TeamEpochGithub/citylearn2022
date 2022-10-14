@@ -1,6 +1,6 @@
 import json
 import pickle
-
+import sys
 import keras
 import numpy as np
 import pandas as pd
@@ -11,6 +11,8 @@ import prediction_models
 from pickle import load
 from keras.models import load_model
 from joblib import load
+
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 
 # Should receive all observations
@@ -32,7 +34,7 @@ def combined_policy(observation, action_space, next_consumption, agent_id, times
     return action
 
 
-class ConsumptionPredAgent:
+class ConsumptionPredAgent2:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
@@ -42,33 +44,35 @@ class ConsumptionPredAgent:
         self.action_space = {}
         self.timestep = -1
 
-        load_path_1 = osp.join(osp.dirname(prediction_models.__file__), "building1_load.joblib")
-        load_path_2 = osp.join(osp.dirname(prediction_models.__file__), "building2_load.joblib")
-        load_path_3 = osp.join(osp.dirname(prediction_models.__file__), "building3_load.joblib")
-        load_path_4 = osp.join(osp.dirname(prediction_models.__file__), "building4_load.joblib")
-        load_path_5 = osp.join(osp.dirname(prediction_models.__file__), "building5_load.joblib")
+        load_path = osp.join(osp.dirname(prediction_models.__file__), "load_model.joblib")
+        # load_path_1 = osp.join(osp.dirname(prediction_models.__file__), "building1_load.joblib")
+        # load_path_2 = osp.join(osp.dirname(prediction_models.__file__), "building2_load.joblib")
+        # load_path_3 = osp.join(osp.dirname(prediction_models.__file__), "building3_load.joblib")
+        # load_path_4 = osp.join(osp.dirname(prediction_models.__file__), "building4_load.joblib")
+        # load_path_5 = osp.join(osp.dirname(prediction_models.__file__), "building5_load.joblib")
 
         solar_path = osp.join(osp.dirname(prediction_models.__file__), "solar_model.joblib")
 
-        load_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_scaler.pkl")
-        solar_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_scaler.pkl")
+        load_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "ms_load_data.joblib")
+        solar_scaler_path = osp.join(osp.dirname(prediction_models.__file__), "ms_solar_data.joblib")
 
-        load_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "non_shiftable_load_scaler_result.pkl")
-        solar_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "solar_generation_scaler_result.pkl")
+        load_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "ms_load_result.joblib")
+        solar_scaler_path_result = osp.join(osp.dirname(prediction_models.__file__), "ms_solar_result.joblib")
 
-        self.non_shiftable_load_model1 = load(load_path_1)
-        self.non_shiftable_load_model2 = load(load_path_2)
-        self.non_shiftable_load_model3 = load(load_path_3)
-        self.non_shiftable_load_model4 = load(load_path_4)
-        self.non_shiftable_load_model5 = load(load_path_5)
+        self.non_shiftable_load_model = load(load_path)
+        # self.non_shiftable_load_model1 = load(load_path_1)
+        # self.non_shiftable_load_model2 = load(load_path_2)
+        # self.non_shiftable_load_model3 = load(load_path_3)
+        # self.non_shiftable_load_model4 = load(load_path_4)
+        # self.non_shiftable_load_model5 = load(load_path_5)
 
         self.solar_generation_model = load(solar_path)
 
-        # self.non_shiftable_load_scaler = load(open(load_scaler_path, 'rb'))
-        # self.solar_generation_scaler = load(open(solar_scaler_path, 'rb'))
-        #
-        # self.non_shiftable_load_scaler_result = load(open(load_scaler_path_result, 'rb'))
-        # self.solar_generation_scaler_result = load(open(solar_scaler_path_result, 'rb'))
+        self.non_shiftable_load_scaler = load(load_scaler_path)
+        self.solar_generation_scaler = load(solar_scaler_path)
+
+        self.non_shiftable_load_scaler_result = load(load_scaler_path_result)
+        self.solar_generation_scaler_result = load(solar_scaler_path_result)
 
         self.consumptions = [8.055133434295655, 4.66588343518575, 2.9147167675018317, 2.375566767374676,
                              2.9799001015981044, 3.537733432769775, 3.1261834378043813, 1.7603501000980544,
@@ -2228,8 +2232,8 @@ class ConsumptionPredAgent:
         direct_solar_irradiance_predicted_12h = obs[17]
         direct_solar_irradiance_predicted_24h = obs[18]
         carbon_intensity = obs[19]
-        non_shiftable_load = obs[20]
-        solar_generation = obs[21]
+        non_shiftable_load = obs[20] # Not for solar_model
+        solar_generation = obs[21] # Not for load_model
         electrical_storage_soc = obs[22]
         net_electricity_consumption = obs[23]
         electricity_pricing = obs[24]
@@ -2237,53 +2241,42 @@ class ConsumptionPredAgent:
         electricity_pricing_predicted_12h = obs[26]
         electricity_pricing_predicted_24h = obs[27]
 
-        load_24hours_ago = 0
-        solar_24hours_ago = 0
+        load_list = obs.copy()
+        load_list.pop(21)
+        load_list.pop(21)
+        load_list.pop(21)
 
-        load_input = np.asarray(obs)
-        solar_input = np.asarray(obs)
+        load_input = [load_list] # Geen solar generation erin gooien
+        # print(load_input)
 
+        solar_list = obs.copy()
+        solar_list.pop(20)
+        solar_list.pop(21)
+        solar_list.pop(21)
 
+        solar_input = [solar_list] # Geen load erin gooien
 
-        # load_input = [outdoor_relative_humidity, outdoor_dry_bulb_temperature_predicted_6h, outdoor_dry_bulb_temperature, outdoor_dry_bulb_temperature_predicted_6h, hour, diffuse_solar_irradiance, diffuse_solar_irradiance_predicted_24h, month, diffuse_solar_irradiance_predicted_6h, direct_solar_irradiance_predicted_6h, direct_solar_irradiance_predicted_24h, direct_solar_irradiance]
-        # if str(agent_id) in self.last_24hours_load:
-        #     self.last_24hours_load[str(agent_id)].append(load_input)
-        # else:
-        #     self.last_24hours_load[str(agent_id)] = []
-        #
-        # if actual_timestep < 24:
-        #     self.next_load = non_shiftable_load
-        # else:
-        #     df_last_24hours_load = pd.DataFrame(self.last_24hours_load[str(agent_id)])
-        #     df_last_24hours_load_scaled = self.non_shiftable_load_scaler.transform(df_last_24hours_load)
-        #
-        #     X_train = np.array([df_last_24hours_load_scaled])
-        #     X_train_reshaped = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], X_train.shape[2]))
-        #
-        #     self.next_load = self.non_shiftable_load_model.predict(X_train_reshaped, verbose=0)
-        #     self.next_load = self.non_shiftable_load_scaler_result.inverse_transform(self.next_load)
-        #     load_24hours_ago = df_last_24hours_load[1][0]
-        #     self.last_24hours_load[str(agent_id)] = self.last_24hours_load[str(agent_id)][1:]
-        #
-        # solar_input = [solar_generation, direct_solar_irradiance_predicted_24h, diffuse_solar_irradiance, solar_generation, month, outdoor_dry_bulb_temperature, outdoor_relative_humidity, outdoor_dry_bulb_temperature_predicted_6h, direct_solar_irradiance_predicted_24h, hour, diffuse_solar_irradiance_predicted_6h, outdoor_relative_humidity_predicted_6h, direct_solar_irradiance, direct_solar_irradiance_predicted_6h]
-        # if str(agent_id) in self.last_24hours_solar:
-        #     self.last_24hours_solar[str(agent_id)].append(solar_input)
-        # else:
-        #     self.last_24hours_solar[str(agent_id)] = []
-        #
-        # if actual_timestep < 24:
-        #     self.next_solar = solar_generation
-        # else:
-        #     df_last_24hours_solar = pd.DataFrame(self.last_24hours_solar[str(agent_id)])
-        #     df_last_24hours_solar_scaled = self.solar_generation_scaler.transform(df_last_24hours_solar)
-        #
-        #     X_train = np.array([df_last_24hours_solar_scaled])
-        #     X_train_reshaped = np.reshape(X_train, (X_train.shape[0], X_train.shape[1], X_train.shape[2]))
-        #
-        #     self.next_solar = self.solar_generation_model.predict(X_train_reshaped, verbose=0)
-        #     self.next_solar = self.solar_generation_scaler_result.inverse_transform(self.next_solar)
-        #     solar_24hours_ago = df_last_24hours_solar[2][0]
-        #     self.last_24hours_solar[str(agent_id)] = self.last_24hours_solar[str(agent_id)][1:]
+        #Transform data using scalers
+
+        ## Load ##
+        df_load = pd.DataFrame(load_input)
+        df_load_scaled = self.non_shiftable_load_scaler.transform(df_load)
+
+        X_load = np.array(df_load_scaled)
+
+        self.next_load = self.non_shiftable_load_model.predict(X_load)
+        self.next_load = self.non_shiftable_load_scaler_result.inverse_transform([self.next_load])
+        self.next_load = self.next_load[0][0]
+
+        ## Solar ##
+        df_solar = pd.DataFrame(solar_input)
+        df_solar_scaled = self.solar_generation_scaler.transform(df_solar)
+
+        X_solar = np.array(df_solar_scaled)
+
+        self.next_solar = self.solar_generation_model.predict(X_solar)
+        self.next_solar = self.solar_generation_scaler_result.inverse_transform([self.next_solar])
+        self.next_solar = self.next_solar[0][0]
 
         if self.next_load < 0:
             self.next_load = 0
@@ -2291,16 +2284,9 @@ class ConsumptionPredAgent:
             self.next_solar = 0
 
         print("current load: ", non_shiftable_load, " current solar: ", solar_generation)
-        print("24hours load: ", load_24hours_ago, " 24hours solar: ", solar_24hours_ago)
         print("predict load: ", self.next_load, " predict solar: ", self.next_solar)
 
         self.next_consumption = self.next_load - self.next_solar
-        # self.next_consumption = load_24hours_ago - solar_24hours_ago
-        # self.next_consumption = non_shiftable_load - solar_generation
-
-        # averaged_custom_load = np.mean([self.next_load, load_24hours_ago, non_shiftable_load])
-        # averaged_custom_solar = np.mean([self.next_solar, solar_24hours_ago, solar_generation])
-        # self.next_consumption = averaged_custom_load - averaged_custom_solar
 
         return combined_policy(observation, self.action_space[agent_id], self.next_consumption, agent_id,
                                self.timestep // len(observation), self.max_charge)
