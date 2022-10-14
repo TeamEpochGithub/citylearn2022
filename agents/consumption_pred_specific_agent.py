@@ -25,8 +25,8 @@ def combined_policy(observation, action_space, next_consumption, agent_id, times
     # else:
     #     next_consumption = 10
 
-    # building_charge = next_consumption / num_buildings / max_charge
-    building_charge = next_consumption
+    building_charge = next_consumption / num_buildings / max_charge
+    # building_charge = next_consumption
     action = -building_charge
 
     action = np.array([action], dtype=action_space.dtype)
