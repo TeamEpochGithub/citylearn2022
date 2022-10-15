@@ -7,6 +7,8 @@ import time
 import csv
 
 from tqdm import tqdm
+import warnings
+warnings.simplefilter("ignore", category=DeprecationWarning)
 
 """
 Please do not make changes to this file. 
