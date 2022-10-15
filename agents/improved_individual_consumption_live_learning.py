@@ -4,12 +4,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os.path as osp
+
+from agents.helper_classes.live_learning import LiveLearner
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing.find_action_limit import find_efficiency
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
-
 
 consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/s_consumptions.csv")
 # carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
@@ -17,16 +18,26 @@ consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptio
 consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
+
 # carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 # carbon = carbon.values.tolist()[1:]
 
 
-def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in):
+def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in,
+                                  live_learner):
+
+    print(time_step)
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
 
+    live_learner.update_lists(observation)
+
     consumption = consumptions[agent_id][time_step]
+
+    # if time_step > 60:
+    #     consumption = live_learner.get_consumption(1)
+    #     consumption = consumption.item()
 
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
@@ -34,7 +45,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
     if consumption * pos_in < 0:
         chunk = []
         steps = 0
-        pos = -1*pos_in
+        pos = -1 * pos_in
 
         t = 0
 
@@ -42,19 +53,34 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
             consumption = consumptions[agent_id][time_step + t]
             chunk.append(consumption)
             t += 1
-
             if time_step + t == 8759:
                 break
+
+        # if time_step <= 60:
+        #     while consumptions[agent_id][time_step + t] * pos >= 0:
+        #         consumption = consumptions[agent_id][time_step + t]
+        #         chunk.append(consumption)
+        #         t += 1
+        #         if time_step + t == 8759:
+        #             break
+        # else:
+        #     while live_learner.get_consumption(time_step + t) * pos >= 0:
+        #         consumption = live_learner.get_consumption(time_step + t)
+        #         consumption = consumption.item()
+        #         chunk.append(consumption)
+        #         t += 1
+        #         if time_step + t == 8759:
+        #             break
 
         consumption_sum = sum(chunk)
 
         if pos == -1:
-            if -1*consumption_sum >= (capacity-soc)/np.sqrt(0.83):
+            if -1 * consumption_sum >= (capacity - soc) / np.sqrt(0.83):
                 relative_consumption = [i / consumption_sum for i in chunk]
-                energies = [i * (capacity - soc)/np.sqrt(0.83) for i in relative_consumption]
+                energies = [i * (capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
 
             else:
-                energies = [-1*i for i in chunk]
+                energies = [-1 * i for i in chunk]
 
         else:
             prices = []
@@ -85,7 +111,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
                         removing = [0]
 
                     difference = peak - max(removing)
-                    consumption_difference = [difference/prices[i] for i in peak_indexes]
+                    consumption_difference = [difference / prices[i] for i in peak_indexes]
 
                     if local_soc >= sum(consumption_difference):
                         for i, cd in enumerate(consumption_difference):
@@ -94,28 +120,27 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
                             local_consumption_price[peak_indexes[i]] -= difference
 
                     else:
-                        relative_difference = [cd/sum(consumption_difference) for cd in consumption_difference]
+                        relative_difference = [cd / sum(consumption_difference) for cd in consumption_difference]
 
                         for i, rd in enumerate(relative_difference):
-                            energies[peak_indexes[i]] += local_soc*rd
+                            energies[peak_indexes[i]] += local_soc * rd
                             local_consumption_price[peak_indexes[i]] -= rd * local_soc * prices[peak_indexes[i]]
 
                         local_soc = 0
 
             else:
                 energies = chunk
-        energy = -1*pos*energies[0]
+        energy = -1 * pos * energies[0]
 
     else:
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
+        print(steps, energies)
+        energy = -1 * energies[steps] * pos
 
-        energy = -1*energies[steps]*pos
+    action = energy / capacity
 
-    action = energy/capacity
-
-    print(observation, action)
     observation.append(action)
     row = observation
     action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
@@ -127,7 +152,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
     return action, energies, steps, pos
 
 
-class ImprovedIndividualConsumptionAgent:
+class ImprovedIndividualConsumptionLiveLearningAgent:
 
     def __init__(self):
         self.action_space = {}
@@ -138,6 +163,8 @@ class ImprovedIndividualConsumptionAgent:
         self.energies = {}
         self.steps = {}
 
+        self.live_learners = {}
+
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.capacity[agent_id] = 6.4
@@ -146,16 +173,21 @@ class ImprovedIndividualConsumptionAgent:
         self.energies[agent_id] = [0]
         self.steps[agent_id] = 0
 
+        if str(agent_id) not in self.live_learners:
+            self.live_learners[str(agent_id)] = LiveLearner(500)
+
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
-        collaborative_timestep = self.timestep//5
+        collaborative_timestep = self.timestep // 5
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
+        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(
+            observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id],
+            self.pos[agent_id], self.energies[agent_id], self.steps[agent_id], self.live_learners[str(agent_id)])
 
         action = max(min(action_out, 5 / self.capacity[agent_id]), -5 / self.capacity[agent_id])
-        energy = action*self.capacity[agent_id]
+        energy = action * self.capacity[agent_id]
         efficiency = find_efficiency(action, 5, self.capacity[agent_id])
 
         previous_soc = self.soc[agent_id]
@@ -165,6 +197,3 @@ class ImprovedIndividualConsumptionAgent:
         self.capacity[agent_id] = n.new_capacity(self.capacity[agent_id], battery_cons)
 
         return np.array([action_out], dtype=self.action_space[agent_id].dtype)
-
-
-

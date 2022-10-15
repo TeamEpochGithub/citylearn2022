@@ -1,27 +1,41 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.linear_model import SGDRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline, make_union
-from sklearn.preprocessing import StandardScaler
-from tpot.builtins import StackingEstimator
-from tpot.export_utils import set_param_recursive
+from sklearn.preprocessing import MinMaxScaler
+from joblib import dump
 
 # NOTE: Make sure that the outcome column is labeled 'target' in the data file
-tpot_data = pd.read_csv('PATH/TO/DATA/FILE', sep='COLUMN_SEPARATOR', dtype=np.float64)
-features = tpot_data.drop('target', axis=1)
-training_features, testing_features, training_target, testing_target = \
-            train_test_split(features, tpot_data['target'], random_state=42)
+solar_df = pd.read_csv(
+        r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\solar_data.csv")
 
-# Average CV score on the training set was: -0.020452843615494536
-exported_pipeline = make_pipeline(
-    StackingEstimator(estimator=SGDRegressor(alpha=0.0, eta0=0.1, fit_intercept=True, l1_ratio=0.0, learning_rate="invscaling", loss="epsilon_insensitive", penalty="elasticnet", power_t=100.0)),
-    StandardScaler(),
-    GradientBoostingRegressor(alpha=0.99, learning_rate=0.1, loss="ls", max_depth=10, max_features=0.6500000000000001, min_samples_leaf=12, min_samples_split=15, n_estimators=100, subsample=0.8500000000000001)
-)
-# Fix random state for all the steps in exported pipeline
-set_param_recursive(exported_pipeline.steps, 'random_state', 42)
+# Scaler training data
+ms_solar = MinMaxScaler()
+solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
+solar_df_data[solar_df_data.columns] = ms_solar.fit_transform(solar_df_data[solar_df_data.columns])
 
-exported_pipeline.fit(training_features, training_target)
-results = exported_pipeline.predict(testing_features)
+ms_solar_result = MinMaxScaler()
+solar_df[["solar_generation_future"]] = ms_solar_result.fit_transform(solar_df[["solar_generation_future"]])
+solar_df_target = solar_df["solar_generation_future"]
+
+X_train, X_test, y_train, y_test = train_test_split(solar_df_data.to_numpy(), solar_df_target.to_numpy(),
+                                                    train_size=0.8, test_size=0.2)
+
+# Average CV score on the training set was: -0.0012961075388285526
+exported_pipeline = GradientBoostingRegressor(alpha=0.99, learning_rate=0.1, loss="ls", max_depth=10, max_features=0.6500000000000001, min_samples_leaf=10, min_samples_split=8, n_estimators=100, subsample=1.0)
+# Fix random state in exported estimator
+if hasattr(exported_pipeline, 'random_state'):
+    setattr(exported_pipeline, 'random_state', 42)
+
+exported_pipeline.fit(X_train, y_train)
+results = exported_pipeline.predict(X_test)
+
+dump(exported_pipeline, '../prediction_models/solar_model.joblib')
+dump(ms_solar, '../prediction_models/ms_solar_data.joblib')
+dump(ms_solar_result, '../prediction_models/ms_solar_result.joblib')
+mse = (np.square(results - y_test)).mean()
+
+print(X_test, X_train, y_train, y_test)
+
+print(exported_pipeline.score(X_test, y_test))
+print(mse)
