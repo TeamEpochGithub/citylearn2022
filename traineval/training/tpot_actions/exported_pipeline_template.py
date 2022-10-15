@@ -1,20 +1,12 @@
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LassoLarsCV, RidgeCV
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.pipeline import make_pipeline, make_union
-from sklearn.preprocessing import RobustScaler
-from tpot.builtins import StackingEstimator
-from xgboost import XGBRegressor
 import os.path as osp
 import data.citylearn_challenge_2022_phase_1 as competition_data
-from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
+from sklearn.ensemble import ExtraTreesRegressor
 import warnings
 
 warnings.simplefilter("ignore", category=DeprecationWarning)
-
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
 
 action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
 

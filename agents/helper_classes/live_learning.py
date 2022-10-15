@@ -1,11 +1,6 @@
-import warnings
-
 import pandas as pd
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
-
 from sklearn.preprocessing import StandardScaler
 
 

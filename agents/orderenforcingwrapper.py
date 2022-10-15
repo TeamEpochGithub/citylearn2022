@@ -1,9 +1,6 @@
 from gym.spaces import Box
 from agents.user_agent import UserAgent
 from rewards.user_reward import UserReward
-import warnings
-
-warnings.simplefilter("ignore", category=DeprecationWarning)
 
 
 def dict_to_action_space(aspace_dict):

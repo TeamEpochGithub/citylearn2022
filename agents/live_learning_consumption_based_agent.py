@@ -1,9 +1,4 @@
-import warnings
-
-warnings.simplefilter("ignore", category=DeprecationWarning)
-
 import numpy as np
-
 from agents.helper_classes.live_learning import LiveLearner
 from traineval.utils.convert_arguments import environment_convert_argument
 
