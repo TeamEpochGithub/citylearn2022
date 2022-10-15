@@ -49,7 +49,7 @@ class LiveLearningAgentTPOTActions:
 
     def __init__(self):
         self.action_space = {}
-        self.cap_learning_data = 1500
+        self.cap_learning_data = 1000
         self.live_learners = {}
         tpot_model_path = osp.join(osp.dirname(tpot_files.__file__), 'pipe.joblib')
         self.action_model = joblib.load(tpot_model_path)
