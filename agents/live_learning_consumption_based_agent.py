@@ -7,7 +7,7 @@ import joblib
 import traineval.training.tpot_actions as tpot_files
 
 
-def live_learning_and_tpot_policy(observation, action_space, live_learner, action_model, timestep, agent_id):
+def live_learning_and_tpot_policy(observation, action_space, live_learner, action_model, timestep, agent_id, update_learner_interval):
     if timestep > 8750:
         return np.array([-0.1], dtype=action_space.dtype)
 
@@ -32,7 +32,11 @@ def live_learning_and_tpot_policy(observation, action_space, live_learner, actio
     for i in environment_convert_argument(col_names):
         obs.append(observation[i])
 
-    predicted_consumptions = live_learner.predict_multiple_consumption(6)
+    if timestep % update_learner_interval == 0:
+        predicted_consumptions = live_learner.predict_multiple_consumption(6, fit=True)
+    else:
+        predicted_consumptions = live_learner.predict_multiple_consumption(6, fit=False)
+
     action = action_model.predict([obs + predicted_consumptions])
     if agent_id == 1:
         print(timestep, action)
@@ -54,6 +58,7 @@ class LiveLearningAgentTPOTActions:
         tpot_model_path = osp.join(osp.dirname(tpot_files.__file__), 'pipe.joblib')
         self.action_model = joblib.load(tpot_model_path)
         self.timestep = -1
+        self.update_learner_interval = 3
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -65,4 +70,4 @@ class LiveLearningAgentTPOTActions:
         self.timestep += 1
         return live_learning_and_tpot_policy(observation, self.action_space[agent_id],
                                              self.live_learners[str(agent_id)],
-                                             self.action_model, self.timestep // len(self.live_learners), agent_id)
+                                             self.action_model, self.timestep // len(self.live_learners), agent_id, self.update_learner_interval)
