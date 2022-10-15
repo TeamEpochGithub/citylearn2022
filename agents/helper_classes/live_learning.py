@@ -44,17 +44,41 @@ class LiveLearner:
 
     def fit_and_predict_load(self, steps):
         self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
-        predicted_load = self.load_forecaster.predict(steps=steps).iloc[0]
+        predicted_load = self.load_forecaster.predict(steps=steps).iloc[steps - 1]
         if predicted_load < 0:
             predicted_load = 0
         return predicted_load * 8
 
     def fit_and_predict_solar(self, steps):
         self.solar_forecaster.fit(pd.Series(self.solar_generations))
-        predicted_solar = self.solar_forecaster.predict(steps=steps).iloc[0]
+        predicted_solar = self.solar_forecaster.predict(steps=steps).iloc[steps - 1]
         if predicted_solar < 0:
             predicted_solar = 0
         return predicted_solar * 4
 
-    def get_consumption(self, steps):
+    def predict_consumption(self, steps):
         return self.fit_and_predict_load(steps) - self.fit_and_predict_solar(steps)
+
+    def fit_and_predict_multiple_load(self, steps):
+        self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+        predicted_load = self.load_forecaster.predict(steps=steps)
+        for i, x in enumerate(predicted_load):
+            if x < 0:
+                predicted_load[i] = 0
+        # print("load", predicted_load)
+        # print("load over")
+        return list(predicted_load * 8)[:steps]
+
+    def fit_and_predict_multiple_solar(self, steps):
+        self.solar_forecaster.fit(pd.Series(self.solar_generations))
+        predicted_solar = self.solar_forecaster.predict(steps=steps)
+        for i, x in enumerate(predicted_solar):
+            if x < 0:
+                predicted_solar[i] = 0
+        # print("solar", predicted_solar)
+        # print("solar over")
+        return list(predicted_solar * 4)[:steps]
+
+    def predict_multiple_consumption(self, steps):
+        return [a - b for a, b in
+                zip(self.fit_and_predict_multiple_load(steps), self.fit_and_predict_multiple_solar(steps))]

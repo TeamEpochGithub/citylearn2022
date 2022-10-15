@@ -26,8 +26,6 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in,
                                   live_learner):
 
-    print(time_step)
-
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
 
@@ -136,13 +134,19 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
-        print(steps, energies)
         energy = -1 * energies[steps] * pos
 
     action = energy / capacity
 
+
+    if time_step >= 60:
+        predicted_consumptions = live_learner.predict_multiple_consumption(10)
+    else:
+        predicted_consumptions = np.zeros(10)
+    predicted_consumptions = list(predicted_consumptions)
+
     observation.append(action)
-    row = observation
+    row = observation + predicted_consumptions
     action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
@@ -174,13 +178,14 @@ class ImprovedIndividualConsumptionLiveLearningAgent:
         self.steps[agent_id] = 0
 
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(500)
+            self.live_learners[str(agent_id)] = LiveLearner(300)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
         collaborative_timestep = self.timestep // 5
+        print(collaborative_timestep)
 
         action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(
             observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id],

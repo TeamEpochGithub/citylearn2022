@@ -5,7 +5,8 @@ from agents.improved_individual_consumption_live_learning import ImprovedIndivid
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
+from agents.live_learning_consumption_based_agent import LiveLearningAgentBuilder
 
-UserAgent = ImprovedIndividualConsumptionAgent
+UserAgent = ImprovedIndividualConsumptionLiveLearningAgent
 
 # UserAgent = ConsumptionBasedTPOTActionsAgent
