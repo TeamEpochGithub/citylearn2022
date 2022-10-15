@@ -1,3 +1,4 @@
+from agents.consumption_based_tpot_actions_agent import ConsumptionBasedTPOTActionsAgent
 from agents.improved_individual_consumption import ImprovedIndividualConsumptionAgent
 from agents.improved_individual_consumption_live_learning import ImprovedIndividualConsumptionLiveLearningAgent
 
@@ -5,4 +6,6 @@ from agents.improved_individual_consumption_live_learning import ImprovedIndivid
 #####                Specify your agent here                  #####
 ###################################################################
 
-UserAgent = ImprovedIndividualConsumptionLiveLearningAgent
+UserAgent = ImprovedIndividualConsumptionAgent
+
+# UserAgent = ConsumptionBasedTPOTActionsAgent

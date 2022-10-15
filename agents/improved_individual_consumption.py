@@ -1,3 +1,4 @@
+import csv
 import sys
 import pandas as pd
 import numpy as np
@@ -20,90 +21,85 @@ carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 carbon = carbon.values.tolist()[1:]
 
 
-def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in):
+def individual_consumption_policy(observation, time_step, agent_id, remaining_battery_capacity, soc, pos_in, energies_in, steps_in):
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
 
-    consumption = consumptions[agent_id][time_step]
+    next_consumption = consumptions[agent_id][time_step]
 
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
-    if consumption * pos_in < 0:
-        chunk = []
+    if next_consumption * pos_in < 0:
+        chunk_consumptions = []
         steps = 0
-        pos = -1*pos_in
+        pos = -pos_in
 
         t = 0
 
         while consumptions[agent_id][time_step + t] * pos >= 0:
-            consumption = consumptions[agent_id][time_step + t]
-            chunk.append(consumption)
+            next_consumption = consumptions[agent_id][time_step + t]
+            chunk_consumptions.append(next_consumption)
             t += 1
 
-            if time_step + t == 8759:
+            if time_step + t >= 8759:
                 break
 
-        consumption_sum = sum(chunk)
+        chunk_total_consumption = sum(chunk_consumptions)
 
         if pos == -1:
-            if -1*consumption_sum >= (capacity-soc)/np.sqrt(0.83):
-                relative_consumption = [i / consumption_sum for i in chunk]
-                energies = [i * (capacity - soc)/np.sqrt(0.83) for i in relative_consumption]
-
+            if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83):
+                relative_consumption = [i / chunk_total_consumption for i in chunk_consumptions]
+                energies = [i * (remaining_battery_capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
             else:
-                energies = [-1*i for i in chunk]
+                energies = [-1*i for i in chunk_consumptions]
 
         else:
             prices = []
             emissions = []
 
-            for h in range(len(chunk)):
+            for h in range(len(chunk_consumptions)):
                 prices.append(pricing(date[2], date[0], date[1]))
                 date = shift_date(date[0], date[1], date[2], shifts=1)
 
                 emissions.append(carbon[time_step + h])
 
-            consumption_price = [prices[i] * c for i, c in enumerate(chunk)]
+            consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
 
-            if consumption_sum >= soc * np.sqrt(0.83):
+            if chunk_total_consumption >= soc * np.sqrt(0.83):
                 local_soc = soc * np.sqrt(0.83)
-                local_consumption_price = consumption_price[:]
-                energies = [0] * len(chunk)
+                energies = [0] * len(chunk_consumptions)
 
                 while local_soc != 0:
-                    removing = local_consumption_price[:]
-                    peak = max(local_consumption_price)
-                    peak_indexes = [i for i, cp in enumerate(local_consumption_price) if cp == peak]
+                    max_consumption_price = max(consumption_prices)
+                    peak_indices = [i for i, p in enumerate(consumption_prices) if p == max_consumption_price]
 
-                    for _ in peak_indexes:
-                        removing.remove(peak)
+                    consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
 
-                    if len(removing) == 0:
-                        removing = [0]
+                    if len(consumption_prices_without_peak) == 0:
+                        consumption_prices_without_peak = [0]
 
-                    difference = peak - max(removing)
-                    consumption_difference = [difference/prices[i] for i in peak_indexes]
+                    difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
+                    consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
 
                     if local_soc >= sum(consumption_difference):
-                        for i, cd in enumerate(consumption_difference):
-                            energies[peak_indexes[i]] += cd
-                            local_soc -= cd
-                            local_consumption_price[peak_indexes[i]] -= difference
-
+                        for i, difference in enumerate(consumption_difference):
+                            energies[peak_indices[i]] += difference
+                            local_soc -= difference
+                            consumption_prices[peak_indices[i]] -= difference_from_peak
                     else:
-                        relative_difference = [cd/sum(consumption_difference) for cd in consumption_difference]
+                        relative_difference = [c / sum(consumption_difference) for c in consumption_difference]
 
                         for i, rd in enumerate(relative_difference):
-                            energies[peak_indexes[i]] += local_soc*rd
-                            local_consumption_price[peak_indexes[i]] -= rd * local_soc * prices[peak_indexes[i]]
+                            energies[peak_indices[i]] += local_soc*rd
+                            consumption_prices[peak_indices[i]] -= rd * local_soc * prices[peak_indices[i]]
 
                         local_soc = 0
 
             else:
-                energies = chunk
-        energy = -1*pos*energies[0]
+                energies = chunk_consumptions
+        energy = -1 * pos * energies[0]
 
     else:
         pos = pos_in
@@ -112,7 +108,16 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
 
         energy = -1*energies[steps]*pos
 
-    action = energy/capacity
+    action = energy / remaining_battery_capacity
+
+    # observation.append(action)
+    # row = observation
+    # action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
+    # action_file = open(action_file_path, 'a', newline="")
+    # writer = csv.writer(action_file)
+    # writer.writerow(row)
+    # action_file.close()
+
     return action, energies, steps, pos
 
 
@@ -121,7 +126,7 @@ class ImprovedIndividualConsumptionAgent:
     def __init__(self):
         self.action_space = {}
         self.timestep = -1
-        self.capacity = {}
+        self.remaining_battery_capacity = {}
         self.soc = {}
         self.pos = {}
         self.energies = {}
@@ -129,7 +134,7 @@ class ImprovedIndividualConsumptionAgent:
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
-        self.capacity[agent_id] = 6.4
+        self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
         self.pos[agent_id] = -1
         self.energies[agent_id] = [0]
@@ -141,17 +146,17 @@ class ImprovedIndividualConsumptionAgent:
         self.timestep += 1
         collaborative_timestep = self.timestep//5
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
+        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.remaining_battery_capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        action = max(min(action_out, 5 / self.capacity[agent_id]), -5 / self.capacity[agent_id])
-        energy = action*self.capacity[agent_id]
-        efficiency = find_efficiency(action, 5, self.capacity[agent_id])
+        action = max(min(action_out, 5 / self.remaining_battery_capacity[agent_id]), -5 / self.remaining_battery_capacity[agent_id])
+        energy = action*self.remaining_battery_capacity[agent_id]
+        efficiency = find_efficiency(action, 5, self.remaining_battery_capacity[agent_id])
 
         previous_soc = self.soc[agent_id]
-        self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])
+        self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.remaining_battery_capacity[agent_id])
 
         battery_cons = n.last_energy_balance(self.soc[agent_id], previous_soc, efficiency)
-        self.capacity[agent_id] = n.new_capacity(self.capacity[agent_id], battery_cons)
+        self.remaining_battery_capacity[agent_id] = n.new_capacity(self.remaining_battery_capacity[agent_id], battery_cons)
 
         return np.array([action_out], dtype=self.action_space[agent_id].dtype)
 

@@ -1,5 +1,7 @@
 from typing import List
 import numpy as np
+import warnings
+warnings.simplefilter("ignore", DeprecationWarning)
 
 ###########################################################################
 #####                Specify your reward function here                #####

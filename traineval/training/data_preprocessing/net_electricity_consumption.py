@@ -110,7 +110,6 @@ v_capacity = new_capacity(previous_capacity=previous_capacity, last_energy_balan
 
 battery = electrical_storage_soc(soc=v_soc, previous_capacity=previous_capacity)
 
-print(f"Battery observation: {battery}")
 
 #Correct result should be: 0.47156653825308686
 
