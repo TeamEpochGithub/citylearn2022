@@ -139,10 +139,10 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
     action = energy / capacity
 
 
-    if time_step >= 60:
-        predicted_consumptions = live_learner.predict_multiple_consumption(10)
+    if time_step >= 72:
+        predicted_consumptions = live_learner.predict_multiple_consumption(6)
     else:
-        predicted_consumptions = np.zeros(10)
+        predicted_consumptions = np.zeros(6)
     predicted_consumptions = list(predicted_consumptions)
 
     observation.append(action)
