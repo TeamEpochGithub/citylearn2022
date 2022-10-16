@@ -115,8 +115,8 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
 
     action = energy/capacity
 
-    if agent_id == 0:
-        print([f"Agent {agent_id}, Action: {action}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}"])
+    if agent_id == 0 and 18 <= time_step <= 22:
+        print([f"Agent {agent_id}, Action: {action}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}, SOC calculated: {soc/capacity}"])
 
     return action, energies, steps, pos
 
@@ -151,37 +151,42 @@ class ImprovedIndividualConsumptionAgent:
         collaborative_timestep = self.timestep//5
 
 
-        if agent_id == 0:
+        if agent_id == 0 and 18 <= collaborative_timestep <= 22:
             print(f"and an actual net consumption {observation[23]}")
 
-        if collaborative_timestep > 0:
+        if collaborative_timestep > 24:
             self.plot[agent_id][0].append(observation[23])
             self.plot[agent_id][1].append(observation[20]-observation[21])
             self.plot[agent_id][2].append((observation[20]-observation[21])*observation[24])
             self.plot[agent_id][3].append(observation[23] * observation[24])
 
-        if collaborative_timestep == 48 and agent_id == 0:
+        if collaborative_timestep == 72 and agent_id == 0:
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
             plt.plot(range(len(self.plot[agent_id][0])), [0]*len(self.plot[agent_id][0]), color="black")
             plt.show()
-            print(self.plot[agent_id])
 
 
         action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
+
+        energy = n.energy_normed(action_out*self.capacity[agent_id])
         action = max(min(action_out, 5 / self.capacity[agent_id]), -5 / self.capacity[agent_id])
-        energy = action*self.capacity[agent_id]
+        # energy = action*self.capacity[agent_id]
         efficiency = find_efficiency(action, 5, self.capacity[agent_id])
+        efficiency2 = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
         self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])
 
 
-        if agent_id == 0:
-            print(f"This gives a new SOC of: {self.soc[agent_id]}")
+        if agent_id == 0 and 18 <= collaborative_timestep <= 22:
+            print(f"Then wtf is it supposed to be: {observation[22]}\n")
+            print(f"This gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]}")
+            print(f"Previous capacity: {self.capacity[agent_id]}, Efficiency 1: {efficiency}, Efficiency 2: {efficiency2}, Energy: {energy}")
+
 
 
         battery_cons = n.last_energy_balance(self.soc[agent_id], previous_soc, efficiency)
