@@ -29,14 +29,14 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
-    if consumption * pos_in < 0:
+    if consumption * pos_in < 0:  # pos is 1 if previous consumption was positive and -1 if it was negative
         chunk = []
         steps = 0
         pos = -1*pos_in
 
         t = 0
 
-        while consumptions[agent_id][time_step + t] * pos >= 0:
+        while consumptions[agent_id][time_step + t] * pos >= 0:  # consumptions with the same sign
             consumption = consumptions[agent_id][time_step + t]
             chunk.append(consumption)
             t += 1
@@ -46,12 +46,12 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
 
         consumption_sum = sum(chunk)
 
-        if pos == -1:
-            if -1*consumption_sum >= (capacity-soc)/np.sqrt(0.83):
+        if pos == -1:  # If negative consumption
+            if -1*consumption_sum >= (capacity-soc)/np.sqrt(0.83):  # If more energy can be obtained than the one necessary to charge the battery
                 relative_consumption = [i / consumption_sum for i in chunk]
                 energies = [i * (capacity - soc)/np.sqrt(0.83) for i in relative_consumption]
 
-            else:
+            else:  # Otherwise charge with all the possible energy
                 energies = [-1*i for i in chunk]
 
         else:
@@ -67,6 +67,10 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
             consumption_price = [prices[i] * c for i, c in enumerate(chunk)]
 
             if consumption_sum >= soc * np.sqrt(0.83):
+                # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
+                # price*consumption value and bring it down to the next highest price*consumption by reducing the
+                # consumption at that time step. We do this consecutively until the battery has been emptied.
+
                 local_soc = soc * np.sqrt(0.83)
                 local_consumption_price = consumption_price[:]
                 energies = [0] * len(chunk)
@@ -104,7 +108,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
                 energies = chunk
         energy = -1*pos*energies[0]
 
-    else:
+    else:  # We already calculated the actions for this positive/negative consumption chunk.
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
@@ -142,8 +146,8 @@ class ImprovedIndividualConsumptionAgent:
 
         action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
-        energy = n.energy_normed(action_out * self.capacity[agent_id], max_power)
+        # max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
+        energy = n.energy_normed(action_out * self.capacity[agent_id], 5)
         efficiency = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
