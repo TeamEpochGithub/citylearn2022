@@ -71,6 +71,8 @@ def max_power(p_soc_init, p_nominal_power, previous_capacity):
         p_max_power = p_nominal_power
     elif 0.8 < x <= 1:
         p_max_power = p_nominal_power * (4.2 - 4 * x)
+    elif x > 1:
+        p_max_power = p_nominal_power
 
     return p_max_power
 
@@ -169,5 +171,4 @@ def efficiency(p_energy_normed, p_nominal_power):
     # v_net_electricity_consumption = net_electricity_consumption(non_shiftable_load, v_last_energy_balance, solar_generation_obs)
     #
     # # Correct result: 4.051166666666667
-
 
