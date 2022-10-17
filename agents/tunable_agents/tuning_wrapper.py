@@ -1,5 +1,5 @@
 from gym.spaces import Box
-from agents.pick_tuning_agent import TuningAgent
+from agents.tunable_agents.pick_tuning_agent import TuningAgent
 from rewards.user_reward import UserReward
 
 
@@ -17,9 +17,9 @@ class OrderEnforcingAgent:
     Calls each agent step with agent in a loop and returns the action
     """
 
-    def __init__(self, args):
+    def __init__(self, params):
         self.num_buildings = None
-        self.agent = TuningAgent(args)
+        self.agent = TuningAgent(params)
         self.action_space = None
 
     def register_reset(self, observation):

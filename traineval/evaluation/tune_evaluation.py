@@ -12,7 +12,7 @@ to do local evaluation. The evaluator **DOES NOT**
 use this script for orchestrating the evaluations. 
 """
 
-from agents.tuning_wrapper import OrderEnforcingAgent
+from agents.tunable_agents.tuning_wrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
@@ -49,12 +49,12 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(args, verbose=False):
+def evaluate(params, verbose=False):
     if verbose:
         print("Starting local evaluation")
 
     env = CityLearnEnv(schema=Constants.schema_path)
-    agent = OrderEnforcingAgent(args)
+    agent = OrderEnforcingAgent(params)
 
     # observation_list = []
     obs_dict = env_reset(env)
