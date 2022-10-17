@@ -1,4 +1,3 @@
-import csv
 import sys
 import pandas as pd
 import numpy as np
@@ -31,14 +30,14 @@ def individual_consumption_policy(observation, time_step, agent_id, remaining_ba
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
-    if next_consumption * pos_in < 0:
+    if next_consumption * pos_in < 0: # pos is 1 if previous consumption was positive and -1 if it was negative
         chunk_consumptions = []
         steps = 0
         pos = -pos_in
 
         t = 0
 
-        while consumptions[agent_id][time_step + t] * pos >= 0:
+        while consumptions[agent_id][time_step + t] * pos >= 0: # consumptions with the same sign
             next_consumption = consumptions[agent_id][time_step + t]
             chunk_consumptions.append(next_consumption)
             t += 1
@@ -48,11 +47,11 @@ def individual_consumption_policy(observation, time_step, agent_id, remaining_ba
 
         chunk_total_consumption = sum(chunk_consumptions)
 
-        if pos == -1:
-            if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83):
+        if pos == -1: # If negative consumption
+            if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83): # If more energy can be obtained than the one necessary to charge the battery
                 relative_consumption = [i / chunk_total_consumption for i in chunk_consumptions]
                 energies = [i * (remaining_battery_capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
-            else:
+            else: # Otherwise charge with all the possible energy
                 energies = [-1*i for i in chunk_consumptions]
 
         else:
@@ -68,6 +67,10 @@ def individual_consumption_policy(observation, time_step, agent_id, remaining_ba
             consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
 
             if chunk_total_consumption >= soc * np.sqrt(0.83):
+                # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
+                # price*consumption value and bring it down to the next highest price*consumption by reducing the
+                # consumption at that time step. We do this consecutively until the battery has been emptied.
+
                 local_soc = soc * np.sqrt(0.83)
                 energies = [0] * len(chunk_consumptions)
 
@@ -101,7 +104,7 @@ def individual_consumption_policy(observation, time_step, agent_id, remaining_ba
                 energies = chunk_consumptions
         energy = -1 * pos * energies[0]
 
-    else:
+    else: # We already calculated the actions for this positive/negative consumption chunk.
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
@@ -148,9 +151,9 @@ class ImprovedIndividualConsumptionAgent:
 
         action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.remaining_battery_capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        action = max(min(action_out, 5 / self.remaining_battery_capacity[agent_id]), -5 / self.remaining_battery_capacity[agent_id])
-        energy = action*self.remaining_battery_capacity[agent_id]
-        efficiency = find_efficiency(action, 5, self.remaining_battery_capacity[agent_id])
+        # max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
+        energy = n.energy_normed(action_out * self.remaining_battery_capacity[agent_id], 5)
+        efficiency = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
         self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.remaining_battery_capacity[agent_id])
