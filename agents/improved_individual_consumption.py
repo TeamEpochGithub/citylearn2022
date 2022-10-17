@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
-from traineval.training.data_preprocessing.find_action_limit import find_efficiency
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
@@ -143,9 +142,9 @@ class ImprovedIndividualConsumptionAgent:
 
         action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        action = max(min(action_out, 5 / self.capacity[agent_id]), -5 / self.capacity[agent_id])
-        energy = action*self.capacity[agent_id]
-        efficiency = find_efficiency(action, 5, self.capacity[agent_id])
+        max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
+        energy = n.energy_normed(action_out * self.capacity[agent_id], max_power)
+        efficiency = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
         self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])

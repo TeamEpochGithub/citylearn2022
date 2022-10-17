@@ -70,7 +70,7 @@ def max_power(p_soc_init, p_nominal_power, previous_capacity):
     if 0 <= x <= 0.8:
         p_max_power = p_nominal_power
     elif 0.8 < x <= 1:
-        p_max_power = p_nominal_power * (4 - 4 * x)
+        p_max_power = p_nominal_power * (4.2 - 4 * x)
 
     return p_max_power
 
