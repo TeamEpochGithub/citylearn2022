@@ -1,7 +1,11 @@
 import pandas as pd
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 
 
 class LiveLearner:
@@ -10,13 +14,13 @@ class LiveLearner:
         self.cap_learning_data = cap_learning_data
 
         self.load_forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=LGBMRegressor(),
             lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
             transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=LGBMRegressor(),
             lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
             transformer_y=StandardScaler()
         )
