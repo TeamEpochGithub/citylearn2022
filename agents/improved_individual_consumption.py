@@ -21,6 +21,8 @@ carbon = carbon.values.tolist()[1:]
 
 
 def individual_consumption_policy(observation, time_step, agent_id, remaining_battery_capacity, soc, pos_in, energies_in, steps_in):
+    if agent_id == 1:
+        print(observation, time_step, agent_id, remaining_battery_capacity, soc, pos_in, energies_in, steps_in)
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in

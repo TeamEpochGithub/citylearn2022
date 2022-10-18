@@ -1,4 +1,5 @@
-
+from agents.clean_improved_individual_consumption import CleanImprovedIndividualConsumptionAgent
+from agents.cleaner_improved_individual_consumption import CleanerImprovedIndividualConsumptionAgent
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
@@ -7,4 +8,4 @@ from agents.improved_individual_consumption_live_learning import ImprovedIndivid
 from agents.live_learning_consumption_agent import LiveLearningConsumptionAgent
 from agents.live_learning_consumption_based_agent import LiveLearningAgentTPOTActions
 
-UserAgent = ImprovedIndividualConsumptionLiveLearningAgent
+UserAgent = CleanImprovedIndividualConsumptionAgent
