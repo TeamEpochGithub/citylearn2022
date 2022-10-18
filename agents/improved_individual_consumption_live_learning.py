@@ -24,51 +24,55 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
 def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in,
-                                  live_learner):
+                                  live_learner, predicted_chunk):
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
 
-    live_learner.update_lists(observation)
-
+    # live_learner.update_lists(observation)
     consumption = consumptions[agent_id][time_step]
 
-    # if time_step > 60:
-    #     consumption = live_learner.get_consumption(1)
-    #     consumption = consumption.item()
+    if time_step > 60:
+        if not predicted_chunk:
+            consumption = live_learner.predict_consumption(1)
+        # consumption = consumption.item()
+        else:
+            consumption = predicted_chunk[steps_in]
 
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
+
+
     if consumption * pos_in < 0:
         chunk = []
         steps = 0
-        pos = -1 * pos_in
+        pos = -pos_in
 
         t = 0
 
-        while consumptions[agent_id][time_step + t] * pos >= 0:
-            consumption = consumptions[agent_id][time_step + t]
-            chunk.append(consumption)
-            t += 1
-            if time_step + t == 8759:
-                break
+        # while consumptions[agent_id][time_step + t] * pos >= 0:
+        #     consumption = consumptions[agent_id][time_step + t]
+        #     chunk.append(consumption)
+        #     t += 1
+        #     if time_step + t == 8759:
+        #         break
 
-        # if time_step <= 60:
-        #     while consumptions[agent_id][time_step + t] * pos >= 0:
-        #         consumption = consumptions[agent_id][time_step + t]
-        #         chunk.append(consumption)
-        #         t += 1
-        #         if time_step + t == 8759:
-        #             break
-        # else:
-        #     while live_learner.get_consumption(time_step + t) * pos >= 0:
-        #         consumption = live_learner.get_consumption(time_step + t)
-        #         consumption = consumption.item()
-        #         chunk.append(consumption)
-        #         t += 1
-        #         if time_step + t == 8759:
-        #             break
+        if time_step <= 60:
+            while consumptions[agent_id][time_step + t] * pos >= 0:
+                consumption = consumptions[agent_id][time_step + t]
+                chunk.append(consumption)
+                t += 1
+                if time_step + t == 8759:
+                    break
+        else:
+            while live_learner.get_consumption(time_step + t) * pos >= 0:
+                consumption = live_learner.get_consumption(time_step + t)
+                consumption = consumption.item()
+                chunk.append(consumption)
+                t += 1
+                if time_step + t == 8759:
+                    break
 
         consumption_sum = sum(chunk)
 
@@ -125,7 +129,6 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
                             local_consumption_price[peak_indexes[i]] -= rd * local_soc * prices[peak_indexes[i]]
 
                         local_soc = 0
-
             else:
                 energies = chunk
         energy = -1 * pos * energies[0]
@@ -134,26 +137,28 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
+        print(pos)
         energy = -1 * energies[steps] * pos
+        chunk = predicted_chunk
 
     action = energy / capacity
 
 
-    if time_step >= 72:
-        predicted_consumptions = live_learner.predict_multiple_consumption(6)
-    else:
-        predicted_consumptions = np.zeros(6)
-    predicted_consumptions = list(predicted_consumptions)
+    # if time_step >= 72:
+    #     predicted_consumptions = live_learner.predict_multiple_consumption(6)
+    # else:
+    #     predicted_consumptions = np.zeros(6)
+    # predicted_consumptions = list(predicted_consumptions)
+    #
+    # observation.append(action)
+    # row = observation + predicted_consumptions
+    # action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
+    # action_file = open(action_file_path, 'a', newline="")
+    # writer = csv.writer(action_file)
+    # writer.writerow(row)
+    # action_file.close()
 
-    observation.append(action)
-    row = observation + predicted_consumptions
-    action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
-    action_file = open(action_file_path, 'a', newline="")
-    writer = csv.writer(action_file)
-    writer.writerow(row)
-    action_file.close()
-
-    return action, energies, steps, pos
+    return action, energies, steps, pos, chunk
 
 
 class ImprovedIndividualConsumptionLiveLearningAgent:
@@ -168,6 +173,7 @@ class ImprovedIndividualConsumptionLiveLearningAgent:
         self.steps = {}
 
         self.live_learners = {}
+        self.predicted_chunk = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -176,6 +182,7 @@ class ImprovedIndividualConsumptionLiveLearningAgent:
         self.pos[agent_id] = -1
         self.energies[agent_id] = [0]
         self.steps[agent_id] = 0
+        self.predicted_chunk[agent_id] = []
 
         if str(agent_id) not in self.live_learners:
             self.live_learners[str(agent_id)] = LiveLearner(300)
@@ -187,9 +194,9 @@ class ImprovedIndividualConsumptionLiveLearningAgent:
         collaborative_timestep = self.timestep // 5
         print(collaborative_timestep)
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(
+        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id], self.predicted_chunk[agent_id] = individual_consumption_policy(
             observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id],
-            self.pos[agent_id], self.energies[agent_id], self.steps[agent_id], self.live_learners[str(agent_id)])
+            self.pos[agent_id], self.energies[agent_id], self.steps[agent_id], self.live_learners[str(agent_id)], predicted_chunk=self.predicted_chunk[agent_id])
 
         action = max(min(action_out, 5 / self.capacity[agent_id]), -5 / self.capacity[agent_id])
         energy = action * self.capacity[agent_id]
