@@ -1,5 +1,6 @@
 import numpy as np
 from agents.helper_classes.live_learning import LiveLearner
+from agents.helper_classes.tunable_live_learning import TunableLiveLearner
 from traineval.utils.convert_arguments import environment_convert_argument
 
 import os.path as osp
@@ -28,7 +29,7 @@ def live_learning_policy(observation, action_space, live_learner, timestep, agen
     return action
 
 
-class LiveLearningConsumptionAgent:
+class TunableLiveLearningConsumptionAgent:
     """
     Basic Rule based agent adopted from official Citylearn Rule based agent
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
@@ -45,7 +46,7 @@ class LiveLearningConsumptionAgent:
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(self.cap_learning_data, self.params)
+            self.live_learners[str(agent_id)] = TunableLiveLearner(self.cap_learning_data, self.params)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""

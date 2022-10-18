@@ -1,23 +1,34 @@
 import pandas as pd
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
+from lightgbm import LGBMRegressor
 
 
-class LiveLearner:
+class TunableLiveLearner:
 
-    def __init__(self, cap_learning_data):
+    def __init__(self, cap_learning_data, params):
+        self.params = params
         self.cap_learning_data = cap_learning_data
 
         self.load_forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
-            lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
+            # regressor=params["load_regressor"],
+            regressor=Ridge(),
+            lags=list(params["load_lags"]),
+            # lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
+            # transformer_y=params["load_transformer"]
             transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
-            lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
+            # regressor=params["solar_regressor"],
+            regressor=Ridge(),
+            lags=list(params["solar_lags"]),
+            # lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
+            # transformer_y=params["solar_transformer"]
             transformer_y=StandardScaler()
         )
 
@@ -34,8 +45,9 @@ class LiveLearner:
         self.solar_generations.append(scaled_solar_generation)
 
         if len(self.non_shiftable_loads) > self.cap_learning_data:
-            del self.non_shiftable_loads[0]
-            del self.solar_generations[0]
+            for _ in range(int(len(self.non_shiftable_loads) - self.cap_learning_data)):
+                del self.non_shiftable_loads[0]
+                del self.solar_generations[0]
 
     def fit_and_predict_load(self, steps):
         self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
@@ -72,6 +84,8 @@ class LiveLearner:
         for i, x in enumerate(predicted_solar):
             if x < 0:
                 predicted_solar[i] = 0
+        # print("solar", predicted_solar)
+        # print("solar over")
         return list(predicted_solar * 4)[:steps]
 
     def predict_multiple_consumption(self, steps, fit=False):

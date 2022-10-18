@@ -34,18 +34,17 @@ class LiveLearningConsumptionAgent:
     https://github.com/intelligent-environments-lab/CityLearn/blob/6ee6396f016977968f88ab1bd163ceb045411fa2/citylearn/agents/rbc.py#L23
     """
 
-    def __init__(self, params):
+    def __init__(self):
         self.action_space = {}
-        self.cap_learning_data = params["cap_learning_data"]
+        self.cap_learning_data = 500
         self.live_learners = {}
         self.timestep = -1
-        self.update_learner_interval = params["update_learner_interval"]
-        self.params = params
+        self.update_learner_interval = 3
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(self.cap_learning_data, self.params)
+            self.live_learners[str(agent_id)] = LiveLearner(self.cap_learning_data)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
