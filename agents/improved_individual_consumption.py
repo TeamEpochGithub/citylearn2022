@@ -117,6 +117,7 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
 
     if agent_id == 0 and 18 <= time_step <= 22:
         print([f"Agent {agent_id}, Action: {action}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}, SOC calculated: {soc/capacity}"])
+    print(f"Time: {time_step}")
 
     return action, energies, steps, pos
 
@@ -182,7 +183,7 @@ class ImprovedIndividualConsumptionAgent:
         if agent_id == 0 and 18 <= collaborative_timestep <= 22:
             print(f"Then wtf is it supposed to be: {observation[22]}\n")
             print(f"This gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]}")
-            print(f"Previous capacity: {self.capacity[agent_id]}, Efficiency 1: {efficiency}, Efficiency 2: {efficiency2}, Energy: {energy}")
+            print(f"Previous capacity: {self.capacity[agent_id]}, Efficiency 1: {efficiency}, Energy: {energy}")
 
 
 
