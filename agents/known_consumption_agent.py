@@ -21,7 +21,7 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign):
     chunk_consumptions = []
     future_steps = 0
 
-    while consumptions[agent_id][timestep + future_steps] * consumption_sign >= 0:  # Consumptions have the same sign
+    while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
         next_consumption = consumptions[agent_id][timestep + future_steps]
         chunk_consumptions.append(next_consumption)
         future_steps += 1
@@ -54,8 +54,8 @@ def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_ba
     return chunk_charge_loads
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, prev_consumption_sign, chunk_charge_loads, step_in_chunk):
-
+def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc,
+                                  prev_consumption_sign, chunk_charge_loads, step_in_chunk):
     if timestep >= 8759:
         return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign
 
@@ -63,7 +63,8 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
 
     if next_consumption * prev_consumption_sign < 0:
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
-        chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity, soc)
+        chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
+                                                  soc)
         step_in_chunk = 0
         consumption_sign = -prev_consumption_sign
 
@@ -84,27 +85,29 @@ class KnownConsumptionAgent:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.pos = {}
-        self.energies = {}
-        self.steps = {}
+        self.consumption_sign = {}
+        self.chunk_charge_loads = {}
+        self.steps_in_chunk = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.pos[agent_id] = -1
-        self.energies[agent_id] = [0]
-        self.steps[agent_id] = 0
+        self.consumption_sign[agent_id] = -1
+        self.chunk_charge_loads[agent_id] = [0]
+        self.steps_in_chunk[agent_id] = 0
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
-        collaborative_timestep = self.timestep // 5
+        building_timestep = self.timestep // len(observation)
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(
-            observation, collaborative_timestep, agent_id, self.remaining_battery_capacity[agent_id],
-            self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
+        action_out, self.chunk_charge_loads[agent_id], self.steps_in_chunk[agent_id], self.consumption_sign[agent_id] = \
+            individual_consumption_policy(observation[agent_id], building_timestep, agent_id,
+                                          self.remaining_battery_capacity[agent_id],
+                                          self.soc[agent_id], self.consumption_sign[agent_id], self.chunk_charge_loads[agent_id],
+                                          self.steps_in_chunk[agent_id])
 
         energy = n.energy_normed(action_out * self.remaining_battery_capacity[agent_id], 5)
         efficiency = n.efficiency(energy, 5)
