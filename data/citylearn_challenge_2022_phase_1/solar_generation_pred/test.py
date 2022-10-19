@@ -96,9 +96,17 @@ import matplotlib.pyplot as plt
 #y1 = np.sqrt((-(2*a*np.power(n,2)/(np.power(s,2)*np.power(b, 2))+1) +x np.sqrt(np.power((2*a*np.power(n,2)/(np.power(s,2)*np.power(b,2))+1), 2) - 4*np.power(a,2)*np.power(n, 4)/(np.power(s,4)*np.power(b,4))))/(-2*np.power(c,2)*np.power(n,2)/(np.power(s,4)*np.power(b,2))))
 #print(y1)
 
+from gym.spaces import Box
+
+action_space = Box(-1.0, 1.0, (1,), np.float32)
+x = np.array([0.0476381212169082], dtype=action_space.dtype)
+print(x.dtype)
+print(x[0])
+print(0.0476381212169082)
 
 
-
+# 0.0476381212169082 actual action
+# 0.047638121992349625 turns into this
 
 
 

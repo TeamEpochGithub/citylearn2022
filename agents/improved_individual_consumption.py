@@ -20,7 +20,7 @@ carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 carbon = carbon.values.tolist()[1:]
 
 
-def individual_consumption_policy(observation, time_step, agent_id, capacity, soc, pos_in, energies_in, steps_in):
+def individual_consumption_policy(observation, time_step, agent_id, action_space, capacity, soc, pos_in, energies_in, steps_in):
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
@@ -113,10 +113,11 @@ def individual_consumption_policy(observation, time_step, agent_id, capacity, so
 
         energy = -1*energies[steps]*pos
 
-    action = energy/capacity
+    energy = np.array(energy, dtype=action_space.dtype)
+    action = float(energy/np.array(capacity, dtype=action_space.dtype))
 
     if agent_id == 0 and 0 <= time_step <= 72:
-        print([f"Agent {agent_id}, Action: {action}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}, SOC calculated: {soc/capacity}"])
+        print([f"Agent {agent_id}, Action: {float(np.array(action, dtype=action_space.dtype))}, Energy: {float(np.array(energy, dtype=action_space.dtype))}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}"])
 
     return action, energies, steps, pos
 
@@ -128,7 +129,6 @@ class ImprovedIndividualConsumptionAgent:
         self.timestep = -1
         self.capacity = {}
         self.soc = {}
-        self.previous_soc = {}
         self.pos = {}
         self.energies = {}
         self.steps = {}
@@ -139,7 +139,6 @@ class ImprovedIndividualConsumptionAgent:
         self.action_space[agent_id] = action_space
         self.capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.previous_soc[agent_id] = 0
         self.pos[agent_id] = -1
         self.energies[agent_id] = [0]
         self.steps[agent_id] = 0
@@ -171,26 +170,23 @@ class ImprovedIndividualConsumptionAgent:
             plt.show()
 
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
+        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.action_space[agent_id], self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        max_power = n.max_power(self.previous_soc[agent_id], 5, self.capacity[agent_id])
-        energy = n.energy_normed(action_out * self.capacity[agent_id], max_power)
+        action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
+        max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
+        energy = n.energy_normed(action * self.capacity[agent_id], max_power)
         efficiency = n.efficiency(energy, 5)
 
-        self.previous_soc[agent_id] = self.soc[agent_id]
-        self.soc[agent_id] = n.soc(energy, self.previous_soc[agent_id], efficiency, self.capacity[agent_id])
+        previous_soc = self.soc[agent_id]
+        self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])
 
 
         if agent_id == 0 and 0 <= collaborative_timestep <= 72:
-            print(f"Then wtf is it supposed to be: {observation[22]}\n")
-            print(f"This gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]} or {self.soc[agent_id]}")
-            print(f"Previous capacity: {self.capacity[agent_id]}, Efficiency 1: {efficiency}, Energy: {energy}")
+            print(f"\nThis gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]}% or {self.soc[agent_id]} kWh")
+            print(f"Previous capacity: {self.capacity[agent_id]}, Energy: {energy}, Action output: {action_out}")
 
 
-
-        battery_cons = n.last_energy_balance(self.soc[agent_id], self.previous_soc[agent_id], efficiency)
+        battery_cons = n.last_energy_balance(self.soc[agent_id], previous_soc, efficiency)
         self.capacity[agent_id] = n.new_capacity(self.capacity[agent_id], battery_cons)
 
-        print(f"Action1: {action_out}")
-        print(f"Action2: {np.array([action_out], dtype=self.action_space[agent_id].dtype)[0]}")
         return np.array([action_out], dtype=self.action_space[agent_id].dtype)
