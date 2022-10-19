@@ -33,9 +33,9 @@ def live_learning_and_tpot_policy(observation, action_space, live_learner, actio
         obs.append(observation[i])
 
     if timestep % update_learner_interval == 0:
-        predicted_consumptions = live_learner.predict_multiple_consumption(6, fit=True)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(6, fit=True)
     else:
-        predicted_consumptions = live_learner.predict_multiple_consumption(6, fit=False)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(6, fit=False)
 
     action = action_model.predict([obs + predicted_consumptions])
     if agent_id == 1:

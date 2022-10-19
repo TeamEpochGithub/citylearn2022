@@ -17,8 +17,8 @@ class TunableLiveLearner:
         self.load_forecaster = ForecasterAutoreg(
             # regressor=params["load_regressor"],
             regressor=Ridge(),
-            lags=list(params["load_lags"]),
-            # lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
+            # lags=list(params["load_lags"]),
+            lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
             # transformer_y=params["load_transformer"]
             transformer_y=StandardScaler()
         )
@@ -26,8 +26,8 @@ class TunableLiveLearner:
         self.solar_forecaster = ForecasterAutoreg(
             # regressor=params["solar_regressor"],
             regressor=Ridge(),
-            lags=list(params["solar_lags"]),
-            # lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
+            # lags=list(params["solar_lags"]),
+            lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
             # transformer_y=params["solar_transformer"]
             transformer_y=StandardScaler()
         )

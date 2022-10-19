@@ -19,9 +19,9 @@ def live_learning_policy(observation, action_space, live_learner, timestep, agen
         return np.array([action], dtype=action_space.dtype)
 
     if timestep % update_learner_interval == 0:
-        predicted_consumptions = live_learner.predict_multiple_consumption(1, fit=True)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(1, fit=True)
     else:
-        predicted_consumptions = live_learner.predict_multiple_consumption(1, fit=False)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(1, fit=False)
 
     action = -predicted_consumptions[0] / 6.4
 
