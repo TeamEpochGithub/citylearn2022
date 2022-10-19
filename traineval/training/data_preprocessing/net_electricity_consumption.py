@@ -172,4 +172,3 @@ def efficiency(p_energy_normed, p_nominal_power):
     #
     # # Correct result: 4.051166666666667
 
-
