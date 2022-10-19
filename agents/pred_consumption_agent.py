@@ -24,8 +24,8 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
     future_steps = 1
 
     # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-    while live_learner.predict_multiple_consumptions(future_steps, False)[future_steps - 1] * consumption_sign > 0:
-        # print(live_learner.predict_multiple_consumption(timestep + future_steps, True)[timestep + future_steps - 1])
+    while live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1] * consumption_sign > 0 and future_steps < 15:
+        # print(live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1])
         next_consumption = consumptions[agent_id][timestep + future_steps]
         chunk_consumptions.append(next_consumption)
         future_steps += 1
@@ -73,7 +73,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
     print(timestep)
 
     live_learner.update_lists(observation)
-    print("111111")
+    # print("111111")
 
     if timestep < 150:
         hour = observation[2]
@@ -84,14 +84,14 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
 
     # next_consumption = consumptions[agent_id][timestep]
     next_consumption = live_learner.predict_consumption(1)
-    print("2222222")
+    # print("2222222")
 
     if step_in_chunk >= prev_predicted_chunk_size - 1 or next_consumption * prev_consumption_sign < 0:
-        print("33333333")
+        # print("33333333")
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
         chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
                                                   soc, live_learner)
-        print("44444444")
+        # print("44444444")
         predicted_chunk_size = len(chunk_charge_loads)
         step_in_chunk = 0
         consumption_sign = -prev_consumption_sign
@@ -101,7 +101,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         step_in_chunk += 1
         consumption_sign = prev_consumption_sign
 
-    print("charges and steps", chunk_charge_loads, step_in_chunk)
+    # print("charges and steps", chunk_charge_loads, step_in_chunk)
     charge_load = -1 * consumption_sign * chunk_charge_loads[step_in_chunk]
     action = charge_load / remaining_battery_capacity
 
@@ -132,7 +132,7 @@ class PredConsumptionAgent:
         self.predicted_chunk_size[agent_id] = 0
 
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(300, 5)
+            self.live_learners[str(agent_id)] = LiveLearner(300, 1)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
