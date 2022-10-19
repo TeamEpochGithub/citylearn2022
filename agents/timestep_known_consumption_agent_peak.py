@@ -141,7 +141,7 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
 
 
 
-class KnownConsumptionAgentPeak:
+class TimeStepKnownConsumptionAgentPeak:
 
     def __init__(self):
         self.action_space = {}
@@ -172,7 +172,6 @@ class KnownConsumptionAgentPeak:
 
         previous_soc = self.soc[agent_id]
         self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.remaining_battery_capacity[agent_id])
-        print(self.soc[agent_id])
 
         battery_cons = n.last_energy_balance(self.soc[agent_id], previous_soc, efficiency)
         self.remaining_battery_capacity[agent_id] = n.new_capacity(self.remaining_battery_capacity[agent_id],
