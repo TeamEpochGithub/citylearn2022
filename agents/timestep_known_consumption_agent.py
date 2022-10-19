@@ -54,51 +54,39 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
     return energies
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc,
-                                  prev_consumption_sign, energies, step_in_chunk):
+def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc):
     if timestep >= 8759:
-        return 0, energies, step_in_chunk, prev_consumption_sign
+        return 0
 
     next_consumption = consumptions[agent_id][timestep]
 
     if next_consumption == 0:
-        return 0, energies, step_in_chunk, prev_consumption_sign
+        return 0
+    elif next_consumption > 0:
+        consumption_sign = 1
+    else:
+        consumption_sign = -1
 
-    if next_consumption * prev_consumption_sign < 0:
-        # This happens if we switch from negative consumptions to positive ones, or vice versa.
-        consumption_sign = -prev_consumption_sign
-        energies = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity,
-                                        soc)
-        step_in_chunk = 0
+    energies = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc)
+    energy = -1 * consumption_sign * energies[0]
 
-    else:  # We already calculated the actions for this positive/negative consumption chunk.
-        step_in_chunk += 1
-        consumption_sign = prev_consumption_sign
-
-    energy = -1 * consumption_sign * energies[step_in_chunk]
     action = energy / remaining_battery_capacity
 
-    return action, energies, step_in_chunk, consumption_sign
+    return action
 
 
-class KnownConsumptionAgent:
+class TimeStepKnownConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.consumption_sign = {}
-        self.energies = {}
-        self.steps_in_chunk = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.consumption_sign[agent_id] = -1
-        self.energies[agent_id] = [0]
-        self.steps_in_chunk[agent_id] = 0
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -107,11 +95,9 @@ class KnownConsumptionAgent:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
-        action_out, self.energies[agent_id], self.steps_in_chunk[agent_id], self.consumption_sign[agent_id] = \
-            individual_consumption_policy(observation, building_timestep, agent_id,
-                                          self.remaining_battery_capacity[agent_id],
-                                          self.soc[agent_id], self.consumption_sign[agent_id], self.energies[agent_id],
-                                          self.steps_in_chunk[agent_id])
+        action_out = individual_consumption_policy(observation, building_timestep, agent_id,
+                                                   self.remaining_battery_capacity[agent_id],
+                                                   self.soc[agent_id])
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])
