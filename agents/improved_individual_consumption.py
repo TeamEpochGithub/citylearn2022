@@ -113,11 +113,10 @@ def individual_consumption_policy(observation, time_step, agent_id, action_space
 
         energy = -1*energies[steps]*pos
 
-    energy = np.array(energy, dtype=action_space.dtype)
-    action = float(energy/np.array(capacity, dtype=action_space.dtype))
+    action = energy/capacity
 
-    if agent_id == 0 and 0 <= time_step <= 72:
-        print([f"Agent {agent_id}, Action: {float(np.array(action, dtype=action_space.dtype))}, Energy: {float(np.array(energy, dtype=action_space.dtype))}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}"])
+    if agent_id == 0 and 0 <= time_step <= 48:
+        print([f"Agent {agent_id}, Action: {float(np.array(action, dtype=action_space.dtype))}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}"])
 
     return action, energies, steps, pos
 
@@ -153,16 +152,16 @@ class ImprovedIndividualConsumptionAgent:
         observation = observation[agent_id]
 
 
-        if agent_id == 0 and 0 <= collaborative_timestep <= 72:
+        if agent_id == 0 and 0 <= collaborative_timestep <= 48:
             print(f"and an actual net consumption {observation[23]}")
 
-        if collaborative_timestep > 24:
+        if collaborative_timestep > 0:
             self.plot[agent_id][0].append(observation[23])
             self.plot[agent_id][1].append(observation[20]-observation[21])
             self.plot[agent_id][2].append((observation[20]-observation[21])*observation[24])
             self.plot[agent_id][3].append(observation[23] * observation[24])
 
-        if collaborative_timestep == 72 and agent_id == 0:
+        if collaborative_timestep == 48 and agent_id == 0:
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
@@ -182,7 +181,7 @@ class ImprovedIndividualConsumptionAgent:
         self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])
 
 
-        if agent_id == 0 and 0 <= collaborative_timestep <= 72:
+        if agent_id == 0 and 0 <= collaborative_timestep <= 48:
             print(f"\nThis gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]}% or {self.soc[agent_id]} kWh")
             print(f"Previous capacity: {self.capacity[agent_id]}, Energy: {energy}, Action output: {action_out}")
 
