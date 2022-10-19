@@ -14,19 +14,22 @@ class LiveLearner:
         self.fit_delay_steps = fit_delay_steps
 
         self.load_forecaster = ForecasterAutoreg(
-            regressor=RandomForestRegressor(random_state=42),
+            regressor=Ridge(random_state=42),
             lags=[1, 2, 25, 26],
             transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
-            regressor=RandomForestRegressor(random_state=42),
+            regressor=Ridge(random_state=42),
             lags=[1, 2, 25, 26],
             transformer_y=StandardScaler()
         )
 
         self.non_shiftable_loads = []
         self.solar_generations = []
+
+        self.fit_delay_non_shiftable_load_buffer = []
+        self.fit_delay_solar_generations_buffer = []
 
     def update_lists(self, observation):
         non_shiftable_load = observation[20]
@@ -44,6 +47,14 @@ class LiveLearner:
         if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
             self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
             self.solar_forecaster.fit(pd.Series(self.solar_generations))
+
+    def force_fit(self):
+        self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+        self.solar_forecaster.fit(pd.Series(self.solar_generations))
+
+    #def predict_non_shiftable_load(self, steps):
+
+
 
     def predict_load(self, steps):
         predicted_load = self.load_forecaster.predict(steps=steps).iloc[steps - 1]

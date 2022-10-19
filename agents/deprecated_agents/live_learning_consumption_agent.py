@@ -18,9 +18,9 @@ def live_learning_policy(observation, action_space, live_learner, timestep, agen
         return np.array([action], dtype=action_space.dtype)
 
     if timestep % update_learner_interval == 0:
-        predicted_consumptions = live_learner.predict_multiple_consumptions(1, fit=True)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(1)
     else:
-        predicted_consumptions = live_learner.predict_multiple_consumptions(1, fit=False)
+        predicted_consumptions = live_learner.predict_multiple_consumptions(1)
 
     action = -predicted_consumptions[0] / 6.4
 
@@ -44,7 +44,7 @@ class LiveLearningConsumptionAgent:
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(self.cap_learning_data)
+            self.live_learners[str(agent_id)] = LiveLearner(self.cap_learning_data, self.update_learner_interval)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
