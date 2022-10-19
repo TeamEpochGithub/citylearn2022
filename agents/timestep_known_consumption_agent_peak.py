@@ -1,6 +1,7 @@
 import sys
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
@@ -148,20 +149,37 @@ class TimeStepKnownConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
+        self.plot = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
+        self.plot[agent_id] = [[], [], [], []]
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
         building_timestep = self.timestep // len(observation)
+        observation = observation[agent_id]
+
+        if building_timestep > 24:
+            self.plot[agent_id][0].append(observation[23])
+            self.plot[agent_id][1].append(observation[20] - observation[21])
+            self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
+            self.plot[agent_id][3].append(observation[23] * observation[24])
+
+        if building_timestep == 72 and agent_id == 0:
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+            plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
+            plt.show()
 
         action_out = \
-            individual_consumption_policy(observation[agent_id], building_timestep, agent_id,
+            individual_consumption_policy(observation, building_timestep, agent_id,
                                           self.remaining_battery_capacity[agent_id],
                                           self.soc[agent_id])
 
