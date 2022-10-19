@@ -15,13 +15,13 @@ class LiveLearner:
 
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1, 2, 25, 26],
+            lags=[1, 2, 3, 4, 5, 25, 26, 27, 28, 29, 30],
             transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1, 2, 25, 26],
+            lags=[1, 2, 3, 4, 5, 25, 26, 27, 28, 29, 30],
             transformer_y=StandardScaler()
         )
 
@@ -44,16 +44,58 @@ class LiveLearner:
             del self.non_shiftable_loads[0]
             del self.solar_generations[0]
 
-        if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
-            self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
-            self.solar_forecaster.fit(pd.Series(self.solar_generations))
+        # if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
+        #     self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+        #     self.solar_forecaster.fit(pd.Series(self.solar_generations))
 
-    def force_fit(self):
+    def force_fit_load(self):
         self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+        # print("Fitting load")
+
+    def force_fit_solar(self):
         self.solar_forecaster.fit(pd.Series(self.solar_generations))
 
-    #def predict_non_shiftable_load(self, steps):
+    def force_fit(self):
+        self.force_fit_load()
+        self.force_fit_solar()
+        self.fit_delay_non_shiftable_load_buffer = []
+        self.fit_delay_solar_generations_buffer = []
 
+    def predict_non_shiftable_load(self, steps):
+
+        if len(self.fit_delay_non_shiftable_load_buffer) == 0 or len(self.fit_delay_non_shiftable_load_buffer) < steps:
+
+            self.force_fit_load()
+
+            self.fit_delay_non_shiftable_load_buffer = self.predict_multiple_loads(steps + self.fit_delay_steps)
+
+        predictions = self.fit_delay_non_shiftable_load_buffer[:steps]
+        del self.fit_delay_non_shiftable_load_buffer[0]
+
+        return predictions
+
+    def predict_solar_generations(self, steps):
+
+        if len(self.fit_delay_solar_generations_buffer) == 0 or len(self.fit_delay_solar_generations_buffer) < steps:
+
+            self.force_fit_solar()
+
+            self.fit_delay_solar_generations_buffer = self.predict_multiple_solars(steps + self.fit_delay_steps)
+
+        predictions = self.fit_delay_solar_generations_buffer[:steps]
+        del self.fit_delay_solar_generations_buffer[0]
+
+        return predictions
+
+    def fit_delay_buffer_consumption(self, steps):
+
+        # print("Predicting")
+
+        load = self.predict_non_shiftable_load(steps)
+        solar = self.predict_solar_generations(steps)
+
+        return [a - b for a, b in
+                zip(load, solar)]
 
 
     def predict_load(self, steps):

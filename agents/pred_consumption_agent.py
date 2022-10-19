@@ -19,7 +19,7 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 # carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 # carbon = carbon.values.tolist()[1:]
 
-def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
+def get_chunk_consumptions_old(agent_id, timestep, consumption_sign, live_learner):
     chunk_consumptions = []
     future_steps = 1
 
@@ -34,6 +34,24 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
             break
 
     return chunk_consumptions
+
+def get_chunk_consumptions(timestep, consumption_sign, live_learner):
+
+    live_learner.force_fit()
+
+    max_chunk_size = 12
+
+    chunk_consumptions = live_learner.fit_delay_buffer_consumption(max_chunk_size)
+
+    for index, consumption in enumerate(chunk_consumptions):
+
+        if consumption * consumption_sign < 0:
+
+            chunk_consumptions = chunk_consumptions[:index]
+            break
+
+    return chunk_consumptions
+
 
 
 def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
@@ -76,7 +94,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
     live_learner.update_lists(observation)
     # print("111111")
 
-    if timestep < 150:
+    if timestep < 150:  # Can be lowered to just above the largest lag value when the agent is operational.
         hour = observation[2]
         action = -0.067
         if 6 <= hour <= 14:

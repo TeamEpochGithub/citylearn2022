@@ -17,10 +17,12 @@ def live_learning_policy(observation, action_space, live_learner, timestep, agen
             action = 0.11
         return np.array([action], dtype=action_space.dtype)
 
-    if timestep % update_learner_interval == 0:
-        predicted_consumptions = live_learner.predict_multiple_consumptions(1)
-    else:
-        predicted_consumptions = live_learner.predict_multiple_consumptions(1)
+    # if timestep % update_learner_interval == 0:
+    #     predicted_consumptions = live_learner.predict_multiple_consumptions(1)
+    # else:
+    #     predicted_consumptions = live_learner.predict_multiple_consumptions(1)
+
+    predicted_consumptions = live_learner.fit_delay_buffer_consumption(1)
 
     action = -predicted_consumptions[0] / 6.4
 
@@ -36,7 +38,7 @@ class LiveLearningConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}
-        self.cap_learning_data = 500
+        self.cap_learning_data = 1000
         self.live_learners = {}
         self.timestep = -1
         self.update_learner_interval = 3
