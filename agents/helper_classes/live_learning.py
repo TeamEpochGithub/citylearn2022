@@ -6,8 +6,9 @@ from sklearn.preprocessing import StandardScaler
 
 class LiveLearner:
 
-    def __init__(self, cap_learning_data):
+    def __init__(self, cap_learning_data, fit_delay_steps):
         self.cap_learning_data = cap_learning_data
+        self.fit_delay_steps = fit_delay_steps
 
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
@@ -37,43 +38,42 @@ class LiveLearner:
             del self.non_shiftable_loads[0]
             del self.solar_generations[0]
 
-    def fit_and_predict_load(self, steps):
-        self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+        if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
+            self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+            self.solar_forecaster.fit(pd.Series(self.solar_generations))
+
+    def predict_load(self, steps):
         predicted_load = self.load_forecaster.predict(steps=steps).iloc[steps - 1]
         if predicted_load < 0:
             predicted_load = 0
         return predicted_load * 8
 
-    def fit_and_predict_solar(self, steps):
-        self.solar_forecaster.fit(pd.Series(self.solar_generations))
+    def predict_solar(self, steps):
         predicted_solar = self.solar_forecaster.predict(steps=steps).iloc[steps - 1]
         if predicted_solar < 0:
             predicted_solar = 0
         return predicted_solar * 4
 
     def predict_consumption(self, steps):
-        return self.fit_and_predict_load(steps) - self.fit_and_predict_solar(steps)
+        return self.predict_load(steps) - self.predict_solar(steps)
 
-    def fit_and_predict_multiple_load(self, steps, fit=False):
-        if fit:
-            self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+    def predict_multiple_loads(self, steps):
         predicted_load = self.load_forecaster.predict(steps=steps)
         for i, x in enumerate(predicted_load):
             if x < 0:
                 predicted_load[i] = 0
-        # print("load", predicted_load)
-        # print("load over")
         return list(predicted_load * 8)[:steps]
 
-    def fit_and_predict_multiple_solar(self, steps, fit=False):
-        if fit:
-            self.solar_forecaster.fit(pd.Series(self.solar_generations))
+    def predict_multiple_solars(self, steps):
         predicted_solar = self.solar_forecaster.predict(steps=steps)
         for i, x in enumerate(predicted_solar):
             if x < 0:
                 predicted_solar[i] = 0
         return list(predicted_solar * 4)[:steps]
 
-    def predict_multiple_consumption(self, steps, fit=False):
+    def predict_multiple_consumptions(self, steps):
+        if self.fit_delay_steps > 1:
+            self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+            self.solar_forecaster.fit(pd.Series(self.solar_generations))
         return [a - b for a, b in
-                zip(self.fit_and_predict_multiple_load(steps, fit), self.fit_and_predict_multiple_solar(steps, fit))]
+                zip(self.predict_multiple_loads(steps), self.predict_multiple_solars(steps))]
