@@ -86,5 +86,8 @@ class LiveLearner:
         return list(predicted_solar * 4)[:steps]
 
     def predict_multiple_consumptions(self, steps):
+        if self.fit_delay_steps > 1:
+            self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
+            self.solar_forecaster.fit(pd.Series(self.solar_generations))
         return [a - b for a, b in
                 zip(self.predict_multiple_loads(steps), self.predict_multiple_solars(steps))]
