@@ -38,6 +38,7 @@ class LiveLearner:
             del self.non_shiftable_loads[0]
             del self.solar_generations[0]
 
+        print()
         if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
             self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
             self.solar_forecaster.fit(pd.Series(self.solar_generations))

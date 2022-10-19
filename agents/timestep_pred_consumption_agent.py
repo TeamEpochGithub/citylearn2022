@@ -4,25 +4,28 @@ import numpy as np
 import os.path as osp
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
+from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
-consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
+# consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
 # carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
 
-consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
-consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
+# consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
+# consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
 # carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 # carbon = carbon.values.tolist()[1:]
 
-def get_chunk_consumptions(agent_id, timestep, consumption_sign):
+def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
     chunk_consumptions = []
-    future_steps = 0
+    future_steps = 1
 
-    while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-        next_consumption = consumptions[agent_id][timestep + future_steps]
+    # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
+    while live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1] * consumption_sign > 0 and future_steps <= 32:
+        # next_consumption = consumptions[agent_id][timestep + future_steps]
+        next_consumption = live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1]
         chunk_consumptions.append(next_consumption)
         future_steps += 1
 
@@ -45,8 +48,8 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
+def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner):
+    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
@@ -54,51 +57,55 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
     return chunk_charge_loads
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc,
-                                  prev_consumption_sign, chunk_charge_loads, step_in_chunk):
+def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
     if timestep >= 8759:
-        return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign
+        return 0
+    print(timestep)
+    
+    live_learner.update_lists(observation)
 
-    next_consumption = consumptions[agent_id][timestep]
+    if timestep < 150:
+        hour = observation[2]
+        action = -0.067
+        if 6 <= hour <= 14:
+            action = 0.11
+        return action
+
+    next_consumption = live_learner.predict_consumption(1)
+    # next_consumption = consumptions[agent_id][timestep]
 
     if next_consumption == 0:
-        return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign
+        return 0
+    elif next_consumption > 0:
+        consumption_sign = 1
+    else:
+        consumption_sign = -1
 
-    if next_consumption * prev_consumption_sign < 0:
-        # This happens if we switch from negative consumptions to positive ones, or vice versa.
-        consumption_sign = -prev_consumption_sign
-        chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity,
-                                        soc)
-        step_in_chunk = 0
+    chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner)
+    charge_load = -1 * consumption_sign * chunk_charge_loads[0]
 
-    else:  # We already calculated the actions for this positive/negative consumption chunk.
-        step_in_chunk += 1
-        consumption_sign = prev_consumption_sign
+    action = charge_load / remaining_battery_capacity
 
-    energy = -1 * consumption_sign * chunk_charge_loads[step_in_chunk]
-    action = energy / remaining_battery_capacity
-
-    return action, chunk_charge_loads, step_in_chunk, consumption_sign
+    return action
 
 
-class KnownConsumptionAgent:
+class TimeStepPredConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.consumption_sign = {}
-        self.chunk_charge_loads = {}
-        self.steps_in_chunk = {}
+        
+        self.live_learners = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.consumption_sign[agent_id] = -1
-        self.chunk_charge_loads[agent_id] = [0]
-        self.steps_in_chunk[agent_id] = 0
+        
+        if str(agent_id) not in self.live_learners:
+            self.live_learners[str(agent_id)] = LiveLearner(300, 1)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -107,11 +114,9 @@ class KnownConsumptionAgent:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
-        action_out, self.chunk_charge_loads[agent_id], self.steps_in_chunk[agent_id], self.consumption_sign[agent_id] = \
-            individual_consumption_policy(observation, building_timestep, agent_id,
-                                          self.remaining_battery_capacity[agent_id],
-                                          self.soc[agent_id], self.consumption_sign[agent_id], self.chunk_charge_loads[agent_id],
-                                          self.steps_in_chunk[agent_id])
+        action_out = pred_consumption_policy(observation, building_timestep, agent_id,
+                                                   self.remaining_battery_capacity[agent_id],
+                                                   self.soc[agent_id], self.live_learners[str(agent_id)])
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])

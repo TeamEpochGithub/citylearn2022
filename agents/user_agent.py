@@ -3,6 +3,7 @@ from agents.improved_individual_consumption import ImprovedIndividualConsumption
 from agents.known_consumption_agent import KnownConsumptionAgent
 from agents.improved_individual_consumption import ImprovedIndividualConsumptionAgent
 from agents.timestep_known_consumption_agent import TimeStepKnownConsumptionAgent
+from agents.timestep_pred_consumption_agent import TimeStepPredConsumptionAgent
 from agents.known_consumption_agent import KnownConsumptionAgent
 from agents.pred_consumption_agent import PredConsumptionAgent
 from agents.known_consumption_agent_peak import KnownConsumptionAgentPeak
@@ -19,6 +20,7 @@ from agents.known_consumption_agent_peak import KnownConsumptionAgentPeak
 # UserAgent = BasicWeatherAgent
 #UserAgent = ConsumptionBasedAgent
 # UserAgent = DayTunedAgent
+# UserAgent = TimeStepPredConsumptionAgent
 UserAgent = KnownConsumptionAgentPeak
 
 # Changen naar MonthTunedAgent en dan weer submission maken
