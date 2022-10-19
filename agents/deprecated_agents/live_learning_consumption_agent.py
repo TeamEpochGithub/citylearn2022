@@ -41,7 +41,7 @@ class LiveLearningConsumptionAgent:
         self.cap_learning_data = 1000
         self.live_learners = {}
         self.timestep = -1
-        self.update_learner_interval = 3
+        self.update_learner_interval = 2
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
