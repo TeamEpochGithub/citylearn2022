@@ -4,7 +4,6 @@ import pandas as pd
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import RandomForestRegressor
 
 
 class LiveLearner:
@@ -15,13 +14,13 @@ class LiveLearner:
 
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1, 2, 3, 4, 5, 25, 26, 27, 28, 29, 30],
+            lags=[1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52],
             transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1, 2, 3, 4, 5, 25, 26, 27, 28, 29, 30],
+            lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
             transformer_y=StandardScaler()
         )
 
@@ -44,13 +43,8 @@ class LiveLearner:
             del self.non_shiftable_loads[0]
             del self.solar_generations[0]
 
-        # if len(self.non_shiftable_loads) > 60 and len(self.non_shiftable_loads) % self.fit_delay_steps == 0:
-        #     self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
-        #     self.solar_forecaster.fit(pd.Series(self.solar_generations))
-
     def force_fit_load(self):
         self.load_forecaster.fit(pd.Series(self.non_shiftable_loads))
-        # print("Fitting load")
 
     def force_fit_solar(self):
         self.solar_forecaster.fit(pd.Series(self.solar_generations))
@@ -88,8 +82,6 @@ class LiveLearner:
         return predictions
 
     def fit_delay_buffer_consumption(self, steps):
-
-        # print("Predicting")
 
         load = self.predict_non_shiftable_load(steps)
         solar = self.predict_solar_generations(steps)
