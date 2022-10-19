@@ -28,6 +28,9 @@ def individual_consumption_policy(observation, time_step, agent_id, action_space
     consumption = consumptions[agent_id][time_step]
     consumption_print = consumption
 
+    if consumption == 0:
+        return 0, energies_in, steps_in, pos_in
+
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
@@ -38,7 +41,7 @@ def individual_consumption_policy(observation, time_step, agent_id, action_space
 
         t = 0
 
-        while consumptions[agent_id][time_step + t] * pos >= 0:
+        while consumptions[agent_id][time_step + t] * pos > 0:
             consumption = consumptions[agent_id][time_step + t]
             chunk.append(consumption)
             t += 1
