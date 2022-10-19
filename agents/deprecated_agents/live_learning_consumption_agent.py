@@ -49,7 +49,7 @@ class LiveLearningConsumptionAgent:
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
         self.timestep += 1
-        return live_learning_policy(observation, self.action_space[agent_id],
+        return live_learning_policy(observation[agent_id], self.action_space[agent_id],
                                     self.live_learners[str(agent_id)],
                                     self.timestep // len(self.live_learners), agent_id,
                                     self.update_learner_interval)

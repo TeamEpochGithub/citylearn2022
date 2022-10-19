@@ -488,10 +488,36 @@ def auto_regressor_test_generic_start():
     print(metric_list)
     print(non_backtest_metric)
 
+def lag_list_maker():
+
+    days = 3
+    day_slice = 10
+
+    list_container = []
+
+    for i in range(0, days+1):
+
+        for j in range(1, day_slice+1):
+
+            ls = []
+
+            for k in range(0, i+1):
+
+                l = list(np.arange(1 + (k * 24), j + (k * 24)))
+                ls.append(l)
+
+            flat_list = [item for sublist in ls for item in sublist]
+            list_container.append(flat_list)
+
+    print(list_container)
+
+
 if __name__ == '__main__':
     # plot_average_lf()
     # day_difference()
     # average_difference()
     # auto_regressor_test_grid()
     # auto_regressor_test_non_grid()
-    auto_regressor_test_generic_start()
+
+    lag_list_maker()
+    #auto_regressor_test_generic_start()
