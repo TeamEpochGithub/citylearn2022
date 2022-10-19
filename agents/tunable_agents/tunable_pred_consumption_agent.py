@@ -19,15 +19,14 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 # carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 # carbon = carbon.values.tolist()[1:]
 
-def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
+def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner, params):
     chunk_consumptions = []
     future_steps = 1
 
     # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-    while live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1] * consumption_sign > 0 and future_steps <= 12:
+    while live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1] * consumption_sign > 0 and future_steps <= params["future_steps"]:
         # print(live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1])
-        next_consumption = live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1]
-        # next_consumption = consumptions[agent_id][timestep + future_steps]
+        next_consumption = consumptions[agent_id][timestep + future_steps]
         chunk_consumptions.append(next_consumption)
         future_steps += 1
         if timestep + future_steps >= 8759:
@@ -49,9 +48,9 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner):
+def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner, params):
     consumption_sign = -prev_consumption_sign
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner)
+    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner, params)
     # print("predicted consumptions", chunk_consumptions)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
@@ -62,13 +61,13 @@ def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_ba
 
     # print(chunk_charge_loads)
     if not chunk_charge_loads:
-        chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner)
+        chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner, params)
 
     return chunk_charge_loads
 
 
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc,
-                            prev_consumption_sign, chunk_charge_loads, step_in_chunk, live_learner, prev_predicted_chunk_size):
+                            prev_consumption_sign, chunk_charge_loads, step_in_chunk, live_learner, prev_predicted_chunk_size, params):
     if timestep >= 8759:
         return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign, prev_predicted_chunk_size
     print(timestep)
@@ -91,7 +90,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         # print("33333333")
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
         chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
-                                                  soc, live_learner)
+                                                  soc, live_learner, params)
         # print("44444444")
         predicted_chunk_size = len(chunk_charge_loads)
         step_in_chunk = 0
@@ -106,14 +105,12 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
     charge_load = -1 * consumption_sign * chunk_charge_loads[step_in_chunk]
     action = charge_load / remaining_battery_capacity
 
-    if agent_id == 1:
-        print(action)
     return action, chunk_charge_loads, step_in_chunk, consumption_sign, predicted_chunk_size
 
 
-class PredConsumptionAgent:
+class TunablePredConsumptionAgent:
 
-    def __init__(self):
+    def __init__(self, params):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
@@ -124,6 +121,7 @@ class PredConsumptionAgent:
         self.predicted_chunk_size = {}
 
         self.live_learners = {}
+        self.params = params
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -148,7 +146,7 @@ class PredConsumptionAgent:
                                     self.remaining_battery_capacity[agent_id],
                                     self.soc[agent_id], self.consumption_sign[agent_id],
                                     self.chunk_charge_loads[agent_id],
-                                    self.steps_in_chunk[agent_id], self.live_learners[str(agent_id)], self.predicted_chunk_size[agent_id])
+                                    self.steps_in_chunk[agent_id], self.live_learners[str(agent_id)], self.predicted_chunk_size[agent_id], self.params)
 
         energy = n.energy_normed(action_out * self.remaining_battery_capacity[agent_id], 5)
         efficiency = n.efficiency(energy, 5)
