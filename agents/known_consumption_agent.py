@@ -25,6 +25,7 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign):
         next_consumption = consumptions[agent_id][timestep + future_steps]
         chunk_consumptions.append(next_consumption)
         future_steps += 1
+
         if timestep + future_steps >= 8759:
             break
 
@@ -37,34 +38,37 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83):
         # If more energy can be obtained than the one necessary to charge the battery
         relative_consumption = [i / chunk_total_consumption for i in chunk_consumptions]
-        chunk_charge_loads = [i * (remaining_battery_capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
+        energies = [i * (remaining_battery_capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
     else:  # Otherwise charge with all the possible energy
-        chunk_charge_loads = [-1 * i for i in chunk_consumptions]
+        energies = [-1 * i for i in chunk_consumptions]
 
-    return chunk_charge_loads
+    return energies
 
 
 def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
     consumption_sign = -prev_consumption_sign
     chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
     if consumption_sign == -1:  # If negative consumption
-        chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
+        energies = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = chunk_consumptions
-    return chunk_charge_loads
+        energies = chunk_consumptions
+    return energies
 
 
 def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc,
-                                  prev_consumption_sign, chunk_charge_loads, step_in_chunk):
+                                  prev_consumption_sign, energies, step_in_chunk):
     if timestep >= 8759:
-        return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign
+        return 0, energies, step_in_chunk, prev_consumption_sign
 
     next_consumption = consumptions[agent_id][timestep]
 
+    if next_consumption == 0:
+        return 0, energies, step_in_chunk, prev_consumption_sign
+
     if next_consumption * prev_consumption_sign < 0:
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
-        chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
-                                                  soc)
+        energies = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
+                                        soc)
         step_in_chunk = 0
         consumption_sign = -prev_consumption_sign
 
@@ -72,10 +76,10 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
         step_in_chunk += 1
         consumption_sign = prev_consumption_sign
 
-    charge_load = -1 * consumption_sign * chunk_charge_loads[step_in_chunk]
-    action = charge_load / remaining_battery_capacity
+    energy = -1 * consumption_sign * energies[step_in_chunk]
+    action = energy / remaining_battery_capacity
 
-    return action, chunk_charge_loads, step_in_chunk, consumption_sign
+    return action, energies, step_in_chunk, consumption_sign
 
 
 class KnownConsumptionAgent:
@@ -86,7 +90,7 @@ class KnownConsumptionAgent:
         self.remaining_battery_capacity = {}
         self.soc = {}
         self.consumption_sign = {}
-        self.chunk_charge_loads = {}
+        self.energies = {}
         self.steps_in_chunk = {}
 
     def set_action_space(self, agent_id, action_space):
@@ -94,7 +98,7 @@ class KnownConsumptionAgent:
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
         self.consumption_sign[agent_id] = -1
-        self.chunk_charge_loads[agent_id] = [0]
+        self.energies[agent_id] = [0]
         self.steps_in_chunk[agent_id] = 0
 
     def compute_action(self, observation, agent_id):
@@ -102,14 +106,17 @@ class KnownConsumptionAgent:
 
         self.timestep += 1
         building_timestep = self.timestep // len(observation)
+        observation = observation[agent_id]
 
-        action_out, self.chunk_charge_loads[agent_id], self.steps_in_chunk[agent_id], self.consumption_sign[agent_id] = \
-            individual_consumption_policy(observation[agent_id], building_timestep, agent_id,
+        action_out, self.energies[agent_id], self.steps_in_chunk[agent_id], self.consumption_sign[agent_id] = \
+            individual_consumption_policy(observation, building_timestep, agent_id,
                                           self.remaining_battery_capacity[agent_id],
-                                          self.soc[agent_id], self.consumption_sign[agent_id], self.chunk_charge_loads[agent_id],
+                                          self.soc[agent_id], self.consumption_sign[agent_id], self.energies[agent_id],
                                           self.steps_in_chunk[agent_id])
 
-        energy = n.energy_normed(action_out * self.remaining_battery_capacity[agent_id], 5)
+        action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
+        max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])
+        energy = n.energy_normed(action * self.remaining_battery_capacity[agent_id], max_power)
         efficiency = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
