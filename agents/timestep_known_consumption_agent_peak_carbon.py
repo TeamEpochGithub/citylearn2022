@@ -46,7 +46,7 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -64,27 +64,30 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, rem
             date = shift_date(date[0], date[1], date[2], shifts=1)
 
             emissions.append(carbon[timestep + hour])
-        print(chunk_consumptions, agent_id, timestep)
+
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
         consumption_emissions = [emissions[i] * c for i, c in enumerate(chunk_consumptions)]
 
         max_p, min_p, max_e, min_e = max(consumption_prices), min(consumption_prices), max(consumption_emissions), min(consumption_emissions)
-
+        if len(chunk_consumptions) == 1:
+            min_p, min_e = 0, 0
         scaled_consumption_prices = [(i - min_p)/(max_p-min_p) for i in consumption_prices]
         scaled_consumption_emissions = [(i - min_e)/(max_e-min_e) for i in consumption_emissions]
 
-        reference_curve = [(scaled_consumption_prices[i] + scaled_consumption_emissions[i]) for i in range(len(chunk_consumptions))]
+
+        weight_p, weight_e = 1, 0
+        reference_curve = [(weight_p*scaled_consumption_prices[i] + weight_e*scaled_consumption_emissions[i]) for i in range(len(chunk_consumptions))]
 
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
 
-        return lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e)
+        return lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e, weight_p, weight_e)
 
     else:
         return chunk_consumptions
 
 
-def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e):
+def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e, weight_p, weight_e):
     while local_soc != 0:
 
         # Get the peak consumption_price and check in which step the peak(s) happens
@@ -100,7 +103,7 @@ def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emiss
         # Get the difference in consumption price between the highest peak and the next highest peak
         # Make a list of the differences in consumption between the highest peaks and the next highest peak
         difference_from_peak = peak - max(reference_curve_without_peak)
-        consumption_difference = [find_consumption_difference(difference_from_peak, prices[i], emissions[i], max_p, min_p, max_e, min_e) for i in peak_indices]
+        consumption_difference = [find_consumption_difference(difference_from_peak, prices[i], emissions[i], max_p, min_p, max_e, min_e, weight_p, weight_e) for i in peak_indices]
 
         # Lower peaks to next highest peak
         if local_soc >= sum(consumption_difference):
@@ -121,12 +124,12 @@ def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emiss
 
     return chunk_charge_loads
 
-def find_consumption_difference(difference_from_peak, price, emission, max_p, min_p, max_e, min_e):
+def find_consumption_difference(difference_from_peak, price, emission, max_p, min_p, max_e, min_e, weight_p, weight_e):
     range_p = max_p - min_p
     range_e = max_e - min_e
 
-    consumption = ((difference_from_peak * range_e * range_p) + (range_e * min_p) + (range_p * min_e))\
-        / ((range_e * price) + (range_p * emission))
+    consumption = ((difference_from_peak * range_e * range_p) + (range_e * min_p * weight_p) + (range_p * min_e * weight_e))\
+        / ((weight_p * range_e * price) + (weight_e * range_p * emission))
 
     return consumption
 
@@ -138,7 +141,7 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc)
+        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id)
 
     return chunk_charge_loads
 
