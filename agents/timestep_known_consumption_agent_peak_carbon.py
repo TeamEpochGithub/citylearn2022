@@ -66,6 +66,12 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, rem
             emissions.append(carbon[timestep + hour])
 
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+        consumption_emissions = [emissions[i] * c for i, c in enumerate(chunk_consumptions)]
+
+        scaled_consumption_prices = [(i - min(consumption_prices))/(max(consumption_prices)-max(consumption_prices)) for i in consumption_prices]
+        scaled_consumption_emissions = [(i - min(consumption_emissions))/(max(consumption_emissions)-max(consumption_emissions)) for i in consumption_emissions]
+        reference_curve = [(scaled_consumption_prices[i] + scaled_consumption_emissions[i]) for i in range(len(chunk_consumptions))]
+
 
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
