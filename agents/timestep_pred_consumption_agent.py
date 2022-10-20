@@ -34,6 +34,21 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
 
     return chunk_consumptions
 
+def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
+
+    max_chunk_size = 32
+
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size)
+
+    for index, consumption in enumerate(chunk_consumptions):
+
+        if consumption * consumption_sign < 0:
+
+            chunk_consumptions = chunk_consumptions[:index]
+            break
+
+    return chunk_consumptions
+
 
 def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
     chunk_total_consumption = sum(chunk_consumptions)
@@ -49,7 +64,9 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
 
 
 def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner):
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner)
+    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner)
+    if len(chunk_consumptions) == 0:
+        chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign * -1, live_learner)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
@@ -60,7 +77,7 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
     if timestep >= 8759:
         return 0
-    print(timestep)
+    #print(timestep, agent_id)
     
     live_learner.update_lists(observation)
 
@@ -71,8 +88,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
             action = 0.11
         return action
 
-    next_consumption = live_learner.predict_consumption(1)
-    # next_consumption = consumptions[agent_id][timestep]
+    next_consumption = live_learner.predict_consumption(1)[0]
 
     if next_consumption == 0:
         return 0
@@ -105,7 +121,7 @@ class TimeStepPredConsumptionAgent:
         self.soc[agent_id] = 0
         
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(300, 1)
+            self.live_learners[str(agent_id)] = LiveLearner(500, 15)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""

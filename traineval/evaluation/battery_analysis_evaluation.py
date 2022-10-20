@@ -119,7 +119,8 @@ def evaluate():
                 agent_time_elapsed += time.perf_counter() - step_start
 
             num_steps += 1
-            if num_steps % 1000 == 0:
+            #print("Hour:", num_steps)
+            if num_steps % 100 == 0:
                 print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
