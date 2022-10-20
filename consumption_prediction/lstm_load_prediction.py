@@ -535,7 +535,7 @@ def auto_regressor_test_generic_start():
 
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1,2,3,4,5,23,24,25,26,27, 48, 49, 50, 51, 52],
+            lags=[1,2,3,4,5,23,24,25,26,27, 48, 49, 50, 51, 50],
             transformer_y=StandardScaler()
         )
 
@@ -549,7 +549,7 @@ def auto_regressor_test_generic_start():
             if inner_index % 200 == 0:
                 print(inner_index)
 
-            current_prediction = forecaster.predict(steps=1)
+            current_prediction = forecaster.predict(steps=1, last_window=pd.Series(encountered_data[-51:]))
 
             predictions.append(current_prediction.iloc[0])
 
@@ -561,7 +561,9 @@ def auto_regressor_test_generic_start():
                 del encountered_data[0]
 
             # if index % 2 == 0:
-            forecaster.fit(y=pd.Series(encountered_data))
+
+            if inner_index % 5 == 0:
+                forecaster.fit(y=pd.Series(encountered_data))
 
         mse = (np.square(np.asarray(predictions) - np.asarray(truth))).mean()
         non_backtest_metric.append(np.sqrt(mse))

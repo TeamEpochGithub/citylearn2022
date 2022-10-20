@@ -37,11 +37,9 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
 
 def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
 
-    live_learner.force_fit()
-
     max_chunk_size = 12
 
-    chunk_consumptions = live_learner.fit_delay_buffer_consumption(max_chunk_size)
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size)
 
     for index, consumption in enumerate(chunk_consumptions):
 
@@ -49,6 +47,7 @@ def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
 
             chunk_consumptions = chunk_consumptions[:index]
             break
+
 
     return chunk_consumptions
 
@@ -96,7 +95,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         return action, chunk_charge_loads, step_in_chunk + 1, prev_consumption_sign, prev_predicted_chunk_size
 
     # next_consumption = consumptions[agent_id][timestep]
-    next_consumption = live_learner.fit_delay_buffer_consumption(1)[0]
+    next_consumption = live_learner.predict_consumption(1)[0]
 
     if step_in_chunk >= prev_predicted_chunk_size - 1 or next_consumption * prev_consumption_sign < 0:
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
@@ -141,7 +140,7 @@ class PredConsumptionAgent:
         self.predicted_chunk_size[agent_id] = 0
 
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(300, 1)
+            self.live_learners[str(agent_id)] = LiveLearner(300, 15)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""

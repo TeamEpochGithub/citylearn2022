@@ -22,7 +22,7 @@ def live_learning_policy(observation, action_space, live_learner, timestep, agen
     # else:
     #     predicted_consumptions = live_learner.predict_multiple_consumptions(1)
 
-    predicted_consumptions = live_learner.fit_delay_buffer_consumption(1)
+    predicted_consumptions = live_learner.predict_consumption(1)
 
     action = -predicted_consumptions[0] / 6.4
 
@@ -41,7 +41,7 @@ class LiveLearningConsumptionAgent:
         self.cap_learning_data = 1000
         self.live_learners = {}
         self.timestep = -1
-        self.update_learner_interval = 2
+        self.update_learner_interval = 5
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
