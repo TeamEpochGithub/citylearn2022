@@ -7,6 +7,7 @@ from agents.timestep_pred_consumption_agent import TimeStepPredConsumptionAgent
 from agents.known_consumption_agent import KnownConsumptionAgent
 from agents.pred_consumption_agent import PredConsumptionAgent
 from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptionAgentPeak
+from agents.timestep_known_consumption_agent_peak_carbon import TimeStepKnownConsumptionAgentPeakCarbon
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
@@ -21,6 +22,6 @@ from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptio
 #UserAgent = ConsumptionBasedAgent
 # UserAgent = DayTunedAgent
 # UserAgent = TimeStepPredConsumptionAgent
-UserAgent = TimeStepKnownConsumptionAgentPeak
+UserAgent = TimeStepKnownConsumptionAgentPeakCarbon
 
 # Changen naar MonthTunedAgent en dan weer submission maken

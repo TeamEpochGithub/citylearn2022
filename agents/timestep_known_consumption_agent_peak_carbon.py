@@ -64,58 +64,72 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, rem
             date = shift_date(date[0], date[1], date[2], shifts=1)
 
             emissions.append(carbon[timestep + hour])
-
+        print(chunk_consumptions, agent_id, timestep)
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
         consumption_emissions = [emissions[i] * c for i, c in enumerate(chunk_consumptions)]
 
-        scaled_consumption_prices = [(i - min(consumption_prices))/(max(consumption_prices)-max(consumption_prices)) for i in consumption_prices]
-        scaled_consumption_emissions = [(i - min(consumption_emissions))/(max(consumption_emissions)-max(consumption_emissions)) for i in consumption_emissions]
-        reference_curve = [(scaled_consumption_prices[i] + scaled_consumption_emissions[i]) for i in range(len(chunk_consumptions))]
+        max_p, min_p, max_e, min_e = max(consumption_prices), min(consumption_prices), max(consumption_emissions), min(consumption_emissions)
 
+        scaled_consumption_prices = [(i - min_p)/(max_p-min_p) for i in consumption_prices]
+        scaled_consumption_emissions = [(i - min_e)/(max_e-min_e) for i in consumption_emissions]
+
+        reference_curve = [(scaled_consumption_prices[i] + scaled_consumption_emissions[i]) for i in range(len(chunk_consumptions))]
 
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
 
-        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
+        return lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e)
 
     else:
         return chunk_consumptions
 
 
-def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
+def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e):
     while local_soc != 0:
 
         # Get the peak consumption_price and check in which step the peak(s) happens
-        max_consumption_price = max(consumption_prices)
-        peak_indices = [i for i, p in enumerate(consumption_prices) if p == max_consumption_price]
+        peak = max(reference_curve)
+        peak_indices = [i for i, p in enumerate(reference_curve) if p == peak]
 
         # List of other prices which do not indicate a peak
-        consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
+        reference_curve_without_peak = [x for x in reference_curve if x != peak]
 
-        if len(consumption_prices_without_peak) == 0:
-            consumption_prices_without_peak = [0]
+        if len(reference_curve_without_peak) == 0:
+            reference_curve_without_peak = [0]
 
         # Get the difference in consumption price between the highest peak and the next highest peak
         # Make a list of the differences in consumption between the highest peaks and the next highest peak
-        difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
-        consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
+        difference_from_peak = peak - max(reference_curve_without_peak)
+        consumption_difference = [find_consumption_difference(difference_from_peak, prices[i], emissions[i], max_p, min_p, max_e, min_e) for i in peak_indices]
 
         # Lower peaks to next highest peak
         if local_soc >= sum(consumption_difference):
             for i, difference in enumerate(consumption_difference):
                 chunk_charge_loads[peak_indices[i]] += difference
                 local_soc -= difference
-                consumption_prices[peak_indices[i]] -= difference_from_peak
+                reference_curve[peak_indices[i]] -= difference_from_peak
         else:
             relative_difference = [c / sum(consumption_difference) for c in consumption_difference]
 
             for i, rd in enumerate(relative_difference):
-                chunk_charge_loads[peak_indices[i]] += local_soc * rd
-                consumption_prices[peak_indices[i]] -= rd * local_soc * prices[peak_indices[i]]
+                chunk_charge_load = rd * local_soc
+                chunk_charge_loads[peak_indices[i]] += chunk_charge_load
+
+                reference_curve[peak_indices[i]] -= (chunk_charge_load * prices[peak_indices[i]] - min_p)/(max_p-min_p) + (chunk_charge_load*emissions[peak_indices[i]] - min_e)/(max_e-min_e)
 
             local_soc = 0
 
     return chunk_charge_loads
+
+def find_consumption_difference(difference_from_peak, price, emission, max_p, min_p, max_e, min_e):
+    range_p = max_p - min_p
+    range_e = max_e - min_e
+
+    consumption = ((difference_from_peak * range_e * range_p) + (range_e * min_p) + (range_p * min_e))\
+        / ((range_e * price) + (range_p * emission))
+
+    return consumption
+
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
@@ -152,7 +166,7 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
 
 
 
-class TimeStepKnownConsumptionAgentPeak:
+class TimeStepKnownConsumptionAgentPeakCarbon:
 
     def __init__(self):
         self.action_space = {}
