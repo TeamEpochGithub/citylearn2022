@@ -35,6 +35,23 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
 
     return chunk_consumptions
 
+def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
+
+    max_chunk_size = 12
+
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size)
+
+    for index, consumption in enumerate(chunk_consumptions):
+
+        if consumption * consumption_sign < 0:
+
+            chunk_consumptions = chunk_consumptions[:index]
+            break
+
+
+    return chunk_consumptions
+
+
 
 def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
     chunk_total_consumption = sum(chunk_consumptions)
@@ -51,16 +68,12 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
 
 def calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner):
     consumption_sign = -prev_consumption_sign
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner)
-    # print("predicted consumptions", chunk_consumptions)
+    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
-        # print("AA")
     else:
         chunk_charge_loads = chunk_consumptions
-        # print("BB")
 
-    # print(chunk_charge_loads)
     if not chunk_charge_loads:
         chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner)
 
@@ -71,12 +84,10 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
                             prev_consumption_sign, chunk_charge_loads, step_in_chunk, live_learner, prev_predicted_chunk_size):
     if timestep >= 8759:
         return 0, chunk_charge_loads, step_in_chunk, prev_consumption_sign, prev_predicted_chunk_size
-    print(timestep)
 
     live_learner.update_lists(observation)
-    # print("111111")
 
-    if timestep < 150:
+    if timestep < 150:  # Can be lowered to just above the largest lag value when the agent is operational.
         hour = observation[2]
         action = -0.067
         if 6 <= hour <= 14:
@@ -84,15 +95,12 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         return action, chunk_charge_loads, step_in_chunk + 1, prev_consumption_sign, prev_predicted_chunk_size
 
     # next_consumption = consumptions[agent_id][timestep]
-    next_consumption = live_learner.predict_consumption(1)
-    # print("2222222")
+    next_consumption = live_learner.predict_consumption(1)[0]
 
     if step_in_chunk >= prev_predicted_chunk_size - 1 or next_consumption * prev_consumption_sign < 0:
-        # print("33333333")
         # This happens if we switch from negative consumptions to positive ones, or vice versa.
         chunk_charge_loads = calculate_next_chunk(prev_consumption_sign, agent_id, timestep, remaining_battery_capacity,
                                                   soc, live_learner)
-        # print("44444444")
         predicted_chunk_size = len(chunk_charge_loads)
         step_in_chunk = 0
         consumption_sign = -prev_consumption_sign
@@ -102,12 +110,9 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         step_in_chunk += 1
         consumption_sign = prev_consumption_sign
 
-    # print("charges and steps", chunk_charge_loads, step_in_chunk)
     charge_load = -1 * consumption_sign * chunk_charge_loads[step_in_chunk]
     action = charge_load / remaining_battery_capacity
 
-    if agent_id == 1:
-        print(action)
     return action, chunk_charge_loads, step_in_chunk, consumption_sign, predicted_chunk_size
 
 
@@ -135,7 +140,7 @@ class PredConsumptionAgent:
         self.predicted_chunk_size[agent_id] = 0
 
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(300, 1)
+            self.live_learners[str(agent_id)] = LiveLearner(300, 15)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
