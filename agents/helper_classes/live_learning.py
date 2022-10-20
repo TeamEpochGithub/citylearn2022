@@ -18,7 +18,7 @@ class LiveLearner:
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
-            lags=[1, 2, 3, 23, 24, 25, 48, 49, 50],
+            lags=[1, 2],
             transformer_y=StandardScaler()
         )
 
