@@ -46,7 +46,7 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -67,16 +67,18 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, rem
 
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
 
+        if timestep == 16:
+            print(f"Peak: {max(chunk_consumptions)}, Time: {timestep}, Agent: {agent_id}, max_p {max(consumption_prices)}, min_p {min(consumption_prices)}")
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
 
-        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
+        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, timestep, agent_id)
 
     else:
         return chunk_consumptions
 
 
-def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
+def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, timestep, agent_id):
     while local_soc != 0:
 
         # Get the peak consumption_price and check in which step the peak(s) happens
@@ -85,7 +87,7 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
         # List of other prices which do not indicate a peak
         consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
-
+        print(consumption_prices)
         if len(consumption_prices_without_peak) == 0:
             consumption_prices_without_peak = [0]
 
@@ -93,6 +95,8 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
         # Make a list of the differences in consumption between the highest peaks and the next highest peak
         difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
         consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
+        if timestep != 16:
+            print(f"Cons difference: {consumption_difference}, Diff from peak: {difference_from_peak}, Time: {timestep}, SOC: {local_soc}")
 
         # Lower peaks to next highest peak
         if local_soc >= sum(consumption_difference):
@@ -118,7 +122,7 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc)
+        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id)
 
     return chunk_charge_loads
 
