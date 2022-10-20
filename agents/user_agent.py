@@ -1,6 +1,6 @@
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
-from agents.basic_pred_consumption_agent import BasicPredConsumptionAgent
+from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptionAgentPeak
 
-UserAgent = BasicPredConsumptionAgent
+UserAgent = TimeStepKnownConsumptionAgentPeak
