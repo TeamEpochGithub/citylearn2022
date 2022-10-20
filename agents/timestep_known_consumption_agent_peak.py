@@ -46,7 +46,7 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -118,7 +118,7 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
         chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep,
-                                                           remaining_battery_capacity)
+                                                           remaining_battery_capacity, soc)
 
     return chunk_charge_loads
 
