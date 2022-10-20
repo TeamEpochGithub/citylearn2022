@@ -107,7 +107,7 @@ class TimeStepPredConsumptionAgent:
         self.soc[agent_id] = 0
         
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(168, 30)
+            self.live_learners[str(agent_id)] = LiveLearner(500, 15)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
