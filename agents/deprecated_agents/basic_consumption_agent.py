@@ -22,7 +22,7 @@ def individual_consumption_policy(action_space, time_step, agent_id):
     return action
 
 
-class IndividualConsumptionAgent:
+class BasicConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}

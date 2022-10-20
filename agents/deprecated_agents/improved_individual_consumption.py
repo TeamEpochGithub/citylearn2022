@@ -20,108 +20,106 @@ carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 carbon = carbon.values.tolist()[1:]
 
 
-def individual_consumption_policy(observation, time_step, agent_id, remaining_battery_capacity, soc, pos_in, energies_in, steps_in):
-    if agent_id == 1:
-        print(observation, time_step, agent_id, remaining_battery_capacity, soc, pos_in, energies_in, steps_in)
+def individual_consumption_policy(observation, time_step, agent_id, action_space, capacity, soc, pos_in, energies_in, steps_in):
 
     if time_step >= 8759:
         return 0, energies_in, steps_in, pos_in
 
-    next_consumption = consumptions[agent_id][time_step]
+    consumption = consumptions[agent_id][time_step]
+    consumption_print = consumption
+
+    if consumption == 0:
+        return 0, energies_in, steps_in, pos_in
 
     hour = observation[2]
     date = shift_date(hour, observation[1], observation[0], shifts=1)
 
-    if next_consumption * pos_in < 0: # pos is 1 if previous consumption was positive and -1 if it was negative
-        chunk_consumptions = []
+    if consumption * pos_in < 0:
+        chunk = []
         steps = 0
-        pos = -pos_in
+        pos = -1*pos_in
 
         t = 0
 
-        while consumptions[agent_id][time_step + t] * pos >= 0: # consumptions with the same sign
-            next_consumption = consumptions[agent_id][time_step + t]
-            chunk_consumptions.append(next_consumption)
+        while consumptions[agent_id][time_step + t] * pos > 0:
+            consumption = consumptions[agent_id][time_step + t]
+            chunk.append(consumption)
             t += 1
 
-            if time_step + t >= 8759:
+            if time_step + t == 8759:
                 break
 
-        chunk_total_consumption = sum(chunk_consumptions)
+        consumption_sum = sum(chunk)
 
-        if pos == -1: # If negative consumption
-            if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83): # If more energy can be obtained than the one necessary to charge the battery
-                relative_consumption = [i / chunk_total_consumption for i in chunk_consumptions]
-                energies = [i * (remaining_battery_capacity - soc) / np.sqrt(0.83) for i in relative_consumption]
-            else: # Otherwise charge with all the possible energy
-                energies = [-1*i for i in chunk_consumptions]
+        if pos == -1:
+            if -1*consumption_sum >= (capacity-soc)/np.sqrt(0.83):
+                relative_consumption = [i / consumption_sum for i in chunk]
+                energies = [i * (capacity - soc)/np.sqrt(0.83) for i in relative_consumption]
+
+            else:
+                energies = [-1*i for i in chunk]
 
         else:
             prices = []
             emissions = []
 
-            for h in range(len(chunk_consumptions)):
+            for h in range(len(chunk)):
                 prices.append(pricing(date[2], date[0], date[1]))
                 date = shift_date(date[0], date[1], date[2], shifts=1)
 
                 emissions.append(carbon[time_step + h])
 
-            consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+            consumption_price = [prices[i] * c for i, c in enumerate(chunk)]
 
-            if chunk_total_consumption >= soc * np.sqrt(0.83):
-                # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
-                # price*consumption value and bring it down to the next highest price*consumption by reducing the
-                # consumption at that time step. We do this consecutively until the battery has been emptied.
-
+            if consumption_sum >= soc * np.sqrt(0.83):
                 local_soc = soc * np.sqrt(0.83)
-                energies = [0] * len(chunk_consumptions)
+                local_consumption_price = consumption_price[:]
+                energies = [0] * len(chunk)
 
                 while local_soc != 0:
-                    max_consumption_price = max(consumption_prices)
-                    peak_indices = [i for i, p in enumerate(consumption_prices) if p == max_consumption_price]
+                    removing = local_consumption_price[:]
+                    peak = max(local_consumption_price)
+                    peak_indexes = [i for i, cp in enumerate(local_consumption_price) if cp == peak]
 
-                    consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
+                    for _ in peak_indexes:
+                        removing.remove(peak)
 
-                    if len(consumption_prices_without_peak) == 0:
-                        consumption_prices_without_peak = [0]
+                    if len(removing) == 0:
+                        removing = [0]
 
-                    difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
-                    consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
+                    difference = peak - max(removing)
+                    consumption_difference = [difference/prices[i] for i in peak_indexes]
 
                     if local_soc >= sum(consumption_difference):
-                        for i, difference in enumerate(consumption_difference):
-                            energies[peak_indices[i]] += difference
-                            local_soc -= difference
-                            consumption_prices[peak_indices[i]] -= difference_from_peak
+                        for i, cd in enumerate(consumption_difference):
+                            energies[peak_indexes[i]] += cd
+                            local_soc -= cd
+                            local_consumption_price[peak_indexes[i]] -= difference
+
                     else:
-                        relative_difference = [c / sum(consumption_difference) for c in consumption_difference]
+                        relative_difference = [cd/sum(consumption_difference) for cd in consumption_difference]
 
                         for i, rd in enumerate(relative_difference):
-                            energies[peak_indices[i]] += local_soc*rd
-                            consumption_prices[peak_indices[i]] -= rd * local_soc * prices[peak_indices[i]]
+                            energies[peak_indexes[i]] += local_soc*rd
+                            local_consumption_price[peak_indexes[i]] -= rd * local_soc * prices[peak_indexes[i]]
 
                         local_soc = 0
 
             else:
-                energies = chunk_consumptions
-        energy = -1 * pos * energies[0]
+                energies = chunk
+        energy = -1*pos*energies[0]
 
-    else: # We already calculated the actions for this positive/negative consumption chunk.
+    else:
         pos = pos_in
         energies = energies_in
         steps = steps_in + 1
 
         energy = -1*energies[steps]*pos
 
-    action = energy / remaining_battery_capacity
+    action = energy/capacity
 
-    # observation.append(action)
-    # row = observation
-    # action_file_path = osp.join(osp.dirname(competition_data.__file__), 'perfect_actions.csv')
-    # action_file = open(action_file_path, 'a', newline="")
-    # writer = csv.writer(action_file)
-    # writer.writerow(row)
-    # action_file.close()
+    if agent_id == 0 and 0 <= time_step <= 48:
+        print([f"Agent {agent_id}, Action: {float(np.array(action, dtype=action_space.dtype))}, Energy: {energy}, Consumption: {consumption_print}, Time: {time_step}, SOC observed: {observation[22]}"])
 
     return action, energies, steps, pos
 
@@ -131,39 +129,67 @@ class ImprovedIndividualConsumptionAgent:
     def __init__(self):
         self.action_space = {}
         self.timestep = -1
-        self.remaining_battery_capacity = {}
+        self.capacity = {}
         self.soc = {}
         self.pos = {}
         self.energies = {}
         self.steps = {}
 
+        self.plot = {}
+
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
-        self.remaining_battery_capacity[agent_id] = 6.4
+        self.capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
         self.pos[agent_id] = -1
         self.energies[agent_id] = [0]
         self.steps[agent_id] = 0
 
+        self.plot[agent_id] = [[], [], [], []]
+
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
-        collaborative_timestep = self.timestep//5
+        collaborative_timestep = self.timestep//len(observation)
+        observation = observation[agent_id]
 
-        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.remaining_battery_capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
 
-        # max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
-        energy = n.energy_normed(action_out * self.remaining_battery_capacity[agent_id], 5)
+        if agent_id == 0 and 0 <= collaborative_timestep <= 48:
+            print(f"and an actual net consumption {observation[23]}")
+
+        if collaborative_timestep > 0:
+            self.plot[agent_id][0].append(observation[23])
+            self.plot[agent_id][1].append(observation[20]-observation[21])
+            self.plot[agent_id][2].append((observation[20]-observation[21])*observation[24])
+            self.plot[agent_id][3].append(observation[23] * observation[24])
+
+        if collaborative_timestep == 48 and agent_id == 0:
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+            plt.plot(range(len(self.plot[agent_id][0])), [0]*len(self.plot[agent_id][0]), color="black")
+            plt.show()
+
+
+        action_out, self.energies[agent_id], self.steps[agent_id], self.pos[agent_id] = individual_consumption_policy(observation, collaborative_timestep, agent_id, self.action_space[agent_id], self.capacity[agent_id], self.soc[agent_id], self.pos[agent_id], self.energies[agent_id], self.steps[agent_id])
+
+        action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
+        max_power = n.max_power(self.soc[agent_id], 5, self.capacity[agent_id])
+        energy = n.energy_normed(action * self.capacity[agent_id], max_power)
         efficiency = n.efficiency(energy, 5)
 
         previous_soc = self.soc[agent_id]
-        self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.remaining_battery_capacity[agent_id])
+        self.soc[agent_id] = n.soc(energy, previous_soc, efficiency, self.capacity[agent_id])
+
+
+        if agent_id == 0 and 0 <= collaborative_timestep <= 48:
+            print(f"\nThis gives a new SOC of: {self.soc[agent_id]/self.capacity[agent_id]}% or {self.soc[agent_id]} kWh")
+            print(f"Previous capacity: {self.capacity[agent_id]}, Energy: {energy}, Action output: {action_out}")
+
 
         battery_cons = n.last_energy_balance(self.soc[agent_id], previous_soc, efficiency)
-        self.remaining_battery_capacity[agent_id] = n.new_capacity(self.remaining_battery_capacity[agent_id], battery_cons)
+        self.capacity[agent_id] = n.new_capacity(self.capacity[agent_id], battery_cons)
 
         return np.array([action_out], dtype=self.action_space[agent_id].dtype)
-
-
-
