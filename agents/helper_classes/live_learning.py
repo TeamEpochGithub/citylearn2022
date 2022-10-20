@@ -1,5 +1,3 @@
-import sys
-
 import pandas as pd
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge

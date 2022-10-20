@@ -4,9 +4,6 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
-from xgboost import XGBRegressor
-from lightgbm import LGBMRegressor
-
 
 class TunableLiveLearner:
 

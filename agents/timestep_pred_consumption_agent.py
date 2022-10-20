@@ -1,22 +1,8 @@
-import sys
-import pandas as pd
 import numpy as np
-import os.path as osp
-from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
-from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
-# consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
-# carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
-
-# consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
-# consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
-
-
-# carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
-# carbon = carbon.values.tolist()[1:]
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
     chunk_consumptions = []
@@ -77,7 +63,7 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
     if timestep >= 8759:
         return 0
-    #print(timestep, agent_id)
+    print(timestep, agent_id)
     
     live_learner.update_lists(observation)
 
@@ -121,7 +107,7 @@ class TimeStepPredConsumptionAgent:
         self.soc[agent_id] = 0
         
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(500, 15)
+            self.live_learners[str(agent_id)] = LiveLearner(168, 30)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
