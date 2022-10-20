@@ -13,7 +13,7 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
     future_steps = 1
 
     # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-    while live_learner.predict_multiple_consumptions(future_steps)[
+    while live_learner.predict_multiple_consumptions(future_steps, False)[
         future_steps - 1] * consumption_sign > 0 and future_steps <= 32:
         # next_consumption = consumptions[agent_id][timestep + future_steps]
         next_consumption = live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1]
@@ -29,7 +29,7 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
 def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
     max_chunk_size = 32
 
-    chunk_consumptions = live_learner.predict_consumption(max_chunk_size)
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size, False)
 
     for index, consumption in enumerate(chunk_consumptions):
 
@@ -75,7 +75,7 @@ def write_step_to_file(agent_id, action, observation):
     action_file.close()
 
 
-def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
+def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner, write_to_file):
     if timestep >= 8759:
         return 0
     # print(timestep, agent_id)
@@ -89,7 +89,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
             action = 0.11
         return action
 
-    next_consumption = live_learner.predict_consumption(1)[0]
+    next_consumption = live_learner.predict_consumption(1, True)[0]
 
     if next_consumption == 0:
         return 0
@@ -102,9 +102,9 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
                                               live_learner)
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
-    action = action * 3
 
-    # write_step_to_file(agent_id, action, observation)
+    if write_to_file:
+        write_step_to_file(agent_id, action, observation)
 
     return action
 
@@ -118,6 +118,7 @@ class TimeStepPredConsumptionAgent:
         self.soc = {}
 
         self.live_learners = {}
+        self.write_to_file = True
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -125,7 +126,7 @@ class TimeStepPredConsumptionAgent:
         self.soc[agent_id] = 0
 
         if str(agent_id) not in self.live_learners:
-            self.live_learners[str(agent_id)] = LiveLearner(800, 15)
+            self.live_learners[str(agent_id)] = LiveLearner(800, 15, self.write_to_file)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -136,7 +137,7 @@ class TimeStepPredConsumptionAgent:
 
         action_out = pred_consumption_policy(observation, building_timestep, agent_id,
                                              self.remaining_battery_capacity[agent_id],
-                                             self.soc[agent_id], self.live_learners[str(agent_id)])
+                                             self.soc[agent_id], self.live_learners[str(agent_id)], self.write_to_file)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])
