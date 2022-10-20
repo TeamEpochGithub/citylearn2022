@@ -1,7 +1,11 @@
+import csv
+
 import numpy as np
 
 from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
+import os.path as osp
+from analysis import data_consumption_comparison
 
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
@@ -60,6 +64,17 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
     return chunk_charge_loads
 
 
+def write_step_to_file(agent_id, action, observation):
+    # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
+    row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
+           observation[24]]
+    action_file_path = osp.join(osp.dirname(data_consumption_comparison.__file__), 'pred_consumption_performance.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
+
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
     if timestep >= 8759:
         return 0
@@ -67,7 +82,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
 
     live_learner.update_lists(observation)
 
-    if timestep < 150:
+    if timestep < 72:
         hour = observation[2]
         action = -0.067
         if 6 <= hour <= 14:
@@ -86,8 +101,10 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
     chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
                                               live_learner)
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
-
     action = charge_load / remaining_battery_capacity
+    action = action * 3
+
+    # write_step_to_file(agent_id, action, observation)
 
     return action
 
