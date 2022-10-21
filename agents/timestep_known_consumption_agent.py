@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os.path as osp
 
-from analysis import data_consumption_comparison
+from analysis import data
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
@@ -61,14 +61,32 @@ def write_step_to_file(agent_id, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
-    action_file_path = osp.join(osp.dirname(data_consumption_comparison.__file__), 'known_consumption_performance.csv')
+    action_file_path = osp.join(osp.dirname(data.__file__), 'known_consumption_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
     action_file.close()
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc):
+def write_historic_consumptions_to_file(agent_id, timestep):
+
+    num_consumptions = 10
+    row = []
+    for i in range(num_consumptions):
+        if timestep - i - 2 >= 0:
+            row.append(consumptions[agent_id][timestep-i - 2])
+        else:
+            row.append(0)
+
+    # row = [agent_id, ]
+    action_file_path = osp.join(osp.dirname(data.__file__), 'historic_consumptions.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
+
+def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, write_to_file):
     if timestep >= 8759:
         return 0
 
@@ -86,7 +104,9 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
 
     action = energy / remaining_battery_capacity
 
-    # write_step_to_file(agent_id, action, observation)
+    if write_to_file:
+        write_step_to_file(agent_id, action, observation)
+        write_historic_consumptions_to_file(agent_id, timestep)
 
     return action
 
@@ -98,6 +118,7 @@ class TimeStepKnownConsumptionAgent:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
+        self.write_to_file = True
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -113,7 +134,7 @@ class TimeStepKnownConsumptionAgent:
 
         action_out = individual_consumption_policy(observation, building_timestep, agent_id,
                                                    self.remaining_battery_capacity[agent_id],
-                                                   self.soc[agent_id])
+                                                   self.soc[agent_id], self.write_to_file)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])

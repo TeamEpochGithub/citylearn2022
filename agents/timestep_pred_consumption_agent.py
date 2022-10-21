@@ -1,11 +1,18 @@
 import csv
 
 import numpy as np
+import pandas as pd
 
 from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 import os.path as osp
-from analysis import data_consumption_comparison
+from analysis import data
+from data import citylearn_challenge_2022_phase_1 as competition_data
+
+consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
+
+consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
+consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
@@ -29,7 +36,7 @@ def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
 def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
     max_chunk_size = 32
 
-    chunk_consumptions = live_learner.predict_consumption(max_chunk_size, False)
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size, only_write_once=False)
 
     for index, consumption in enumerate(chunk_consumptions):
 
@@ -68,14 +75,32 @@ def write_step_to_file(agent_id, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
-    action_file_path = osp.join(osp.dirname(data_consumption_comparison.__file__), 'pred_consumption_performance.csv')
+    action_file_path = osp.join(osp.dirname(data.__file__), 'pred_consumption_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
     action_file.close()
 
 
-def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner, write_to_file):
+def write_historic_consumptions_to_file(agent_id, timestep):
+    num_consumptions = 10
+    row = []
+    for i in range(num_consumptions):
+        if timestep - i - 2 >= 0:
+            row.append(consumptions[agent_id][timestep - i - 2])
+        else:
+            row.append(0)
+
+    # row = [agent_id, ]
+    action_file_path = osp.join(osp.dirname(data.__file__), 'pred_historic_consumptions.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
+
+def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner,
+                            write_to_file):
     if timestep >= 8759:
         return 0
     # print(timestep, agent_id)
@@ -89,7 +114,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
             action = 0.11
         return action
 
-    next_consumption = live_learner.predict_consumption(1, True)[0]
+    next_consumption = live_learner.predict_consumption(1, only_write_once=True)[0]
 
     if next_consumption == 0:
         return 0
@@ -105,6 +130,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
 
     if write_to_file:
         write_step_to_file(agent_id, action, observation)
+        write_historic_consumptions_to_file(agent_id, timestep)
 
     return action
 

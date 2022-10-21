@@ -6,13 +6,13 @@ from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 import os.path as osp
 
-from analysis import data_consumption_comparison
+from analysis import data
 
 
 def write_prediction_to_file(load, solar):
 
     row = [load, solar]
-    action_file_path = osp.join(osp.dirname(data_consumption_comparison.__file__), 'pred_consumption_predictions.csv')
+    action_file_path = osp.join(osp.dirname(data.__file__), 'pred_consumption_predictions.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
