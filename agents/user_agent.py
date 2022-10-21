@@ -5,6 +5,7 @@ from agents.timestep_known_consumption_agent import TimeStepKnownConsumptionAgen
 from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptionAgentPeak
 from agents.timestep_pred_consumption_agent import TimeStepPredConsumptionAgent
 from agents.timestep_pred_consumption_agent_peak import TimeStepPredConsumptionAgentPeak
+from agents.timestep_known_consumption_agent_peak_carbon import TimeStepKnownConsumptionAgentPeakCarbon
 
 # UserAgent = RandomAgent
 # UserAgent = KnownConsumptionAgent
@@ -15,8 +16,9 @@ from agents.timestep_pred_consumption_agent_peak import TimeStepPredConsumptionA
 # UserAgent = BasicWeatherAgent
 #UserAgent = ConsumptionBasedAgent
 # UserAgent = DayTunedAgent
-UserAgent = TimeStepPredConsumptionAgent
+# UserAgent = TimeStepPredConsumptionAgent
 # UserAgent = TimeStepKnownConsumptionAgentPeak
+UserAgent = TimeStepKnownConsumptionAgentPeakCarbon
 
 # Changen naar MonthTunedAgent en dan weer submission maken
 
