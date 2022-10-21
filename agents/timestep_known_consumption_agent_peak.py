@@ -14,9 +14,9 @@ carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity
 consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
-
 carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 carbon = carbon.values.tolist()[1:]
+
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign):
     chunk_consumptions = []
@@ -46,7 +46,7 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -67,18 +67,16 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc
 
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
 
-        if timestep == 16:
-            print(f"Peak: {max(chunk_consumptions)}, Time: {timestep}, Agent: {agent_id}, max_p {max(consumption_prices)}, min_p {min(consumption_prices)}")
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
 
-        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, timestep, agent_id)
+        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
 
     else:
         return chunk_consumptions
 
 
-def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, timestep, agent_id):
+def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
     while local_soc != 0:
 
         # Get the peak consumption_price and check in which step the peak(s) happens
@@ -87,7 +85,7 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, ti
 
         # List of other prices which do not indicate a peak
         consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
-        print(consumption_prices)
+
         if len(consumption_prices_without_peak) == 0:
             consumption_prices_without_peak = [0]
 
@@ -95,8 +93,6 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, ti
         # Make a list of the differences in consumption between the highest peaks and the next highest peak
         difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
         consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
-        if timestep != 16:
-            print(f"Cons difference: {consumption_difference}, Diff from peak: {difference_from_peak}, Time: {timestep}, SOC: {local_soc}")
 
         # Lower peaks to next highest peak
         if local_soc >= sum(consumption_difference):
@@ -117,12 +113,12 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices, ti
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
-
     chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, soc, agent_id)
+        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep,
+                                                           remaining_battery_capacity, soc)
 
     return chunk_charge_loads
 
@@ -140,7 +136,8 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     else:
         consumption_sign = -1
 
-    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity,
+    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
+                                              remaining_battery_capacity,
                                               soc)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
@@ -172,19 +169,19 @@ class TimeStepKnownConsumptionAgentPeak:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
-        if building_timestep > 24:
-            self.plot[agent_id][0].append(observation[23])
-            self.plot[agent_id][1].append(observation[20] - observation[21])
-            self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
-            self.plot[agent_id][3].append(observation[23] * observation[24])
-
-        if building_timestep == 72 and agent_id == 0:
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
-            plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
-            plt.show()
+        # if building_timestep > 24:
+        #     self.plot[agent_id][0].append(observation[23])
+        #     self.plot[agent_id][1].append(observation[20] - observation[21])
+        #     self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
+        #     self.plot[agent_id][3].append(observation[23] * observation[24])
+        #
+        # if building_timestep == 72 and agent_id == 0:
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+        #     plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
+        #     plt.show()
 
         action_out = \
             individual_consumption_policy(observation, building_timestep, agent_id,
