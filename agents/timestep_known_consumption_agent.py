@@ -1,7 +1,10 @@
+import csv
 import sys
 import pandas as pd
 import numpy as np
 import os.path as osp
+
+from analysis import data_consumption_comparison
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
@@ -54,6 +57,17 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
     return energies
 
 
+def write_step_to_file(agent_id, action, observation):
+    # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
+    row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
+           observation[24]]
+    action_file_path = osp.join(osp.dirname(data_consumption_comparison.__file__), 'known_consumption_performance.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
+
 def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc):
     if timestep >= 8759:
         return 0
@@ -71,6 +85,8 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     energy = -1 * consumption_sign * energies[0]
 
     action = energy / remaining_battery_capacity
+
+    # write_step_to_file(agent_id, action, observation)
 
     return action
 

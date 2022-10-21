@@ -14,9 +14,9 @@ carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity
 consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
-
 carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
 carbon = carbon.values.tolist()[1:]
+
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign):
     chunk_consumptions = []
@@ -113,12 +113,12 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
-
     chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc)
+        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep,
+                                                           remaining_battery_capacity, soc)
 
     return chunk_charge_loads
 
@@ -136,14 +136,14 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     else:
         consumption_sign = -1
 
-    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity,
+    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
+                                              remaining_battery_capacity,
                                               soc)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
 
     return action
-
 
 
 class TimeStepKnownConsumptionAgentPeak:
