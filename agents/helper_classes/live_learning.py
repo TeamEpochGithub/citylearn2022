@@ -21,11 +21,11 @@ def write_prediction_to_file(load, solar):
 
 class LiveLearner:
 
-    def __init__(self, cap_learning_data, fit_delay_steps, write_to_file):
+    def __init__(self, cap_learning_data, fit_delay_steps):
         self.cap_learning_data = cap_learning_data
         self.fit_delay_steps = fit_delay_steps
         self.fit_delay_counter = self.fit_delay_steps
-        self.write_to_file = write_to_file
+        # self.write_to_file = write_to_file
 
         self.load_lags = [1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52]
         self.solar_lags = [1, 2, 3, 23, 24, 25, 48, 49, 50]
@@ -100,14 +100,14 @@ class LiveLearner:
 
         return list(predictions)
 
-    def predict_consumption(self, steps, only_write_once):
+    def predict_consumption(self, steps):
 
         load = self.predict_non_shiftable_load(steps)
         solar = self.predict_solar_generations(steps)
 
-        if self.write_to_file:
-            if only_write_once:
-                write_prediction_to_file(load[0], solar[0])
+        # if self.write_to_file:
+        #     if only_write_once:
+        #         write_prediction_to_file(load[0], solar[0])
 
         return [a - b for a, b in
                 zip(load, solar)]
