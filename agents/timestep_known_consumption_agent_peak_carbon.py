@@ -75,7 +75,8 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc
         scaled_consumption_prices = [(i - min_p) / (max_p - min_p) for i in consumption_prices]
         scaled_consumption_emissions = [(i - min_e) / (max_e - min_e) for i in consumption_emissions]
 
-        weight_p, weight_e = 1, 0
+        weight_p = 1
+        weight_e = 1 - weight_p
         reference_curve = [(weight_p * scaled_consumption_prices[i] + weight_e * scaled_consumption_emissions[i]) for i
                            in range(len(chunk_consumptions))]
 
@@ -83,14 +84,14 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc
         chunk_charge_loads = [0] * len(chunk_consumptions)
 
         return lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e,
-                              min_e, weight_p, weight_e)
+                              min_e, weight_p, weight_e, timestep, agent_id)
 
     else:
         return chunk_consumptions
 
 
 def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emissions, max_p, min_p, max_e, min_e,
-                   weight_p, weight_e):
+                   weight_p, weight_e, timestep, agent_id):
     while local_soc != 0:
 
         # Get the peak consumption_price and check in which step the peak(s) happens
@@ -99,9 +100,9 @@ def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emiss
 
         # List of other prices which do not indicate a peak
         reference_curve_without_peak = [x for x in reference_curve if x != peak]
-
         if len(reference_curve_without_peak) == 0:
-            reference_curve_without_peak = [0]
+            reference_curve_without_peak = [
+                ((-1 * weight_p * min_p) / (max_p - min_p)) - ((weight_e * min_e) / (max_e - min_e))]
 
         # Get the difference in consumption price between the highest peak and the next highest peak
         # Make a list of the differences in consumption between the highest peaks and the next highest peak
@@ -109,7 +110,6 @@ def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emiss
         consumption_difference = [
             find_consumption_difference(difference_from_peak, prices[i], emissions[i], max_p, min_p, max_e, min_e,
                                         weight_p, weight_e) for i in peak_indices]
-
         # Lower peaks to next highest peak
         if local_soc >= sum(consumption_difference):
             for i, difference in enumerate(consumption_difference):
@@ -128,6 +128,12 @@ def lowering_peaks(local_soc, chunk_charge_loads, reference_curve, prices, emiss
 
             local_soc = 0
 
+    for i in range(2, len(chunk_charge_loads)):
+        if chunk_charge_loads[i] != 0 and chunk_charge_loads[i - 1] == 0 and chunk_charge_loads[i - 2] == 0:
+            chunk_charge_loads[i - 2] = 0.000000001
+            chunk_charge_loads[i - 1] = -0.0000001
+            break
+
     return chunk_charge_loads
 
 
@@ -135,8 +141,7 @@ def find_consumption_difference(difference_from_peak, price, emission, max_p, mi
     range_p = max_p - min_p
     range_e = max_e - min_e
 
-    consumption = ((difference_from_peak * range_e * range_p) + (range_e * min_p * weight_p) + (
-                range_p * min_e * weight_e)) \
+    consumption = (difference_from_peak * range_e * range_p) \
                   / ((weight_p * range_e * price) + (weight_e * range_p * emission))
 
     return consumption
@@ -182,13 +187,13 @@ class TimeStepKnownConsumptionAgentPeakCarbon:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.plot = {}
+        # self.plot = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.plot[agent_id] = [[], [], [], []]
+        # self.plot[agent_id] = [[], [], [], []]
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -197,19 +202,19 @@ class TimeStepKnownConsumptionAgentPeakCarbon:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
-        if building_timestep > 24:
-            self.plot[agent_id][0].append(observation[23])
-            self.plot[agent_id][1].append(observation[20] - observation[21])
-            self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
-            self.plot[agent_id][3].append(observation[23] * observation[24])
-
-        if building_timestep == 72 and agent_id == 0:
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
-            plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
-            plt.show()
+        # if building_timestep > 24:
+        #     self.plot[agent_id][0].append(observation[23])
+        #     self.plot[agent_id][1].append(observation[20] - observation[21])
+        #     self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
+        #     self.plot[agent_id][3].append(observation[23] * observation[24])
+        #
+        # if building_timestep == 72 and agent_id == 0:
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+        #     plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
+        #     plt.show()
 
         action_out = \
             individual_consumption_policy(observation, building_timestep, agent_id,

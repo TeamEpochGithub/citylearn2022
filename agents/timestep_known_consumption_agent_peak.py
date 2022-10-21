@@ -46,7 +46,7 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -144,6 +144,7 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     action = charge_load / remaining_battery_capacity
 
     return action
+
 
 
 class TimeStepKnownConsumptionAgentPeak:

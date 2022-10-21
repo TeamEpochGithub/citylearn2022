@@ -15,22 +15,22 @@ consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
-def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
-    chunk_consumptions = []
-    future_steps = 1
-
-    # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-    while live_learner.predict_multiple_consumptions(future_steps, False)[
-        future_steps - 1] * consumption_sign > 0 and future_steps <= 32:
-        # next_consumption = consumptions[agent_id][timestep + future_steps]
-        next_consumption = live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1]
-        chunk_consumptions.append(next_consumption)
-        future_steps += 1
-
-        if timestep + future_steps >= 8759:
-            break
-
-    return chunk_consumptions
+# def get_chunk_consumptions(agent_id, timestep, consumption_sign, live_learner):
+#     chunk_consumptions = []
+#     future_steps = 1
+#
+#     # while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
+#     while live_learner.predict_multiple_consumptions(future_steps, False)[
+#         future_steps - 1] * consumption_sign > 0 and future_steps <= 32:
+#         # next_consumption = consumptions[agent_id][timestep + future_steps]
+#         next_consumption = live_learner.predict_multiple_consumptions(future_steps)[future_steps - 1]
+#         chunk_consumptions.append(next_consumption)
+#         future_steps += 1
+#
+#         if timestep + future_steps >= 8759:
+#             break
+#
+#     return chunk_consumptions
 
 
 def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
@@ -62,8 +62,8 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
 
 def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, live_learner):
     chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner)
-    if len(chunk_consumptions) == 0:
-        chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign * -1, live_learner)
+    # if len(chunk_consumptions) == 0:
+    #     chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign * -1, live_learner)
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
