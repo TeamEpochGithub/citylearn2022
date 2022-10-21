@@ -153,8 +153,12 @@ def positive_consumption_scenario(obs_date, chunk_consumptions, timestep, soc, a
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
-                         live_learner):
+                         live_learner, current_consumption_prediction):
     chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep)
+
+    consumption_error = (observation[20] - observation[21]) - current_consumption_prediction
+
+    chunk_consumptions = [c + consumption_error / len(chunk_consumptions) for c in chunk_consumptions]
 
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
@@ -165,9 +169,10 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
     return chunk_charge_loads
 
 
-def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner):
+def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner,
+                            current_consumption_prediction, previous_consumption_sign):
     if timestep >= 8759:
-        return 0
+        return 0, 0, 0
 
     live_learner.update_lists(observation)
 
@@ -176,28 +181,31 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         action = -0.067
         if 6 <= hour <= 14:
             action = 0.11
-        return action
+        return action, 0, -1
 
     next_consumption = live_learner.predict_consumption(1)[0]
 
     if next_consumption == 0:
-        return 0
+        return 0, 0, 0
     elif next_consumption > 0:
         consumption_sign = 1
     else:
         consumption_sign = -1
 
+    if consumption_sign * previous_consumption_sign == -1:
+        current_consumption_prediction = observation[20] - observation[21]
+
     chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
                                               remaining_battery_capacity,
-                                              soc, live_learner)
+                                              soc, live_learner, current_consumption_prediction)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
 
-    return action
+    return action, next_consumption, consumption_sign
 
 
-class TimeStepPredConsumptionAgentPeakCarbon:
+class TimeStepPredConsumptionAgentPeakCarbonErrorCorrection:
 
     def __init__(self):
         self.action_space = {}
@@ -206,8 +214,10 @@ class TimeStepPredConsumptionAgentPeakCarbon:
         self.soc = {}
 
         self.live_learners = {}
+        self.consumption_prediction = {}
+        self.consumption_sign = {}
 
-        # self.plot = {}
+        self.plot = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -216,8 +226,10 @@ class TimeStepPredConsumptionAgentPeakCarbon:
 
         if str(agent_id) not in self.live_learners:
             self.live_learners[str(agent_id)] = LiveLearner(800, 15)
+        self.consumption_prediction[agent_id] = 0
+        self.consumption_sign[agent_id] = -1
 
-        # self.plot[agent_id] = [[], [], [], []]
+        self.plot[agent_id] = [[], [], [], [], []]
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -226,23 +238,23 @@ class TimeStepPredConsumptionAgentPeakCarbon:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
-        # if building_timestep > 24:
-        #     self.plot[agent_id][0].append(observation[23])
-        #     self.plot[agent_id][1].append(observation[20] - observation[21])
-        #     self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
-        #     self.plot[agent_id][3].append(observation[23] * observation[24])
-        #
-        # if building_timestep == 72 and agent_id == 0:
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
-        #     plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
-        #     plt.show()
+        if building_timestep > 1000:
+            self.plot[agent_id][0].append(observation[23])
+            self.plot[agent_id][1].append(observation[20] - observation[21])
+            self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
+            self.plot[agent_id][3].append(observation[23] * observation[24])
+            self.plot[agent_id][4].append(self.consumption_prediction[agent_id])
 
-        action_out = pred_consumption_policy(observation, building_timestep, agent_id,
-                                             self.remaining_battery_capacity[agent_id],
-                                             self.soc[agent_id], self.live_learners[str(agent_id)])
+        if building_timestep == 1000 + 48 and agent_id == 0:
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+            plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
+            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][4], color="purple")
+            plt.show()
+
+        action_out, self.consumption_prediction[agent_id], self.consumption_sign[agent_id] = pred_consumption_policy(observation, building_timestep, agent_id, self.remaining_battery_capacity[agent_id], self.soc[agent_id], self.live_learners[str(agent_id)], self.consumption_prediction[agent_id], self.consumption_sign[agent_id])
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])
