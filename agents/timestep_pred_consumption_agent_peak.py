@@ -1,23 +1,19 @@
-import csv
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import os.path as osp
 
 from agents.helper_classes.live_learning import LiveLearner
-from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
+
 # consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
-carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
+# carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
 
 # consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 # consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
-carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
-carbon = carbon.values.tolist()[1:]
+# carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
+# carbon = carbon.values.tolist()[1:]
 
 
 def get_chunk_consumptions_fit_delay(consumption_sign, live_learner):
@@ -56,15 +52,11 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, rem
         # consumption at that time step. We do this consecutively until the battery has been emptied.
 
         date = shift_date(observation[2], observation[1], observation[0], shifts=1)
-
         prices = []
-        emissions = []
 
         for hour in range(len(chunk_consumptions)):
             prices.append(pricing(date[2], date[0], date[1]))
             date = shift_date(date[0], date[1], date[2], shifts=1)
-
-            emissions.append(carbon[timestep + hour])
 
         consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
 
@@ -158,8 +150,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         consumption_sign = -1
 
     chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                              remaining_battery_capacity,
-                                              soc, live_learner)
+                                              remaining_battery_capacity, soc, live_learner)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
@@ -193,20 +184,6 @@ class TimeStepPredConsumptionAgentPeak:
         self.timestep += 1
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
-
-        # if building_timestep > 24:
-        #     self.plot[agent_id][0].append(observation[23])
-        #     self.plot[agent_id][1].append(observation[20] - observation[21])
-        #     self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
-        #     self.plot[agent_id][3].append(observation[23] * observation[24])
-        #
-        # if building_timestep == 72 and agent_id == 0:
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
-        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
-        #     plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
-        #     plt.show()
 
         action_out = \
             pred_consumption_policy(observation, building_timestep, agent_id,
