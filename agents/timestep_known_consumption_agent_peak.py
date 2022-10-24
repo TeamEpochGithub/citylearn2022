@@ -2,7 +2,7 @@ import csv
 import pandas as pd
 import numpy as np
 import os.path as osp
-from analysis import data
+from analysis import analysis_data
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
@@ -22,7 +22,7 @@ def write_step_to_file(agent_id, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
-    action_file_path = osp.join(osp.dirname(data.__file__), 'known_performance.csv')
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'known_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
@@ -38,7 +38,7 @@ def write_historic_consumptions_to_file(agent_id, timestep):
         else:
             row.append(0)
 
-    action_file_path = osp.join(osp.dirname(data.__file__), 'historic_consumptions.csv')
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'historic_consumptions.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
@@ -166,8 +166,7 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
         consumption_sign = -1
 
     chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                              remaining_battery_capacity,
-                                              soc)
+                                              remaining_battery_capacity, soc)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
@@ -186,7 +185,6 @@ class TimeStepKnownConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.plot = {}
         self.write_to_file = False
 
     def set_action_space(self, agent_id, action_space):

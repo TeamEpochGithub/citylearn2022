@@ -28,8 +28,8 @@ import matplotlib.pyplot as plt
 #     dfb3.rename(columns={"Solar Generation [W/kW]": "3rd gen"}, inplace=True)
 #     dfb4.rename(columns={"Solar Generation [W/kW]": "4th gen"}, inplace=True)
 #     dfb5.rename(columns={"Solar Generation [W/kW]": "5th gen"}, inplace=True)
-#     #data = pd.concat([df_now,df6h])
-#     #data["Outdoor Drybulb Temperature [C]"].map({"NaN": 0})
+#     #analysis_data = pd.concat([df_now,df6h])
+#     #analysis_data["Outdoor Drybulb Temperature [C]"].map({"NaN": 0})
 #
 #     indexes = [*range(1, 8761)]
 #
@@ -65,8 +65,8 @@ import matplotlib.pyplot as plt
 #     def simple_policy():
 #         # Simple policy
 #         carbon_data = pd.read_csv(
-#             r"C:\Users\bjorn\OneDrive\Documents\TU Delft\EPOCH\CityLearn\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\carbon_intensity.csv")
-#         price_data = pd.read_csv(r"C:\Users\bjorn\OneDrive\Documents\TU Delft\EPOCH\CityLearn\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\pricing.csv")[
+#             r"C:\Users\bjorn\OneDrive\Documents\TU Delft\EPOCH\CityLearn\citylearn-2022-starter-kit\analysis_data\citylearn_challenge_2022_phase_1\carbon_intensity.csv")
+#         price_data = pd.read_csv(r"C:\Users\bjorn\OneDrive\Documents\TU Delft\EPOCH\CityLearn\citylearn-2022-starter-kit\analysis_data\citylearn_challenge_2022_phase_1\pricing.csv")[
 #             "Electricity Pricing [$]"]
 #
 #         c_mean = carbon_data.mean()

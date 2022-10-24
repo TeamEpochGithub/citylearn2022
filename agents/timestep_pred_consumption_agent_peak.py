@@ -2,7 +2,7 @@ import numpy as np
 import os.path as osp
 import csv
 
-from analysis import data
+from analysis import analysis_data
 from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
@@ -21,7 +21,7 @@ def write_step_to_file(agent_id, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
-    action_file_path = osp.join(osp.dirname(data.__file__), 'pred_performance.csv')
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'pred_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
@@ -143,6 +143,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         return -0.1
 
     live_learner.update_lists(observation)
+    print("timestep: ", timestep)
 
     if timestep < 72:
         hour = observation[2]
@@ -180,15 +181,13 @@ class TimeStepPredConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.plot = {}
-
         self.live_learners = {}
+        self.write_to_file = False
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
-        self.write_to_file = False
 
         if str(agent_id) not in self.live_learners:
             self.live_learners[str(agent_id)] = LiveLearner(800, 15, self.write_to_file)

@@ -5,11 +5,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from joblib import dump
 
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+# NOTE: Make sure that the outcome column is labeled 'target' in the analysis_data file
 solar_df = pd.read_csv(
         r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\solar_data.csv")
 
-# Scaler training data
+# Scaler training analysis_data
 ms_solar = MinMaxScaler()
 solar_df_data = solar_df.drop(["solar_generation_future"], axis=1)
 solar_df_data[solar_df_data.columns] = ms_solar.fit_transform(solar_df_data[solar_df_data.columns])

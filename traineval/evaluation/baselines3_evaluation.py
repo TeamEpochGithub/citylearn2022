@@ -320,7 +320,7 @@ if __name__ == "__main__":
     print("######PPO#######")
     ppo_start = time.perf_counter()
     # train_ppo(timesteps)
-    model = PPO.load("../../gymenv_stablebaseline/data/ppo_test_steps2048")
+    model = PPO.load("../../gymenv_stablebaseline/analysis_data/ppo_test_steps2048")
     evaluate_print_results(model)
     ppo_stop = time.perf_counter()
     print("PPO time:", ppo_stop - ppo_start)

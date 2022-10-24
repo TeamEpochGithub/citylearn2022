@@ -8,7 +8,7 @@ import numpy as np
 
 DIV_LINE_WIDTH = 50
 
-# Global vars for tracking and labeling data at load time.
+# Global vars for tracking and labeling analysis_data at load time.
 exp_idx = 0
 units = dict()
 
@@ -16,7 +16,7 @@ units = dict()
 def plot_data(data, xaxis='Epoch', value="AverageEpRet", condition="Condition1", smooth=1, **kwargs):
     if smooth > 1:
         """
-        smooth data with moving window average.
+        smooth analysis_data with moving window average.
         that is,
             smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
         where the "smooth" param is width of that window (2k+1)
@@ -36,7 +36,7 @@ def plot_data(data, xaxis='Epoch', value="AverageEpRet", condition="Condition1",
     If you upgrade to any version of Seaborn greater than 0.8.1, switch from 
     tsplot to lineplot replacing L29 with:
 
-        sns.lineplot(data=data, x=xaxis, y=value, hue=condition, ci='sd', **kwargs)
+        sns.lineplot(analysis_data=analysis_data, x=xaxis, y=value, hue=condition, ci='sd', **kwargs)
 
     Changes the colorscheme and the default legend style, though.
     """
@@ -108,10 +108,10 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
     """
     For every entry in all_logdirs,
         1) check if the entry is a real directory and if it is, 
-           pull data from it; 
+           pull analysis_data from it;
 
         2) if not, check to see if the entry is a prefix for a 
-           real directory, and pull data from that.
+           real directory, and pull analysis_data from that.
     """
     logdirs = []
     for logdir in all_logdirs:
@@ -144,7 +144,7 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
     assert not (legend) or (len(legend) == len(logdirs)), \
         "Must give a legend title for each set of experiments."
 
-    # Load data from logdirs
+    # Load analysis_data from logdirs
     data = []
     if legend:
         for log, leg in zip(logdirs, legend):
@@ -199,10 +199,10 @@ def main():
             removed some of them as candidates via selection or exclusion 
             rules (below).)
 
-        xaxis (string): Pick what column from data is used for the x-axis.
+        xaxis (string): Pick what column from analysis_data is used for the x-axis.
              Defaults to ``TotalEnvInteracts``.
 
-        value (strings): Pick what columns from data to graph on the y-axis. 
+        value (strings): Pick what columns from analysis_data to graph on the y-axis. 
             Submitting multiple values will produce multiple graphs. Defaults
             to ``Performance``, which is not an actual output of any algorithm.
             Instead, ``Performance`` refers to either ``AverageEpRet``, the 
@@ -218,7 +218,7 @@ def main():
             in random seed. But if you'd like to see all of those curves 
             separately, use the ``--count`` flag.
 
-        smooth (int): Smooth data by averaging it over a fixed window. This 
+        smooth (int): Smooth analysis_data by averaging it over a fixed window. This 
             parameter says how wide the averaging window will be.
 
         select (strings): Optional selection rule: the plotter will only show

@@ -21,7 +21,7 @@ def predict():
     load_df = pd.read_csv(
         r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\load_data.csv")
 
-    # Scaler training data
+    # Scaler training analysis_data
     ms = MinMaxScaler()
     load_df_data = load_df.drop(["non_shiftable_load_future"], axis=1)
     load_df_data[load_df_data.columns] = ms.fit_transform(load_df_data[load_df_data.columns])

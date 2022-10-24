@@ -13,7 +13,7 @@ DEFAULT_BACKEND = {
 }
 
 # Where experiment outputs are saved by default:
-DEFAULT_DATA_DIR = osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))),'spinningup/data')
+DEFAULT_DATA_DIR = osp.join(osp.abspath(osp.dirname(osp.dirname(__file__))),'spinningup/analysis_data')
 
 # Whether to automatically insert a date and time stamp into the names of
 # save directories:

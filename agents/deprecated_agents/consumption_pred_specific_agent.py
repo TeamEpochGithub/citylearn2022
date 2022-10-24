@@ -2256,7 +2256,7 @@ class ConsumptionPredAgent2:
 
         solar_input = [solar_list] # Geen load erin gooien
 
-        #Transform data using scalers
+        #Transform analysis_data using scalers
 
         ## Load ##
         df_load = pd.DataFrame(load_input)

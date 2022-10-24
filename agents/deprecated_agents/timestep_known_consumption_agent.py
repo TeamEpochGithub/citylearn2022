@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import os.path as osp
 
-from analysis import data
+from analysis import analysis_data
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
@@ -61,7 +61,7 @@ def write_step_to_file(agent_id, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
-    action_file_path = osp.join(osp.dirname(data.__file__), 'known_consumption_performance.csv')
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'known_consumption_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
@@ -79,7 +79,7 @@ def write_historic_consumptions_to_file(agent_id, timestep):
             row.append(0)
 
     # row = [agent_id, ]
-    action_file_path = osp.join(osp.dirname(data.__file__), 'historic_consumptions.csv')
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'historic_consumptions.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
