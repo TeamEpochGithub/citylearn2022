@@ -248,8 +248,8 @@ class TimeStepPredConsumptionAgentPeakCarbonErrorCorrection:
         if building_timestep == 1000 + 48 and agent_id == 0:
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
-            plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+            #plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+            #plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
             plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
             plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][4], color="purple")
             plt.show()
