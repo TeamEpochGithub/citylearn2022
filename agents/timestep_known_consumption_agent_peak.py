@@ -185,7 +185,7 @@ class TimeStepKnownConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.write_to_file = False
+        self.write_to_file = True
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space

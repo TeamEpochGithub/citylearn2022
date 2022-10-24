@@ -20,7 +20,8 @@ from traineval.training.data_preprocessing.pricing_simplified import pricing, sh
 
 def write_step_to_file(agent_id, timestep, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
-    row = [agent_id, timestep, action, observation[22], observation[23], observation[20], observation[21], observation[19],
+    row = [agent_id, timestep, action, observation[22], observation[23], observation[20], observation[21],
+           observation[19],
            observation[24]]
     action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'pred_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
@@ -29,22 +30,13 @@ def write_step_to_file(agent_id, timestep, action, observation):
     action_file.close()
 
 
-def get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep, live_learner_load_error):
+def get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep):
     max_chunk_size = 32
 
     if timestep + max_chunk_size > 8759:
         max_chunk_size = 8759 - timestep
 
-    corrections = [0] * max_chunk_size
-    # if timestep > 180:
-    #     corrections = [x for x in live_learner_load_error.predict_load_error(max_chunk_size)]
-
-    loads = live_learner.predict_non_shiftable_load(max_chunk_size)
-    solars = live_learner.predict_solar_generations(max_chunk_size)
-
-    chunk_consumptions = [a + b - c for a, b, c in zip(loads, corrections, solars)]
-
-    # chunk_consumptions = live_learner.predict_consumption(max_chunk_size, False)
+    chunk_consumptions = live_learner.predict_consumption(max_chunk_size, False)
 
     for index, consumption in enumerate(chunk_consumptions):
 
@@ -137,8 +129,8 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
-                         live_learner, live_learner_load_error):
-    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep, live_learner_load_error)
+                         live_learner):
+    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep)
 
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
@@ -150,12 +142,11 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
 
 
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner,
-                            live_learner_load_error, write_to_file):
+                            write_to_file):
     if timestep >= 8758:
         return -1
 
     live_learner.update_lists(observation)
-    # live_learner_load_error.update_non_shiftable_loads(observation[20])
     print("timestep: ", timestep)
 
     if timestep < 72:
@@ -165,19 +156,6 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
             action = 0.11
         return action
 
-    # next_load = live_learner.predict_non_shiftable_load(1)[0]
-    # next_solar = live_learner.predict_solar_generations(1)[0]
-    # correction = 0
-    # live_learner_load_error.update_load_predictions(next_load)
-    # if timestep > 180:
-    #     correction = live_learner_load_error.predict_load_error(1)[0]
-    #
-    # # if agent_id == 1:
-    # #     print(f"actual consumption step {timestep}", observation[23])
-    # #     print(f"predicted correction step {timestep}", correction)
-    # #     print(f"predicted consumption step {timestep}", next_load + correction - next_solar)
-    #
-    # next_consumption = next_load + correction - next_solar
     next_consumption = live_learner.predict_consumption(1, True)[0]
 
     if next_consumption == 0:
@@ -188,8 +166,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         consumption_sign = -1
 
     chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                              remaining_battery_capacity, soc, live_learner,
-                                              live_learner_load_error)
+                                              remaining_battery_capacity, soc, live_learner)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
@@ -207,10 +184,9 @@ class TimeStepPredConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.write_to_file = True
+        self.write_to_file = False
 
         self.live_learners = {}
-        self.live_learners_load_error = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -219,7 +195,6 @@ class TimeStepPredConsumptionAgentPeak:
 
         if str(agent_id) not in self.live_learners:
             self.live_learners[str(agent_id)] = LiveLearner(800, 15, self.write_to_file, agent_id)
-            self.live_learners_load_error[str(agent_id)] = LiveLearnerLoadError(300, 30, self.write_to_file, agent_id)
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
@@ -232,7 +207,6 @@ class TimeStepPredConsumptionAgentPeak:
             pred_consumption_policy(observation, building_timestep, agent_id,
                                     self.remaining_battery_capacity[agent_id],
                                     self.soc[agent_id], self.live_learners[str(agent_id)],
-                                    self.live_learners_load_error[str(agent_id)],
                                     self.write_to_file)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
