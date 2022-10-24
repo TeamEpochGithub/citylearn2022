@@ -109,6 +109,12 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
             local_soc = 0
 
+    for i in range(2, len(chunk_charge_loads)):
+        if chunk_charge_loads[i] != 0 and chunk_charge_loads[i - 1] == 0 and chunk_charge_loads[i - 2] == 0:
+            chunk_charge_loads[i - 2] = 0.000000001
+            chunk_charge_loads[i - 1] = -0.0000001
+            break
+
     return chunk_charge_loads
 
 

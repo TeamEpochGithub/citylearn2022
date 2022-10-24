@@ -1,13 +1,7 @@
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
-from agents.timestep_known_consumption_agent import TimeStepKnownConsumptionAgent
-from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptionAgentPeak
-from agents.timestep_pred_consumption_agent import TimeStepPredConsumptionAgent
-from agents.timestep_pred_consumption_agent_peak import TimeStepPredConsumptionAgentPeak
-from agents.timestep_known_consumption_agent_peak_carbon import TimeStepKnownConsumptionAgentPeakCarbon
-from agents.timestep_pred_consumption_agent_peak_carbon import TimeStepPredConsumptionAgentPeakCarbon
-from agents.timestep_pred_consumption_agent_peak_carbon_error_corr import TimeStepPredConsumptionAgentPeakCarbonErrorCorrection
+from agents.deprecated_agents.timestep_pred_consumption_agent_peak_carbon_error_corr import TimeStepPredConsumptionAgentPeakCarbonErrorCorrection
 
 # UserAgent = RandomAgent
 # UserAgent = KnownConsumptionAgent
