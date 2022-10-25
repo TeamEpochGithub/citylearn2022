@@ -12,12 +12,12 @@ class DataLoader:
 
     @staticmethod
     def load_price_df():
-        return pd.read_csv("../../data/citylearn_challenge_2022_phase_1/pricing.csv")[
+        return pd.read_csv("../../analysis_data/citylearn_challenge_2022_phase_1/pricing.csv")[
             'Electricity Pricing [$]']
 
     @staticmethod
     def load_carbon_df():
-        return pd.read_csv("../../data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")[
+        return pd.read_csv("../../analysis_data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")[
             'kg_CO2/kWh']
 
     def get_mean_prices(self):
@@ -39,5 +39,5 @@ class DataLoader:
     # def get_usage_list(building):
     #     return \
     #         pd.read_csv(
-    #             f"../data/citylearn_challenge_2022_phase_1/consumptions.csv")[
+    #             f"../analysis_data/citylearn_challenge_2022_phase_1/consumptions.csv")[
     #             f"B{building + 1}"]

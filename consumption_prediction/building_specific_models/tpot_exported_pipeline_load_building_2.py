@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from tpot.export_utils import set_param_recursive
 from joblib import dump
 
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+# NOTE: Make sure that the outcome column is labeled 'target' in the analysis_data file
 solar_df = pd.read_csv('./building2_load.csv')
 solar_df_data = solar_df.drop(["non_shiftable_load_future"], axis=1)
 solar_df_target = solar_df["non_shiftable_load_future"]

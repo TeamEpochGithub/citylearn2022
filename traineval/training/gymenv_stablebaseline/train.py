@@ -11,9 +11,9 @@ obs = env.reset()
 
 # check_env(env)
 # model = PPO('MlpPolicy', env, verbose=0, n_steps=2048).learn(total_timesteps=8760)
-# model.save("../gymenv_stablebaseline/data/ppo_test_steps2048")
+# model.save("../gymenv_stablebaseline/analysis_data/ppo_test_steps2048")
 
-model = PPO.load("../gymenv_stablebaseline/data/ppo_test_steps2048.zip")
+model = PPO.load("../gymenv_stablebaseline/analysis_data/ppo_test_steps2048.zip")
 
 obs = env.reset()
 actions = []

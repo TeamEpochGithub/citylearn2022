@@ -11,7 +11,7 @@ from TPOT import switched_data
 import os
 
 
-absolute_path = os.path.abspath(os.path.dirname('data.csv'))
+absolute_path = os.path.abspath(os.path.dirname('analysis_data.csv'))
 
 wthr = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/weather.csv")[
     ["Outdoor Drybulb Temperature [C]", "Relative Humidity [%]", "Diffuse Solar Radiation [W/m2]",
@@ -28,7 +28,7 @@ training, testing, training_labels, testing_labels = train_test_split(x, y, test
 
 
 
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+# NOTE: Make sure that the outcome column is labeled 'target' in the analysis_data file
 tpot_data = pd.read_csv('PATH/TO/DATA/FILE', sep='COLUMN_SEPARATOR', dtype=np.float64)
 features = tpot_data.drop('target', axis=1)
 training_features, testing_features, training_target, testing_target = \

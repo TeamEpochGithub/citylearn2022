@@ -32,7 +32,7 @@ df.to_csv(osp.join(osp.dirname(competition_data.__file__), "consumptions/buildin
 # array1.to_csv('consumptions.csv')
 
 
-# e = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")
+# e = pd.read_csv("../../../analysis_data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")
 
 
 # for i, b in enumerate(buildings):

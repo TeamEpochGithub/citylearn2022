@@ -1,7 +1,7 @@
 import pandas as pd
 
-# pricing = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/pricing.csv")["Electricity Pricing [$]"]
-# months = pd.read_csv("../../../data/citylearn_challenge_2022_phase_1/Building_1.csv")[["Month", "Hour"]]
+# pricing = pd.read_csv("../../../analysis_data/citylearn_challenge_2022_phase_1/pricing.csv")["Electricity Pricing [$]"]
+# months = pd.read_csv("../../../analysis_data/citylearn_challenge_2022_phase_1/Building_1.csv")[["Month", "Hour"]]
 #
 #
 # concat = pd.concat([pricing, months], axis=1, ignore_index=True)

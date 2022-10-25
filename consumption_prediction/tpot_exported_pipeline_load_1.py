@@ -7,11 +7,11 @@ from sklearn.preprocessing import MinMaxScaler
 from tpot.export_utils import set_param_recursive
 from joblib import dump
 
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+# NOTE: Make sure that the outcome column is labeled 'target' in the analysis_data file
 load_df = pd.read_csv(
         r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\data\citylearn_challenge_2022_phase_1\load_data.csv")
 
-# Scaler training data
+# Scaler training analysis_data
 ms_load = MinMaxScaler()
 load_df_data = load_df.drop(["non_shiftable_load_future"], axis=1)
 load_df_data[load_df_data.columns] = ms_load.fit_transform(load_df_data[load_df_data.columns])

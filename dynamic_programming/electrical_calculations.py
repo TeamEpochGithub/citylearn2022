@@ -2,7 +2,7 @@ import numpy as np
 
 
 def net_electricity_consumption(non_shiftable_load, electrical_storage_electricity_consumption, solar_generation_obs):
-    # non_shiftable_load from csv data
+    # non_shiftable_load from csv analysis_data
     # solar_generation_obs from observation
     # electrical_storage_electricity_consumption is last_energy_balance
     return non_shiftable_load + electrical_storage_electricity_consumption - solar_generation_obs
@@ -10,7 +10,7 @@ def net_electricity_consumption(non_shiftable_load, electrical_storage_electrici
 
 def solar_generation_obs(nominal_power, solar_generation_data):
     # nominal_power[i] = list(env.get_building_information().values())[i]["solar_power"], for building i → (4, 4, 4, 5, 4)
-    # solar_generation_data from csv data
+    # solar_generation_data from csv analysis_data
     return nominal_power * solar_generation_data / 1000
 
 

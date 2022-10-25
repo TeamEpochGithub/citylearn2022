@@ -6,16 +6,16 @@ from sklearn import preprocessing
 import matplotlib.pyplot as mp
 
 #Calculate some ranges for price emission and grid
-price_df = pd.read_csv("../data/citylearn_challenge_2022_phase_1/pricing.csv")
-carbon_df = pd.read_csv("../data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")
-weather_df = pd.read_csv("../data/citylearn_challenge_2022_phase_1/weather.csv")
+price_df = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/pricing.csv")
+carbon_df = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/carbon_intensity.csv")
+weather_df = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/weather.csv")
 
 #Building dfs
-building_1 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_1.csv")
-building_2 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_2.csv")
-building_3 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_3.csv")
-building_4 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_4.csv")
-building_5 = pd.read_csv("../data/citylearn_challenge_2022_phase_1/Building_5.csv")
+building_1 = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/Building_1.csv")
+building_2 = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/Building_2.csv")
+building_3 = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/Building_3.csv")
+building_4 = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/Building_4.csv")
+building_5 = pd.read_csv("../analysis_data/citylearn_challenge_2022_phase_1/Building_5.csv")
 
 
 

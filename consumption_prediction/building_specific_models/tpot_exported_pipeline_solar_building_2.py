@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.model_selection import train_test_split
 
-# NOTE: Make sure that the outcome column is labeled 'target' in the data file
+# NOTE: Make sure that the outcome column is labeled 'target' in the analysis_data file
 solar_df = pd.read_csv(
         r"C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-starter-kit\consumption_prediction\building_specific_models\building2_solar.csv")
 

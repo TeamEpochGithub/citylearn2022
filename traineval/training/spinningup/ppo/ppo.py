@@ -77,7 +77,7 @@ class PPOBuffer:
 
     def get(self):
         """
-        Call this at the end of an epoch to get all of the data from
+        Call this at the end of an epoch to get all of the analysis_data from
         the buffer, with advantages appropriately normalized (shifted to have
         mean zero and std one). Also, resets some pointers in the buffer.
         """

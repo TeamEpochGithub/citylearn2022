@@ -1,21 +1,49 @@
-import sys
+import csv
 import pandas as pd
 import numpy as np
 import os.path as osp
+from analysis import analysis_data
 from data import citylearn_challenge_2022_phase_1 as competition_data
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
 consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/building_consumptions.csv")
-carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
+# carbon_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
 
 consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
+# carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
+# carbon = carbon.values.tolist()[1:]
 
-carbon = pd.read_csv(carbon_path)["kg_CO2/kWh"]
-carbon = carbon.values.tolist()[1:]
+
+def write_step_to_file(agent_id, action, observation):
+    # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
+    row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
+           observation[24]]
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'known_performance.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
+
+def write_historic_consumptions_to_file(agent_id, timestep):
+    num_consumptions = 10
+    row = []
+    for i in range(num_consumptions):
+        if timestep - i - 2 >= 0:
+            row.append(consumptions[agent_id][timestep - i - 2])
+        else:
+            row.append(0)
+
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'historic_consumptions.csv')
+    action_file = open(action_file_path, 'a', newline="")
+    writer = csv.writer(action_file)
+    writer.writerow(row)
+    action_file.close()
+
 
 def get_chunk_consumptions(agent_id, timestep, consumption_sign):
     chunk_consumptions = []
@@ -45,78 +73,86 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc):
+def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc):
     chunk_total_consumption = sum(chunk_consumptions)
-
-    date = shift_date(observation[2], observation[1], observation[0], shifts=1)
-
-    prices = []
-    emissions = []
-
-    for hour in range(len(chunk_consumptions)):
-        prices.append(pricing(date[2], date[0], date[1]))
-        date = shift_date(date[0], date[1], date[2], shifts=1)
-
-        emissions.append(carbon[timestep + hour])
-
-    consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
-    next_consumption_price = consumption_prices[0]
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
         # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
         # price*consumption value and bring it down to the next highest price*consumption by reducing the
         # consumption at that time step. We do this consecutively until the battery has been emptied.
 
+        date = shift_date(observation[2], observation[1], observation[0], shifts=1)
+
+        prices = []
+
+        for hour in range(len(chunk_consumptions)):
+            prices.append(pricing(date[2], date[0], date[1]))
+            date = shift_date(date[0], date[1], date[2], shifts=1)
+
+        consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+
         local_soc = soc * np.sqrt(0.83)
-        # print(local_soc)
         chunk_charge_loads = [0] * len(chunk_consumptions)
-        # print(chunk_charge_loads)
 
-        while local_soc != 0:
-            max_consumption_price = max(consumption_prices)
-            peak_indices = [i for i, p in enumerate(consumption_prices) if p == max_consumption_price]
+        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
 
-            consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
-
-            if len(consumption_prices_without_peak) == 0:
-                consumption_prices_without_peak = [0]
-
-            difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
-            consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
-
-            if local_soc >= sum(consumption_difference):
-                for i, difference in enumerate(consumption_difference):
-                    chunk_charge_loads[peak_indices[i]] += difference
-                    local_soc -= difference
-                    consumption_prices[peak_indices[i]] -= difference_from_peak
-                    # print(chunk_charge_loads)
-            else:
-                relative_difference = [c / sum(consumption_difference) for c in consumption_difference]
-
-                for i, rd in enumerate(relative_difference):
-                    chunk_charge_loads[peak_indices[i]] += local_soc * rd
-                    consumption_prices[peak_indices[i]] -= rd * local_soc * prices[peak_indices[i]]
-                    # print(chunk_charge_loads)
-
-                local_soc = 0
-
-        return chunk_charge_loads
     else:
         return chunk_consumptions
 
 
-def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
+def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
+    while local_soc != 0:
 
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
-    if consumption_sign == -1:  # If negative consumption
-        chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
-    else:
-        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, remaining_battery_capacity, soc)
+        # Get the peak consumption_price and check in which step the peak(s) happens
+        max_consumption_price = max(consumption_prices)
+        peak_indices = [i for i, p in enumerate(consumption_prices) if p == max_consumption_price]
+
+        # List of other prices which do not indicate a peak
+        consumption_prices_without_peak = [x for x in consumption_prices if x != max_consumption_price]
+
+        if len(consumption_prices_without_peak) == 0:
+            consumption_prices_without_peak = [0]
+
+        # Get the difference in consumption price between the highest peak and the next highest peak
+        # Make a list of the differences in consumption between the highest peaks and the next highest peak
+        difference_from_peak = max_consumption_price - max(consumption_prices_without_peak)
+        consumption_difference = [difference_from_peak / prices[i] for i in peak_indices]
+
+        # Lower peaks to next highest peak
+        if local_soc >= sum(consumption_difference):
+            for i, difference in enumerate(consumption_difference):
+                chunk_charge_loads[peak_indices[i]] += difference
+                local_soc -= difference
+                consumption_prices[peak_indices[i]] -= difference_from_peak
+        else:
+            relative_difference = [c / sum(consumption_difference) for c in consumption_difference]
+
+            for i, rd in enumerate(relative_difference):
+                chunk_charge_loads[peak_indices[i]] += local_soc * rd
+                consumption_prices[peak_indices[i]] -= rd * local_soc * prices[peak_indices[i]]
+
+            local_soc = 0
+
+    for i in range(2, len(chunk_charge_loads)):
+        if chunk_charge_loads[i] != 0 and chunk_charge_loads[i - 1] == 0 and chunk_charge_loads[i - 2] == 0:
+            chunk_charge_loads[i - 2] = 0.000000001
+            chunk_charge_loads[i - 1] = -0.0000001
+            break
 
     return chunk_charge_loads
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc):
+def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc):
+    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
+    if consumption_sign == -1:  # If negative consumption
+        chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
+    else:
+        chunk_charge_loads = positive_consumption_scenario(observation, chunk_consumptions, timestep, soc)
+
+    return chunk_charge_loads
+
+
+def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, write_to_file):
     if timestep >= 8759:
         return 0
 
@@ -129,16 +165,17 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     else:
         consumption_sign = -1
 
-    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity,
-                                              soc)
-
-    # print(chunk_charge_loads)
+    chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
+                                              remaining_battery_capacity, soc)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
 
-    return action
+    if write_to_file:
+        write_step_to_file(agent_id, action, observation)
+        write_historic_consumptions_to_file(agent_id, timestep)
 
+    return action
 
 
 class TimeStepKnownConsumptionAgentPeak:
@@ -148,6 +185,7 @@ class TimeStepKnownConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
+        self.write_to_file = True
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -159,11 +197,12 @@ class TimeStepKnownConsumptionAgentPeak:
 
         self.timestep += 1
         building_timestep = self.timestep // len(observation)
+        observation = observation[agent_id]
 
         action_out = \
-            individual_consumption_policy(observation[agent_id], building_timestep, agent_id,
+            individual_consumption_policy(observation, building_timestep, agent_id,
                                           self.remaining_battery_capacity[agent_id],
-                                          self.soc[agent_id])
+                                          self.soc[agent_id], self.write_to_file)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])

@@ -5,15 +5,15 @@ data = pd.read_csv(r'C:\Users\kuipe\OneDrive\Bureaublad\Epoch\citylearn-2022-sta
 
 print(data.describe())
 
-# building_1_load = data[:8758]
-# building_2_load = data[8578:17516]
-# building_3_load = data[17516:26274]
-# building_4_load = data[26274:35032]
-# building_5_load = data[35032:]
+# building_1_load = analysis_data[:8758]
+# building_2_load = analysis_data[8578:17516]
+# building_3_load = analysis_data[17516:26274]
+# building_4_load = analysis_data[26274:35032]
+# building_5_load = analysis_data[35032:]
 #
 #
 # print(building_1_load.columns)
-# # building_1_load = building_1_load.drop(columns=data.columns['^Unnamed'])
+# # building_1_load = building_1_load.drop(columns=analysis_data.columns['^Unnamed'])
 # #
 # building_1_load.to_csv('./building_specific_models/building1_load.csv', index=False)
 # building_2_load.to_csv('./building_specific_models/building2_load.csv', index=False)
@@ -21,4 +21,4 @@ print(data.describe())
 # building_4_load.to_csv('./building_specific_models/building4_load.csv', index=False)
 # building_5_load.to_csv('./building_specific_models/building5_load.csv', index=False)
 # print(building_1_load.to_string())
-# print(data['carbon_intensity'][:8757])
+# print(analysis_data['carbon_intensity'][:8757])
