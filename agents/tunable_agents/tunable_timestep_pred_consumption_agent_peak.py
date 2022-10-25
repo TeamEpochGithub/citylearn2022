@@ -157,9 +157,9 @@ def day_night_policy(hour):
     return action
 
 
-class TimeStepPredConsumptionAgentPeak:
+class TunableTimeStepPredConsumptionAgentPeak:
 
-    def __init__(self):
+    def __init__(self, params):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
@@ -174,6 +174,7 @@ class TimeStepPredConsumptionAgentPeak:
         self.evaluation_period = 168
         self.evaluation_left_bound = -10
         self.evaluation_right_bound = -10
+        self.params = params
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -187,13 +188,13 @@ class TimeStepPredConsumptionAgentPeak:
             self.load_learner_best_ind[str(agent_id)] = 0
 
         if str(agent_id) not in self.load_learner_options:
-            self.load_learner_options[str(agent_id)] = [Lag0Learner(500, 15),
-                                                        Lag1Learner(500, 15),
-                                                        Lag2Learner(500, 15),
-                                                        Lag3Learner(500, 15),
-                                                        Lag4Learner(500, 15),
-                                                        Lag5Learner(500, 15),
-                                                        Lag6Learner(500, 15)
+            self.load_learner_options[str(agent_id)] = [Lag0Learner(800, 15),
+                                                        Lag1Learner(800, 15),
+                                                        Lag2Learner(800, 15),
+                                                        Lag3Learner(800, 15),
+                                                        Lag4Learner(800, 15),
+                                                        Lag5Learner(800, 15),
+                                                        Lag6Learner(800, 15)
                                                         ]
 
     def compute_action(self, observation, agent_id):
@@ -261,11 +262,13 @@ class TimeStepPredConsumptionAgentPeak:
         if write_to_file:
             write_step_to_file(agent_id, timestep, action, observation)
 
+        action += self.nudge_action(observation[2])
+
         return action
 
     def evaluate_learners(self, timestep, actual_load, agent_id):
         if timestep == self.evaluation_left_bound:
-            # print("before", self.load_learner_best_ind)
+            print("before", self.load_learner_best_ind)
             for forecaster in self.load_learner_options[str(agent_id)]:
                 forecaster.fit_load()
 
@@ -283,7 +286,7 @@ class TimeStepPredConsumptionAgentPeak:
                     best_ind = ind
                     best_error = error
             self.load_learner_best_ind[str(agent_id)] = best_ind
-            # print("after", self.load_learner_best_ind)
+            print("after", self.load_learner_best_ind)
 
     def update_load_forecasters(self, agent_id, timestep, load):
         for ind, forecaster in enumerate(self.load_learner_options[str(agent_id)]):
@@ -299,3 +302,17 @@ class TimeStepPredConsumptionAgentPeak:
             self.evaluation_right_bound = self.evaluation_left_bound + self.evaluation_period
             print(self.evaluation_left_bound, self.evaluation_right_bound)
             self.evaluation_ind += 1
+
+    def nudge_action(self, hour):
+        nudge = 0
+        if hour == self.params["hour_0"]:
+            nudge += self.params["action_0"]
+        elif hour == self.params["hour_1"]:
+            nudge += self.params["action_1"]
+        elif hour == self.params["hour_2"]:
+            nudge += self.params["action_2"]
+        # elif hour == self.params["hour_3"]:
+        #     nudge += self.params["action_3"]
+        # elif hour == self.params["hour_4"]:
+        #     nudge += self.params["action_4"]
+        return nudge

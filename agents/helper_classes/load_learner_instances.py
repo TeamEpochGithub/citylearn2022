@@ -85,7 +85,7 @@ class LearnerInstance:
     def fit_load(self):
 
         left_bound = max(self.timestep - self.cap_learning_data, 0)
-        # print(left_bound, self.timestep, self.cap_learning_data)
+        print(left_bound, self.timestep, self.cap_learning_data)
         self.forecaster.fit(y=pd.Series(self.non_shiftable_loads),
                             exog=self.get_exogenuous_values(left_bound, self.timestep))
 
