@@ -9,6 +9,7 @@ import csv
 from tqdm import tqdm
 import warnings
 warnings.simplefilter("ignore", category=DeprecationWarning)
+warnings.simplefilter("ignore", category=FutureWarning)
 
 """
 Please do not make changes to this file. 
