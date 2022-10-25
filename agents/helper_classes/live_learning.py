@@ -121,7 +121,11 @@ class LiveLearner:
                                                    last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
                                                    exog=self.get_exogenuous_values(left_bound, right_bound))
 
-        predictions[predictions < 0] = 0
+        # predictions[predictions < 0] = 0
+        for i, x in enumerate(predictions):
+            if x < 0:
+                predictions[i] = 0
+
 
         return list(predictions)
 
@@ -130,10 +134,10 @@ class LiveLearner:
         predictions = self.solar_forecaster.predict(steps=steps,
                                                     last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]))
 
-        predictions[predictions < 0] = 0
-        # for i, x in enumerate(predictions):
-        #     if x < 0:
-        #         predictions[i] = 0
+        # predictions[predictions < 0] = 0
+        for i, x in enumerate(predictions):
+            if x < 0:
+                predictions[i] = 0
 
         return list(predictions)
 
