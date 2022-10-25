@@ -18,9 +18,9 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 # carbon = carbon.values.tolist()[1:]
 
 
-def write_step_to_file(agent_id, action, observation):
+def write_step_to_file(agent_id, timestep, action, observation):
     # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
-    row = [agent_id, action, observation[22], observation[23], observation[20], observation[21], observation[19],
+    row = [agent_id, timestep, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
     action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'known_performance.csv')
     action_file = open(action_file_path, 'a', newline="")
@@ -172,7 +172,7 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     action = charge_load / remaining_battery_capacity
 
     if write_to_file:
-        write_step_to_file(agent_id, action, observation)
+        write_step_to_file(agent_id, timestep, action, observation)
         write_historic_consumptions_to_file(agent_id, timestep)
 
     return action
@@ -185,7 +185,7 @@ class TimeStepKnownConsumptionAgentPeak:
         self.timestep = -1
         self.remaining_battery_capacity = {}
         self.soc = {}
-        self.write_to_file = True
+        self.write_to_file = False
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space

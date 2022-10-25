@@ -1,7 +1,7 @@
-from agents.tunable_agents.tunable_pred_consumption_agent import TunablePredConsumptionAgent
+from agents.tunable_agents.timestep_pred_consumption_agent_peak import TunableTimeStepPredConsumptionAgentPeak
 
 ###################################################################
 #####                Specify your agent here                  #####
 ###################################################################
 
-TuningAgent = TunablePredConsumptionAgent
+TuningAgent = TunableTimeStepPredConsumptionAgentPeak
