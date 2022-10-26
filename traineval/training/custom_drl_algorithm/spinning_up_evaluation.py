@@ -4,7 +4,8 @@ import time
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 
-from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
+# from agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
+from agents.deprecated_agents.order_enforcing_wrapper_spinning_up import OrderEnforcingSpinningUpAgent
 from data import citylearn_challenge_2022_phase_1 as competition_data
 from traineval.utils.convert_arguments import get_environment_arguments
 

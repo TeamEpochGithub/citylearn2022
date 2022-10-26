@@ -1,11 +1,11 @@
 import csv
-import sys
 
 import numpy as np
 import pandas as pd
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
+
 import os.path as osp
 import data.citylearn_challenge_2022_phase_1 as competition_data
 from analysis import analysis_data
@@ -41,13 +41,13 @@ class LiveLearner:
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.load_lags,
-            transformer_y=StandardScaler()
+            transformer_y=self.transformer_y
         )
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.solar_lags,
-            transformer_y=StandardScaler()
+            transformer_y=self.transformer_y
         )
 
         carbon_intensities_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
@@ -93,19 +93,12 @@ class LiveLearner:
 
     def force_fit_load(self):
 
-        mean_nsl = np.mean(self.non_shiftable_loads)
-        normed_nsl = np.asarray(self.non_shiftable_loads) - mean_nsl
-
         left_bound = max(self.timestep - self.cap_learning_data, 0)
-        self.load_forecaster.fit(y=pd.Series(normed_nsl),
+        self.load_forecaster.fit(y=pd.Series(self.non_shiftable_loads),
                                  exog=self.get_exogenuous_values(left_bound, self.timestep))
 
     def force_fit_solar(self):
-
-        mean_solar = np.mean(self.solar_generations)
-        normed_solar = np.asarray(self.solar_generations) - mean_solar
-
-        self.solar_forecaster.fit(pd.Series(normed_solar))
+        self.solar_forecaster.fit(pd.Series(self.solar_generations))
 
     def force_fit(self):
         self.force_fit_load()
@@ -128,40 +121,48 @@ class LiveLearner:
         left_bound = self.timestep - self.max_load_lag
         right_bound = self.timestep + steps
 
-        mean_nsl = np.mean(self.non_shiftable_loads)
-        normed_nsl = np.asarray(self.non_shiftable_loads) - mean_nsl
-
         predictions = self.load_forecaster.predict(steps=steps,
-                                                   last_window=pd.Series(normed_nsl[-self.max_load_lag:]),
+                                                   last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
                                                    exog=self.get_exogenuous_values(left_bound, right_bound))
 
         if isinstance(predictions, pd.Series):
-            predictions = np.asarray(predictions) + mean_nsl
+            predictions = np.asarray(predictions)
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions + mean_nsl]
-
+            return [predictions]
 
     def predict_solar_generations(self, steps):
 
-        mean_solar = np.mean(self.solar_generations)
-        normed_solar = np.asarray(self.solar_generations) - mean_solar
-
         predictions = self.solar_forecaster.predict(steps=steps,
-                                                    last_window=pd.Series(normed_solar[-self.max_solar_lag:]))
+                                                    last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]))
 
         if isinstance(predictions, pd.Series):
-            predictions = np.asarray(predictions) + mean_solar
+            predictions = np.asarray(predictions)
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions + mean_solar]
+            return [predictions]
 
     def predict_consumption(self, steps, only_write_once):
 
         load = self.predict_non_shiftable_load(steps)
         solar = self.predict_solar_generations(steps)
+
+        if self.write_to_file:
+            if only_write_once:
+                write_prediction_to_file(self.agent_id, self.timestep, load[0], solar[0])
+
+        return [a - b for a, b in
+                zip(load, solar)]
+
+    def predict_consumption_without_bias(self, steps, only_write_once, load_bias, solar_bias):
+
+        load = self.predict_non_shiftable_load(steps)
+        solar = self.predict_solar_generations(steps)
+
+        load = list(np.asarray(load) - load_bias)
+        solar = list(np.asarray(solar) - solar_bias)
 
         if self.write_to_file:
             if only_write_once:
