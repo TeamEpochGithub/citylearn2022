@@ -22,6 +22,7 @@ def electrical_storage_soc(p_soc, previous_capacity):
     return p_soc/previous_capacity
 
 
+# (action * total_battery_capacity).clip(-5, 5) , prev_storage (0 initially), efficiency (function) , total_battery_capacity (e.g. 6.4)
 def soc(p_energy_normed, p_soc_init, p_efficiency, previous_capacity):
     # energy normed is energy but cut-off at nominal level
     # soc_init is soc for previous time_step times (1-loss_coefficient)
@@ -88,7 +89,8 @@ def new_capacity(previous_capacity, p_last_energy_balance):
     capacity_degrade = capacity_loss_coefficient * initial_capacity * np.abs(p_last_energy_balance) / (2 * previous_capacity)
     return previous_capacity - capacity_degrade
 
-
+# Current_battery_level, Prev_battery_level, efficiency (function)
+# Battery_consumption
 def last_energy_balance(p_soc, previous_soc, p_efficiency):
     loss_coefficient = 0  # potentially 0.006?
     energy_balance = p_soc - previous_soc * (1 - loss_coefficient)
@@ -116,6 +118,7 @@ def last_energy_balance(p_soc, previous_soc, p_efficiency):
 #
 #     return get_efficiency
 
+# (action * total_battery_capacity).clip(-5, 5) , 5
 def efficiency(p_energy_normed, p_nominal_power):
 
     x = np.abs(p_energy_normed / p_nominal_power)
