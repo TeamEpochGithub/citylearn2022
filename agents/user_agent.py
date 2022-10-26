@@ -3,6 +3,7 @@
 ###################################################################
 from agents.timestep_known_consumption_agent_peak import TimeStepKnownConsumptionAgentPeak
 from agents.timestep_pred_consumption_agent_peak import TimeStepPredConsumptionAgentPeak
+from agents.timestep_pred_consumption_agent_peak_testing import TimeStepPredConsumptionAgentPeakTesting
 
-UserAgent = TimeStepPredConsumptionAgentPeak
+UserAgent = TimeStepPredConsumptionAgentPeakTesting
 
