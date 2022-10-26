@@ -1,9 +1,10 @@
 import csv
 
+import numpy as np
 import pandas as pd
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, FunctionTransformer
 import os.path as osp
 import data.citylearn_challenge_2022_phase_1 as competition_data
 from analysis import analysis_data
@@ -34,16 +35,18 @@ class LiveLearner:
         self.max_load_lag = max(self.load_lags)
         self.max_solar_lag = max(self.solar_lags)
 
+        self.transformer_y = FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
+
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.load_lags,
-            transformer_y=StandardScaler()
+            transformer_y=self.transformer_y
         )
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.solar_lags,
-            transformer_y=StandardScaler()
+            transformer_y=self.transformer_y
         )
 
         carbon_intensities_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
@@ -121,25 +124,24 @@ class LiveLearner:
                                                    last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
                                                    exog=self.get_exogenuous_values(left_bound, right_bound))
 
-        # predictions[predictions < 0] = 0
-        for i, x in enumerate(predictions):
-            if x < 0:
-                predictions[i] = 0
-
-
-        return list(predictions)
+        if isinstance(predictions, pd.Series):
+            predictions = np.asarray(predictions)
+            predictions[predictions < 0] = 0
+            return list(predictions)
+        else:
+            return [predictions]
 
     def predict_solar_generations(self, steps):
 
         predictions = self.solar_forecaster.predict(steps=steps,
                                                     last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]))
 
-        # predictions[predictions < 0] = 0
-        for i, x in enumerate(predictions):
-            if x < 0:
-                predictions[i] = 0
-
-        return list(predictions)
+        if isinstance(predictions, pd.Series):
+            predictions = np.asarray(predictions)
+            predictions[predictions < 0] = 0
+            return list(predictions)
+        else:
+            return [predictions]
 
     def predict_consumption(self, steps, only_write_once):
 
