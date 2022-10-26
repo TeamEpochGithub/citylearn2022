@@ -261,6 +261,8 @@ class TimeStepPredConsumptionAgentPeak:
         if write_to_file:
             write_step_to_file(agent_id, timestep, action, observation)
 
+        action += self.apply_hour_nudges(observation[2])
+
         return action
 
     def evaluate_learners(self, timestep, actual_load, agent_id):
@@ -299,3 +301,9 @@ class TimeStepPredConsumptionAgentPeak:
             self.evaluation_right_bound = self.evaluation_left_bound + self.evaluation_period
             print(self.evaluation_left_bound, self.evaluation_right_bound)
             self.evaluation_ind += 1
+
+    def apply_hour_nudges(self, hour):
+        # The best hours and nudges as calculated in 'exhaustive_hour_nudges' notebook
+        if hour == 18: # or hour == 17 or hour == 18 or hour == 20:
+            return -0.02
+        return 0

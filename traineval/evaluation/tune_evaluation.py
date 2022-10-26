@@ -140,7 +140,8 @@ def evaluate(params, verbose=False):
     #     Constants.lowest_average_cost = average_cost
     #     dict_to_csv([args])
 
-    return {'loss': avg, 'status': STATUS_OK}
+    # return {'loss': avg, 'status': STATUS_OK}
+    return avg, params
 
 
 def get_observation_weights_search_space():
