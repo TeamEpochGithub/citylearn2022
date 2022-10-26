@@ -2,9 +2,9 @@ import numpy as np
 import os.path as osp
 import csv
 
-from agents.helper_classes.load_learner_instances import Lag0Learner, Lag1Learner, Lag2Learner, Lag3Learner, \
-    Lag4Learner, \
-    Lag5Learner, Lag6Learner
+from agents.helper_classes.load_learner_instances import LoadLag0Learner, LoadLag1Learner, LoadLag2Learner, LoadLag3Learner, \
+    LoadLag4Learner, \
+    LoadLag5Learner, LoadLag6Learner
 
 from analysis import analysis_data
 from agents.helper_classes.live_learning import LiveLearner
@@ -188,13 +188,13 @@ class TunableTimeStepPredConsumptionAgentPeak:
             self.load_learner_best_ind[str(agent_id)] = 0
 
         if str(agent_id) not in self.load_learner_options:
-            self.load_learner_options[str(agent_id)] = [Lag0Learner(500, 15),
-                                                        Lag1Learner(500, 15),
-                                                        Lag2Learner(500, 15),
-                                                        Lag3Learner(500, 15),
-                                                        Lag4Learner(500, 15),
-                                                        Lag5Learner(500, 15),
-                                                        Lag6Learner(500, 15)
+            self.load_learner_options[str(agent_id)] = [LoadLag0Learner(500, 15),
+                                                        LoadLag1Learner(500, 15),
+                                                        LoadLag2Learner(500, 15),
+                                                        LoadLag3Learner(500, 15),
+                                                        LoadLag4Learner(500, 15),
+                                                        LoadLag5Learner(500, 15),
+                                                        LoadLag6Learner(500, 15)
                                                         ]
 
     def compute_action(self, observation, agent_id):

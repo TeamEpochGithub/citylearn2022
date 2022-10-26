@@ -117,7 +117,7 @@ class LearnerInstance:
             axis=1)
 
 
-class Lag0Learner(LearnerInstance):
+class LoadLag0Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
         lags = [1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52]
         forecaster = ForecasterAutoreg(
@@ -128,9 +128,10 @@ class Lag0Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag1Learner(LearnerInstance):
+class LoadLag1Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                35, 36, 37, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -139,9 +140,9 @@ class Lag1Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag2Learner(LearnerInstance):
+class LoadLag2Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2]
+        lags = [1, 2, 3, 4, 23, 24, 25, 26, 27, 47, 48, 49, 50, 51]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -150,7 +151,7 @@ class Lag2Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag3Learner(LearnerInstance):
+class LoadLag3Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
         lags = [1, 23, 45, 67]
         forecaster = ForecasterAutoreg(
@@ -161,33 +162,33 @@ class Lag3Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag4Learner(LearnerInstance):
+class LoadLag4Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
         forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=Ridge(random_state=42, solver='sag', tol=0.001, alpha=3.593814),
             lags=lags,
             transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
         )
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag5Learner(LearnerInstance):
+class LoadLag5Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+        lags = [1, 23, 45]
         forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=Ridge(random_state=42, solver='sparse_cg', tol=0.1, alpha=12915.496650),
             lags=lags,
             transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
         )
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag6Learner(LearnerInstance):
+class LoadLag6Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6]
+        lags = [1, 23, 45, 67]
         forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
+            regressor=Ridge(random_state=42, solver='sparse_cg', tol=0.1, alpha=12915.496650),
             lags=lags,
             transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
         )

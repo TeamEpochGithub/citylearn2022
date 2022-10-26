@@ -13,11 +13,11 @@ class LearnerInstance:
     def __init__(self, forecaster, lags, cap_learning_data, fit_delay_steps):
         self.trial_predictions = []
         self.trial_actual_values = []
-        self.load_lags = lags
-        self.max_load_lag = max(self.load_lags)
+        self.solar_lags = lags
+        self.max_solar_lag = max(self.solar_lags)
         self.cap_learning_data = cap_learning_data
         self.forecaster = forecaster
-        self.non_shiftable_loads = []
+        self.solar_generations = []
         self.fit_delay_steps = fit_delay_steps
         self.fit_delay_counter = fit_delay_steps  # Since we want to fit at the beginning
         self.timestep = -1
@@ -51,20 +51,20 @@ class LearnerInstance:
     def get_lags(self):
         return self.load_lags
 
-    def update_loads(self, load, model_is_used):
+    def update_solars(self, solar, model_is_used):
         self.timestep += 1
 
-        if self.fit_delay_counter >= self.fit_delay_steps and len(self.non_shiftable_loads) > self.max_load_lag + 1:
+        if self.fit_delay_counter >= self.fit_delay_steps and len(self.solar_generations) > self.max_solar_lag + 1:
             if model_is_used:
-                self.fit_load()
+                self.fit_solar()
                 self.fit_delay_counter = 1
         else:
             self.fit_delay_counter += 1
 
-        self.non_shiftable_loads.append(load)
+        self.solar_generations.append(solar)
 
-        while len(self.non_shiftable_loads) > self.cap_learning_data:
-            del self.non_shiftable_loads[0]
+        while len(self.solar_generations) > self.cap_learning_data:
+            del self.solar_generations[0]
 
     def reset_trial(self):
         self.trial_predictions = []
@@ -82,20 +82,19 @@ class LearnerInstance:
         mse = mse / (len(self.trial_predictions) - 1)
         return mse
 
-    def fit_load(self):
+    def fit_solar(self):
 
         left_bound = max(self.timestep - self.cap_learning_data, 0)
-        # print(left_bound, self.timestep, self.cap_learning_data)
-        self.forecaster.fit(y=pd.Series(self.non_shiftable_loads),
+        self.forecaster.fit(y=pd.Series(self.solar_generations),
                             exog=self.get_exogenuous_values(left_bound, self.timestep))
 
-    def predict_load(self, steps):
+    def predict_solar(self, steps):
 
-        left_bound = self.timestep - self.max_load_lag
+        left_bound = self.timestep - self.max_solar_lag
         right_bound = self.timestep + steps
 
         predictions = self.forecaster.predict(steps=steps,
-                                              last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
+                                              last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]),
                                               exog=self.get_exogenuous_values(left_bound, right_bound))
 
         if isinstance(predictions, pd.Series):
@@ -118,9 +117,9 @@ class LearnerInstance:
             axis=1)
 
 
-class Lag0Learner(LearnerInstance):
+class SolarLag0Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 23, 24, 25, 26, 27, 48, 49, 50, 51, 52]
+        lags = [1, 2, 3, 23, 24, 25, 48, 49, 50]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -129,9 +128,10 @@ class Lag0Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag1Learner(LearnerInstance):
+class SolarLag1Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+                35, 36, 37, 38, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -140,9 +140,9 @@ class Lag1Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag2Learner(LearnerInstance):
+class SolarLag2Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -151,9 +151,22 @@ class Lag2Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag3Learner(LearnerInstance):
+class SolarLag3Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 23, 45, 67]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+                32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60,
+                61, 62, 63]
+        forecaster = ForecasterAutoreg(
+            regressor=Ridge(random_state=42),
+            lags=lags,
+            transformer_y=StandardScaler()
+        )
+        super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
+
+
+class SolarLag4Learner(LearnerInstance):
+    def __init__(self, cap_learning_data, fit_delay_steps):
+        lags = [1, 2, 23, 24, 45, 46, 67, 68]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -162,9 +175,10 @@ class Lag3Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag4Learner(LearnerInstance):
+class SolarLag5Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5]
+        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+                34, 35, 36, 37, 38, 39]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
@@ -173,20 +187,9 @@ class Lag4Learner(LearnerInstance):
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 
 
-class Lag5Learner(LearnerInstance):
+class SolarLag6Learner(LearnerInstance):
     def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
-        forecaster = ForecasterAutoreg(
-            regressor=Ridge(random_state=42),
-            lags=lags,
-            transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
-        )
-        super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
-
-
-class Lag6Learner(LearnerInstance):
-    def __init__(self, cap_learning_data, fit_delay_steps):
-        lags = [1, 2, 3, 4, 5, 6]
+        lags = [1, 2, 3, 4, 5, 6, 23, 24, 25, 26, 27, 28]
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
