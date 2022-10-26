@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import pickle
 
-import agents.spinning_agent as agentfile
+import agents.deprecated_agents.spinning_agent as agentfile
 
 
 class CustomDRLAgent:
@@ -19,8 +19,7 @@ class CustomDRLAgent:
         # self.ac = torch.load(osp.join(osp.dirname(saved_models.__file__), model_path))
 
         # self.ac = torch.load(osp.join(osp.dirname(trained_models.__file__), "wowamodela.pt"))
-        self.ac = torch.load(osp.join(osp.dirname(agentfile.__file__),
-                                      "../traineval/training/custom_drl_algorithm/wowamodela.pt"))
+        self.ac = torch.load(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\traineval\training\custom_drl_algorithm\wowamodela.pt")
 
         self.index_com = environment_arguments["district_indexes"]
         self.index_part = environment_arguments["building_indexes"]

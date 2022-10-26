@@ -32,13 +32,13 @@ def write_step_to_file(agent_id, timestep, action, observation):
     action_file.close()
 
 
-def get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep):
+def get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep, load_bias, solar_bias):
     max_chunk_size = 32
 
     if timestep + max_chunk_size > 8759:
         max_chunk_size = 8759 - timestep
 
-    chunk_consumptions = live_learner.predict_consumption(max_chunk_size, False)
+    chunk_consumptions = live_learner.predict_consumption_without_bias(max_chunk_size, False, load_bias, solar_bias)
 
     for index, consumption in enumerate(chunk_consumptions):
 
@@ -131,8 +131,11 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
-                         live_learner):
-    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep)
+                         live_learner, load_bias, solar_bias):
+    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, live_learner, timestep, load_bias, solar_bias)
+
+    if len(chunk_consumptions) == 0:
+        chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign * -1, live_learner, timestep, load_bias, solar_bias)
 
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
@@ -144,14 +147,11 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
 
 
 def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, live_learner,
-                            write_to_file):
+                            write_to_file, load_bias, solar_bias):
     if timestep >= 8758:
         return -1
 
     live_learner.update_lists(observation)
-
-    if timestep % 100 == 0:
-        print("timestep: ", timestep)
 
     if timestep < 72:
         hour = observation[2]
@@ -160,7 +160,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
             action = 0.11
         return action
 
-    next_consumption = live_learner.predict_consumption(1, True)[0]
+    next_consumption = live_learner.predict_consumption_without_bias(1, True, load_bias, solar_bias)[0]
 
     if next_consumption == 0:
         return 0
@@ -170,7 +170,7 @@ def pred_consumption_policy(observation, timestep, agent_id, remaining_battery_c
         consumption_sign = -1
 
     chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                              remaining_battery_capacity, soc, live_learner)
+                                              remaining_battery_capacity, soc, live_learner, load_bias, solar_bias)
 
     charge_load = -1 * consumption_sign * chunk_charge_loads[0]
     action = charge_load / remaining_battery_capacity
@@ -222,6 +222,9 @@ class TimeStepPredConsumptionAgentPeakTesting:
             assert len(self.solar_truths[i]) == len(self.solar_predictions[i])
             assert len(self.load_truths[i]) == len(self.load_predictions[i])
 
+            load_residual_bias = np.mean(np.asarray(self.load_truths[i]) - np.asarray(self.load_predictions[i]))
+            solar_residual_bias = np.mean(np.asarray(self.solar_truths[i]) - np.asarray(self.solar_predictions[i]))
+
             solar_mae = metrics.mean_absolute_error(self.solar_truths[i], self.solar_predictions[i])
             load_mae = metrics.mean_absolute_error(self.load_truths[i], self.load_predictions[i])
             solar_mse = metrics.mean_squared_error(self.solar_truths[i], self.solar_predictions[i])
@@ -232,26 +235,34 @@ class TimeStepPredConsumptionAgentPeakTesting:
             print(f"Solar Prediction Mean: {np.mean(self.solar_predictions[i])}")
             print(f"Load Truth Mean: {np.mean(self.load_truths[i])}")
             print(f"Load Prediction Mean: {np.mean(self.load_predictions[i])}")
+            print(f"Load Bias: {load_residual_bias}")
+            print(f"Solar Bias: {solar_residual_bias}")
 
-            for j in range(0, 24):
-
-                lt = self.load_hour_difference[i][j][0]
-                lp = self.load_hour_difference[i][j][1]
-
-                del lt[0]
-                del lp[-1]
-
-                diff = np.asarray(lt) - np.asarray(lp)
-
-                diff_mean = np.mean(diff)
-                diff_sd = np.std(diff)
-
-                print(f"Hour {j + 1}: Diff Mean: {diff_mean} STD Diff: {diff_sd}")
+            # for j in range(0, 24):
+            #
+            #     lt = self.load_hour_difference[i][j][0]
+            #     lp = self.load_hour_difference[i][j][1]
+            #
+            #     del lt[0]
+            #     del lp[-1]
+            #
+            #     diff = np.asarray(lt) - np.asarray(lp)
+            #
+            #     diff_mean = np.mean(diff)
+            #     diff_sd = np.std(diff)
+            #
+            #     print(f"Hour {j + 1}: Diff Mean: {diff_mean} STD Diff: {diff_sd}")
 
 
 
             print("=================================================================================")
 
+    def get_bias(self, agent_id):
+
+        load_residual_bias = np.mean(np.asarray(self.load_truths[agent_id][1:]) - np.asarray(self.load_predictions[agent_id][:-1]))
+        solar_residual_bias = np.mean(np.asarray(self.solar_truths[agent_id][1:]) - np.asarray(self.solar_predictions[agent_id][:-1]))
+
+        return load_residual_bias, solar_residual_bias
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -268,11 +279,17 @@ class TimeStepPredConsumptionAgentPeakTesting:
         building_timestep = self.timestep // len(observation)
         observation = observation[agent_id]
 
+        if building_timestep > 100:
+            load_bias, solar_bias = self.get_bias(agent_id)
+        else:
+            load_bias = 0
+            solar_bias = 0
+
         action_out = \
             pred_consumption_policy(observation, building_timestep, agent_id,
                                     self.remaining_battery_capacity[agent_id],
                                     self.soc[agent_id], self.live_learners[str(agent_id)],
-                                    self.write_to_file)
+                                    self.write_to_file, load_bias, solar_bias)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])
@@ -288,8 +305,9 @@ class TimeStepPredConsumptionAgentPeakTesting:
 
         if building_timestep > 72:
 
-            sp = self.live_learners[str(agent_id)].predict_solar_generations(1)
-            lp = self.live_learners[str(agent_id)].predict_non_shiftable_load(1)
+            sp = self.live_learners[str(agent_id)].predict_solar_generations(1)[0]
+            lp = self.live_learners[str(agent_id)].predict_non_shiftable_load(1)[0]
+
             st = observation[21]
             lt = observation[20]
 

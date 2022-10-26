@@ -1,7 +1,8 @@
 import sys
 
 from gym.spaces import Box
-from agents.spinning_agent import SpinningAgent
+# from agents.spinning_agent import SpinningAgent
+from agents.deprecated_agents.spinning_agent import SpinningAgent
 from rewards.user_reward import UserReward
 
 def dict_to_action_space(aspace_dict):

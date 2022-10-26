@@ -38,9 +38,9 @@ if __name__ == "__main__":
                      "net_electricity_consumption"]
 
     model_type = "ppo"
-    number_of_epochs = 5
+    number_of_epochs = 50
     model_seed = 0
-    save_freq = 1
+    save_freq = 20
     steps = 8760
     max_ep_len = steps - 1
 
