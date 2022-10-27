@@ -18,7 +18,7 @@ consumptions = pd.read_csv(consumptions_path)[[f"{i}" for i in range(5)]]
 consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
-def write_step_to_file(action, cost, probability_action, features):
+def write_step_to_file(features):
     # action, cost, probability_action, *features
     row = features
     action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'consumption_context.csv')
@@ -48,14 +48,14 @@ def day_night_policy(hour):
 
 def calculate_battery_consumption(current_battery_level, prev_battery_level, efficiency):
     loss_coefficient = 0.006  # potentially 0.006?
-    energy_balance = current_battery_level - prev_battery_level * (1 - loss_coefficient)
+    battery_consumption = current_battery_level - prev_battery_level * (1 - loss_coefficient)
 
-    if energy_balance >= 0:
-        energy_balance = energy_balance / efficiency
+    if battery_consumption >= 0:
+        battery_consumption = battery_consumption / efficiency
     else:
-        energy_balance = energy_balance * efficiency
+        battery_consumption = battery_consumption * efficiency
 
-    return energy_balance
+    return battery_consumption
 
 
 def calculate_battery_level(action_capacity, prev_battery_level, efficiency):
@@ -134,7 +134,11 @@ class ContextualBanditAgent:
         action = 0  # random.choice(potential_actions)
         # loss = self.compute_loss(agent_id, timestep)
 
-        write_step_to_file(action, 0, 0, [consumption])
+        non_shiftable_load = observation[20]
+        solar_generation = observation[21]
+        electrical_storage_soc = observation[22]
+        net_electricity_consumption = observation[23]
+        write_step_to_file([non_shiftable_load, solar_generation, electrical_storage_soc])
 
         # action = self.model.forward(-consumption/6.4)
 

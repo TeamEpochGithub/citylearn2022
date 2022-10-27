@@ -19,7 +19,7 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 
 def write_step_to_file(agent_id, timestep, action, observation):
-    # ID, Action, Battery level, Consumption, Load, Solar, Carbon, Price
+    # ID, timestep, Action, Battery level, Consumption, Load, Solar, Carbon, Price
     row = [agent_id, timestep, action, observation[22], observation[23], observation[20], observation[21], observation[19],
            observation[24]]
     action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'known_performance.csv')
