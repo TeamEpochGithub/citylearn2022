@@ -338,9 +338,12 @@ class DistrictPredConsumptionAgent:
         else:
             consumption_sign = -1
 
+        district_capacity = remaining_battery_capacity * num_buildings
+        district_soc = soc * num_buildings
+
         chunk_charge_loads, stored_district_consumptions = calculate_next_chunk(observation, consumption_sign, agent_id,
                                                                                 timestep,
-                                                                                remaining_battery_capacity, soc,
+                                                                                district_capacity, district_soc,
                                                                                 load_learners, solar_learners,
                                                                                 self.stored_district_consumptions)
 
@@ -348,7 +351,7 @@ class DistrictPredConsumptionAgent:
             self.stored_district_consumptions = stored_district_consumptions
 
         district_charge_load = -consumption_sign * chunk_charge_loads[0]
-        action = district_charge_load / remaining_battery_capacity / num_buildings
+        action = district_charge_load / district_capacity
 
         if write_to_file:
             write_step_to_file(agent_id, timestep, action, observation)
