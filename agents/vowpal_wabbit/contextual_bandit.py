@@ -1,5 +1,4 @@
 import csv
-import sys
 from math import sqrt
 import random
 
@@ -12,8 +11,6 @@ from analysis import analysis_data
 from data import citylearn_challenge_2022_phase_1 as competition_data
 import torch
 import torch.nn as nn
-import torch.optim as optim
-import sys
 
 consumptions_path = osp.join(osp.dirname(competition_data.__file__), "consumptions/s_consumptions.csv")
 
@@ -23,10 +20,8 @@ consumptions = [consumptions[f"{i}"].values.tolist()[1:] for i in range(5)]
 
 def write_step_to_file(action, cost, probability_action, features):
     # action, cost, probability_action, *features
-    row = [action, cost, probability_action]
-    for feature in features:
-        row.append(feature)
-    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'vowpal_data.csv')
+    row = features
+    action_file_path = osp.join(osp.dirname(analysis_data.__file__), 'consumption_context.csv')
     action_file = open(action_file_path, 'a', newline="")
     writer = csv.writer(action_file)
     writer.writerow(row)
@@ -127,19 +122,19 @@ class ContextualBanditAgent:
         if timestep >= 8759:
             return 0
 
-        self.update_prev_lists(observation, agent_id)
+        # self.update_prev_lists(observation, agent_id)
 
         # if timestep <= 168:
         consumption = consumptions[agent_id][timestep]
 
         # action = -consumption / 6.4
-        potential_actions = [-0.3, -0.2, -0.15, -0.1, -0.07, -0.05, -0.02, -0.01, 0.0, 0.01, 0.02, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3]
-        action_probability = 1 / len(potential_actions)
+        # potential_actions = [-0.3, -0.2, -0.15, -0.1, -0.07, -0.05, -0.02, -0.01, 0.0, 0.01, 0.02, 0.05, 0.07, 0.1, 0.15, 0.2, 0.3]
+        # action_probability = 1 / len(potential_actions)
 
-        action = random.choice(potential_actions)
-        loss = self.compute_loss(agent_id, timestep)
+        action = 0  # random.choice(potential_actions)
+        # loss = self.compute_loss(agent_id, timestep)
 
-        write_step_to_file(action, loss, action_probability, [consumption])
+        write_step_to_file(action, 0, 0, [consumption])
 
         # action = self.model.forward(-consumption/6.4)
 
