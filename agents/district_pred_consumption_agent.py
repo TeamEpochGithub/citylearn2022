@@ -313,9 +313,10 @@ class DistrictPredConsumptionAgent:
 
         load_learners = []
         solar_learners = []
-        next_district_consumption = 0
 
         if agent_id == 0:
+            next_district_consumption = 0
+
             for agent in range(num_buildings):
 
                 if self.evaluation_left_bound <= timestep <= self.evaluation_right_bound:
@@ -330,6 +331,8 @@ class DistrictPredConsumptionAgent:
                 load_learners.append(load_learner)
                 solar_learners.append(solar_learner)
                 next_district_consumption += next_consumption
+        else:
+            next_district_consumption = self.stored_district_consumptions[0]
 
         if next_district_consumption == 0:
             return 0
