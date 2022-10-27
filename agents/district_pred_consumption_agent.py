@@ -306,8 +306,6 @@ class DistrictPredConsumptionAgent:
                 self.update_load_forecasters(agent, timestep, district_observation[agent][20])
                 self.update_solar_forecasters(agent, timestep, district_observation[agent][21])
 
-        print("timestep: ", timestep)
-
         if timestep < 72:
             return day_night_policy(observation[2])
 
