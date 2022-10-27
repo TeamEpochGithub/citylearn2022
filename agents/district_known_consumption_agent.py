@@ -171,7 +171,7 @@ def get_consumption_prices(obs_date, chunk_consumptions):
     return consumption_prices, prices
 
 
-def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc):
+def positive_consumption_scenario(date, chunk_consumptions, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -179,7 +179,7 @@ def positive_consumption_scenario(observation, chunk_consumptions, timestep, soc
         # price*consumption value and bring it down to the next highest price*consumption by reducing the
         # consumption at that time step. We do this consecutively until the battery has been emptied.
 
-        consumption_prices, prices = get_consumption_prices(observation, chunk_consumptions)
+        consumption_prices, prices = get_consumption_prices(date, chunk_consumptions)
 
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
@@ -195,10 +195,9 @@ def calculate_next_chunk(consumption_sign, timestep, remaining_battery_capacity,
     chunk_consumptions = get_chunk_consumptions(timestep, consumption_sign, num_buildings)
 
     if consumption_sign == -1:  # If negative consumption
-        chunk_charge_loads = negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity,
-                                                           soc)
+        chunk_charge_loads = negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        chunk_charge_loads = positive_consumption_scenario(date, chunk_consumptions, timestep, soc)
+        chunk_charge_loads = positive_consumption_scenario(date, chunk_consumptions, soc)
 
     return chunk_charge_loads
 
