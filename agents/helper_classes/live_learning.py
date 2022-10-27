@@ -62,16 +62,38 @@ class LiveLearner:
         self.solar_generations = []
 
         self.months = list(building["Month"])
+        self.months_hot_encoded = building[["Month"]]
+        self.months_hot_encoded = self.one_hot_encoding(self.months_hot_encoded)
+
         self.hours = list(building["Hour"])
+        self.hours_hot_encoded = building[["Hour"]]
+        self.hours_hot_encoded = self.one_hot_encoding(self.hours_hot_encoded)
+
         self.daytypes = list(building["Day Type"])
+        self.daytypes_hot_encoded = building[["Day Type"]]
+        self.daytypes_hot_encoded = self.one_hot_encoding(self.daytypes_hot_encoded)
 
         self.temperatures = list(weather["Outdoor Drybulb Temperature [C]"])
+        self.temperatures_hot_encoded = self.group_data(weather[["Outdoor Drybulb Temperature [C]"]], amount_groups=2)
+        self.temperatures_hot_encoded = self.one_hot_encoding(self.temperatures_hot_encoded)
+
         self.humidities = list(weather["Relative Humidity [%]"])
+        self.humidities_hot_encoded = self.group_data(weather[["Relative Humidity [%]"]], amount_groups=2)
+        self.humidities_hot_encoded = self.one_hot_encoding(self.humidities_hot_encoded)
 
         self.temperatures_pred_6h = list(weather["6h Prediction Outdoor Drybulb Temperature [C]"])
+        self.temperatures_p6_hot_encoded = self.group_data(weather[["Outdoor Drybulb Temperature [C]"]],
+                                                           amount_groups=2)
+        self.temperatures_p6_hot_encoded = self.one_hot_encoding(self.temperatures_p6_hot_encoded)
+
         self.humidities_pred_6h = list(weather["6h Prediction Relative Humidity [%]"])
+        self.humidities_p6_hot_encoded = self.group_data(weather[["6h Prediction Relative Humidity [%]"]],
+                                                         amount_groups=2)
+        self.humidities_p6_hot_encoded = self.one_hot_encoding(self.humidities_p6_hot_encoded)
 
         self.carbon_intensities = list(carbon_intensities["kg_CO2/kWh"])
+        self.carbon_intensities_hot_encoded = self.group_data(carbon_intensities[["kg_CO2/kWh"]], amount_groups=30)
+        self.carbon_intensities_hot_encoded = self.one_hot_encoding(self.carbon_intensities_hot_encoded)
 
     def update_lists(self, observation):
         self.timestep += 1
