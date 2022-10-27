@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from skforecast.ForecasterAutoreg import ForecasterAutoreg
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from sklearn.preprocessing import StandardScaler, FunctionTransformer, OneHotEncoder
 import os.path as osp
 import data.citylearn_challenge_2022_phase_1 as competition_data
 from analysis import analysis_data
@@ -154,3 +154,25 @@ class LiveLearner:
 
         return [a - b for a, b in
                 zip(load, solar)]
+
+    def one_hot_encoding(self, df):
+        ohe = OneHotEncoder(sparse=False)
+        one_hot_data = ohe.fit_transform(df)
+
+        columns = [[one_hot_data[i][k] for i in range(len(one_hot_data))] for k in range(len(one_hot_data[0]))]
+
+        return columns
+
+    def group_data(self, df, amount_groups):
+        values = df.values.tolist()
+        values = [i[0] for i in values]
+
+        maximum = max(values)
+        minimum = min(values)
+
+        group_range = (maximum-minimum)/amount_groups
+
+        for i, value in enumerate(values):
+            values[i] = (value-minimum)//group_range
+
+        return pd.DataFrame(values)
