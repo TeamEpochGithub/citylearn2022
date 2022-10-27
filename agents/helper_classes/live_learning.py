@@ -137,6 +137,18 @@ class LiveLearner:
             pd.Series(self.carbon_intensities[left_bound:right_bound])],
             axis=1)
 
+    def get_exogenuous_values_one_hot_encoded(self, left_bound, right_bound):
+        return pd.concat([
+            *(pd.Series(column[left_bound:right_bound]) for column in self.months_hot_encoded),
+            # *(pd.Series(column[left_bound:right_bound]) for column in self.hours_hot_encoded),
+            # *(pd.Series(column[left_bound:right_bound]) for column in self.daytypes_hot_encoded),
+            *(pd.Series(column[left_bound:right_bound]) for column in self.temperatures_hot_encoded),
+            *(pd.Series(column[left_bound:right_bound]) for column in self.humidities_hot_encoded),
+            *(pd.Series(column[left_bound:right_bound]) for column in self.temperatures_p6_hot_encoded),
+            *(pd.Series(column[left_bound:right_bound]) for column in self.humidities_p6_hot_encoded),
+            *(pd.Series(column[left_bound:right_bound]) for column in self.carbon_intensities_hot_encoded)],
+            axis=1)
+
     def predict_non_shiftable_load(self, steps):
 
         left_bound = self.timestep - self.max_load_lag
