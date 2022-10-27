@@ -105,6 +105,39 @@ def evaluate():
                 print(f"Num Steps: {num_steps}, Num episodes: {episodes_completed}")
 
             if episodes_completed >= Constants.episodes:
+
+                column_names = ["month",  # 0
+                            "day_type",  # 1
+                            "hour",  # 2
+                            "outdoor_dry_bulb",  # 3
+                            "outdoor_dry_bulb_temperature_predicted_6h",  # 4
+                            "outdoor_dry_bulb_temperature_predicted_12h",  # 5
+                            "outdoor_dry_bulb_temperature_predicted_24h",  # 6
+                            "outdoor_relative_humidity",  # 7
+                            "outdoor_relative_humidity_predicted_6h",  # 8
+                            "outdoor_relative_humidity_predicted_12h",  # 9
+                            "outdoor_relative_humidity_predicted_24h",  # 10
+                            "diffuse_solar_irradiance",  # 11
+                            "diffuse_solar_irradiance_predicted_6h",  # 12
+                            "diffuse_solar_irradiance_predicted_12h",  # 13
+                            "diffuse_solar_irradiance_predicted_24h",  # 14
+                            "direct_solar_irradiance",  # 15
+                            "direct_solar_irradiance_predicted_6h",  # 16
+                            "direct_solar_irradiance_predicted_12h",  # 17
+                            "direct_solar_irradiance_predicted_24h",  # 18
+                            "carbon_intensity",  # 19
+                            "non_shiftable_load",  # 20
+                            "solar_generation",  # 21
+                            "electrical_storage_soc",  # 22
+                            "net_electricity_consumption",  # 23
+                            "electricity_pricing",  # 24
+                            "electricity_pricing_predicted_6h",  # 25
+                            "electricity_pricing_predicted_12h",  # 26
+                            "electricity_pricing_predicted_24h",
+                            "action"]  # 27
+
+                pd.DataFrame(agent.agent.collected_data, columns=column_names).to_csv(r"C:\Users\Lars\Documents\Epoch\CityLearn\citylearn-2022-starter-kit\vwmab\context.csv", index=False)
+
                 break
     except KeyboardInterrupt:
         print("========================= Stopping Evaluation =========================")

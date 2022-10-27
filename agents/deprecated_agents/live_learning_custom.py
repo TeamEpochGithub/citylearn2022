@@ -41,13 +41,13 @@ class LiveLearner:
         self.load_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.load_lags,
-            transformer_y=self.transformer_y
+            transformer_y=StandardScaler()
         )
 
         self.solar_forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=self.solar_lags,
-            transformer_y=self.transformer_y
+            transformer_y=StandardScaler()
         )
 
         carbon_intensities_path = osp.join(osp.dirname(competition_data.__file__), "carbon_intensity.csv")
@@ -93,12 +93,19 @@ class LiveLearner:
 
     def force_fit_load(self):
 
+        mean_nsl = np.mean(self.non_shiftable_loads)
+        normed_nsl = np.asarray(self.non_shiftable_loads) - mean_nsl
+
         left_bound = max(self.timestep - self.cap_learning_data, 0)
-        self.load_forecaster.fit(y=pd.Series(self.non_shiftable_loads),
+        self.load_forecaster.fit(y=pd.Series(normed_nsl),
                                  exog=self.get_exogenuous_values(left_bound, self.timestep))
 
     def force_fit_solar(self):
-        self.solar_forecaster.fit(pd.Series(self.solar_generations))
+
+        mean_solar = np.mean(self.solar_generations)
+        normed_solar = np.asarray(self.solar_generations) - mean_solar
+
+        self.solar_forecaster.fit(pd.Series(normed_solar))
 
     def force_fit(self):
         self.force_fit_load()
@@ -121,29 +128,35 @@ class LiveLearner:
         left_bound = self.timestep - self.max_load_lag
         right_bound = self.timestep + steps
 
+        mean_nsl = np.mean(self.non_shiftable_loads)
+        normed_nsl = np.asarray(self.non_shiftable_loads) - mean_nsl
+
         predictions = self.load_forecaster.predict(steps=steps,
-                                                   last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
+                                                   last_window=pd.Series(normed_nsl[-self.max_load_lag:]),
                                                    exog=self.get_exogenuous_values(left_bound, right_bound))
 
         if isinstance(predictions, pd.Series):
-            predictions = np.asarray(predictions)
+            predictions = np.asarray(predictions) + mean_nsl
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions]
+            return [predictions + mean_nsl]
 
 
     def predict_solar_generations(self, steps):
 
+        mean_solar = np.mean(self.solar_generations)
+        normed_solar = np.asarray(self.solar_generations) - mean_solar
+
         predictions = self.solar_forecaster.predict(steps=steps,
-                                                    last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]))
+                                                    last_window=pd.Series(normed_solar[-self.max_solar_lag:]))
 
         if isinstance(predictions, pd.Series):
-            predictions = np.asarray(predictions)
+            predictions = np.asarray(predictions) + mean_solar
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions]
+            return [predictions + mean_solar]
 
     def predict_consumption(self, steps, only_write_once):
 

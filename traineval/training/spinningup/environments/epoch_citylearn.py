@@ -105,7 +105,7 @@ class EnvCityGym(gym.Env):
         we apply the same action for all the buildings
         """
 
-        self.env.evaluate()
+        #self.env.evaluate()
 
         # reprocessing action
         action = [[act] for act in action]
@@ -113,14 +113,14 @@ class EnvCityGym(gym.Env):
         # we do a step in the environment
         obs, reward, done, info = self.env.step(action)
 
-        storage = obs[0][environment_convert_argument(["electrical_storage_soc"])[0]]
-
-        if action[0][0] < 0 and storage <= 0:
-            reward = -2
-
-        if action[0][0] > 0 and storage >= 1:
-            reward = -2
-
+        # storage = obs[0][environment_convert_argument(["electrical_storage_soc"])[0]]
+        #
+        # if action[0][0] < 0 and storage <= 0:
+        #     reward = -2
+        #
+        # if action[0][0] > 0 and storage >= 1:
+        #     reward = -2
+        #
         observation = self.get_observation(obs)
 
         # print("hour:", round(observation[0], 2), "act:", round(action[0][0], 2), "stor:", round(storage, 2), "rew:", round(reward, 2))
