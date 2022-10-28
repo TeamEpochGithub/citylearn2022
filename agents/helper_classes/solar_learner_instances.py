@@ -127,7 +127,8 @@ class SolarLag0Learner(LearnerInstance):
         forecaster = ForecasterAutoreg(
             regressor=Ridge(random_state=42),
             lags=lags,
-            transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
+            transformer_y=StandardScaler()
+            # transformer_y=FunctionTransformer(func=np.log1p, inverse_func=np.expm1)
         )
         super().__init__(forecaster, lags, cap_learning_data, fit_delay_steps)
 

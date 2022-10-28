@@ -5,5 +5,5 @@ from agents.district_known_consumption_agent import DistrictKnownConsumptionAgen
 from agents.district_pred_consumption_agent import DistrictPredConsumptionAgent
 from agents.original_pred_peak import OriginalPredPeakAgent
 
-UserAgent = DistrictPredConsumptionAgent
+UserAgent = OriginalPredPeakAgent
 

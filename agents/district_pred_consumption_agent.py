@@ -297,6 +297,8 @@ class DistrictPredConsumptionAgent:
         if timestep >= 8758:
             return -1
 
+        print("timestep: ", timestep)
+
         num_buildings = len(district_observation)
         observation = district_observation[agent_id]
 

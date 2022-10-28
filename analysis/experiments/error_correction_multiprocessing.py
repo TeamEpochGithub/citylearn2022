@@ -9,7 +9,7 @@ search_space = {
 
 division_factors = search_space["division_factor"]
 thresholds = search_space["threshold"]
-error_hours = [[1], [24], [23, 24, 25], [1, 24], [1, 23, 24, 25], [1, 2, 23, 24, 25]]
+error_hours = [[23], [24], [25]]  # [23, 24, 25], [1, 24], [1, 23, 24, 25], [1, 2, 23, 24, 25]]
 
 
 def get_all_pairs():
