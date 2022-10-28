@@ -55,41 +55,7 @@ def get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learn
     return chunk_consumptions
 
 
-def extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_charge_loads_in, date):
-    chunk_total_consumption = sum(chunk_consumptions)
-    chunk_charge_loads = chunk_charge_loads_in
-
-    remaining_possible_charge = (remaining_battery_capacity - soc) / np.sqrt(0.83) + chunk_total_consumption
-
-    consumption_prices, prices = get_consumption_prices(date, chunk_consumptions)
-
-    price_occurrences = list(set(prices))
-    price_indexes = [[i for i, p in enumerate(prices) if p == p_occurrence] for p_occurrence in
-                     price_occurrences]
-
-    if len(price_indexes) == 2:
-
-        for i, price_occurrence_indexes in enumerate(price_indexes):
-
-            if i == 0:
-                opposite_index = 1
-            elif i == 1:
-                opposite_index = 0
-
-            for price_index in price_occurrence_indexes:
-                chunk_charge_loads[price_index] += remaining_possible_charge / \
-                                                   (len(price_occurrence_indexes) +
-                                                    len(price_indexes[opposite_index]) *
-                                                    (price_occurrences[i] / price_occurrences[opposite_index]))
-
-    else:
-        chunk_charge_loads = [c + remaining_possible_charge / len(chunk_charge_loads_in) for c in
-                              chunk_charge_loads_in]
-
-    return chunk_charge_loads
-
-
-def negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc):
+def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83):
@@ -99,11 +65,33 @@ def negative_consumption_scenario(date, chunk_consumptions, remaining_battery_ca
     else:  # Otherwise charge with all the possible energy
         chunk_charge_loads = [-1 * i for i in chunk_consumptions]
 
-        if -chunk_total_consumption >= 0.25 * ((remaining_battery_capacity - soc) / np.sqrt(0.83)):
-            chunk_charge_loads = extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_charge_loads,
-                                              date)
-
     return chunk_charge_loads
+
+
+def positive_consumption_scenario(obs_date, chunk_consumptions, soc):
+    chunk_total_consumption = sum(chunk_consumptions)
+
+    if chunk_total_consumption >= soc * np.sqrt(0.83):
+        # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
+        # price*consumption value and bring it down to the next highest price*consumption by reducing the
+        # consumption at that time step. We do this consecutively until the battery has been emptied.
+
+        date = obs_date
+        prices = []
+
+        for hour in range(len(chunk_consumptions)):
+            prices.append(pricing(date[2], date[0], date[1]))
+            date = shift_date(date[0], date[1], date[2], shifts=1)
+
+        consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+
+        local_soc = soc * np.sqrt(0.83)
+        chunk_charge_loads = [0] * len(chunk_consumptions)
+
+        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
+
+    else:
+        return chunk_consumptions
 
 
 def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
@@ -148,48 +136,15 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
     return chunk_charge_loads
 
 
-def get_consumption_prices(obs_date, chunk_consumptions):
-    date = obs_date
-    prices = []
-
-    for hour in range(len(chunk_consumptions)):
-        prices.append(pricing(date[2], date[0], date[1]))
-        date = shift_date(date[0], date[1], date[2], shifts=1)
-
-    consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
-
-    return consumption_prices, prices
-
-
-def positive_consumption_scenario(date, chunk_consumptions, soc):
-    chunk_total_consumption = sum(chunk_consumptions)
-
-    if chunk_total_consumption >= soc * np.sqrt(0.83):
-        # If fully discharging the battery doesn't bring the consumption to 0, we take the highest
-        # price*consumption value and bring it down to the next highest price*consumption by reducing the
-        # consumption at that time step. We do this consecutively until the battery has been emptied.
-
-        consumption_prices, prices = get_consumption_prices(date, chunk_consumptions)
-
-        local_soc = soc * np.sqrt(0.83)
-        chunk_charge_loads = [0] * len(chunk_consumptions)
-
-        return lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices)
-
-    else:
-        return chunk_consumptions
-
-
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
                          load_learner, solar_learner, load_error_24hours_ago):
     chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learner, timestep, load_error_24hours_ago)
     # print("chunk_consumptions", chunk_consumptions)
 
-    date = shift_date(observation[2], observation[1], observation[0], shifts=1)
-
     if consumption_sign == -1:  # If negative consumption
-        chunk_charge_loads = negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc)
+        chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
     else:
+        date = shift_date(observation[2], observation[1], observation[0], shifts=1)
         chunk_charge_loads = positive_consumption_scenario(date, chunk_consumptions, soc)
     # print("chunk_charge_loads", chunk_charge_loads)
     return chunk_charge_loads
@@ -202,9 +157,9 @@ def day_night_policy(hour):
     return action
 
 
-class OriginalPredPeakAgent:
+class TunableOriginalPredPeakAgent:
 
-    def __init__(self):
+    def __init__(self, params):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
@@ -224,6 +179,8 @@ class OriginalPredPeakAgent:
 
         self.actual_loads = {}
         self.predicted_loads = {}
+
+        self.params = params
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -296,7 +253,7 @@ class OriginalPredPeakAgent:
         self.update_load_forecasters(agent_id, timestep, observation[20])
         self.update_solar_forecasters(agent_id, timestep, observation[21])
 
-        print("timestep: ", timestep)
+        # print("timestep: ", timestep)
 
         if timestep < 72:
             return day_night_policy(observation[2])
@@ -313,8 +270,8 @@ class OriginalPredPeakAgent:
         #     print("load: ", observation[20], " pred load: ", next_load)
         load_error_24hours_ago = 0
         if timestep > 72 + 24:
-            load_error_24hours_ago = self.calculate_historic_load_error(agent_id) / 10
-            if abs(load_error_24hours_ago) < 0.1:
+            load_error_24hours_ago = self.calculate_historic_load_error(agent_id) / 10  # self.params["division_factor"]
+            if abs(load_error_24hours_ago) < 0.1: # self.params["threshold"]:
                 load_error_24hours_ago = 0
 
             if -load_error_24hours_ago > next_load:
@@ -354,17 +311,16 @@ class OriginalPredPeakAgent:
         while len(self.predicted_loads[str(agent_id)]) > 30:
             del self.predicted_loads[str(agent_id)][0]
 
-        error = self.actual_loads[str(agent_id)][-24] - self.predicted_loads[str(agent_id)][-25]
+        # error_hours = [[1], [24], [23, 24, 25], [1, 24], [1, 23, 24, 25], [1, 2, 23, 24, 25]]
+        error_hours = self.params["error_hours"]
 
-        # predicted = self.predicted_loads[str(agent_id)]
-        #
-        # if agent_id == 0:
-        #     print(actual[0], predicted[0])
-        #
-        # errors = [a - b for a, b in zip(actual, predicted)]
-        # if agent_id == 0:
-        #     print(errors)
-        return error
+        total_error = 0
+        for i in error_hours:
+            total_error += self.actual_loads[str(agent_id)][-i] - self.predicted_loads[str(agent_id)][-i - 1]
+        total_error = total_error / len(error_hours)
+
+        # total_error = self.actual_loads[str(agent_id)][-24] - self.predicted_loads[str(agent_id)][-25]
+        return total_error
 
     def update_historic_loads(self, agent_id, actual, predicted):
         self.actual_loads[str(agent_id)].append(actual)
