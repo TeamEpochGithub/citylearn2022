@@ -59,7 +59,41 @@ def get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learn
     return sums
 
 
-def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
+def extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_charge_loads_in, date):
+    chunk_total_consumption = sum(chunk_consumptions)
+    chunk_charge_loads = chunk_charge_loads_in
+
+    remaining_possible_charge = (remaining_battery_capacity - soc) / np.sqrt(0.83) + chunk_total_consumption
+
+    consumption_prices, prices = get_consumption_prices(date, chunk_consumptions)
+
+    price_occurrences = list(set(prices))
+    price_indexes = [[i for i, p in enumerate(prices) if p == p_occurrence] for p_occurrence in
+                     price_occurrences]
+
+    if len(price_indexes) == 2:
+
+        for i, price_occurrence_indexes in enumerate(price_indexes):
+
+            if i == 0:
+                opposite_index = 1
+            elif i == 1:
+                opposite_index = 0
+
+            for price_index in price_occurrence_indexes:
+                chunk_charge_loads[price_index] += remaining_possible_charge / \
+                                                   (len(price_occurrence_indexes) +
+                                                    len(price_indexes[opposite_index]) *
+                                                    (price_occurrences[i] / price_occurrences[opposite_index]))
+
+    else:
+        chunk_charge_loads = [c + remaining_possible_charge / len(chunk_charge_loads_in) for c in
+                              chunk_charge_loads_in]
+
+    return chunk_charge_loads
+
+
+def negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if -1 * chunk_total_consumption >= (remaining_battery_capacity - soc) / np.sqrt(0.83):
@@ -69,10 +103,26 @@ def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity
     else:  # Otherwise charge with all the possible energy
         chunk_charge_loads = [-1 * i for i in chunk_consumptions]
 
+        if -chunk_total_consumption >= 0.25 * ((remaining_battery_capacity - soc) / np.sqrt(0.83)):
+            chunk_charge_loads = extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_charge_loads,
+                                              date)
     return chunk_charge_loads
 
 
-def positive_consumption_scenario(obs_date, chunk_consumptions, soc):
+def get_consumption_prices(obs_date, chunk_consumptions):
+    date = obs_date
+    prices = []
+
+    for hour in range(len(chunk_consumptions)):
+        prices.append(pricing(date[2], date[0], date[1]))
+        date = shift_date(date[0], date[1], date[2], shifts=1)
+
+    consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+
+    return consumption_prices, prices
+
+
+def positive_consumption_scenario(date, chunk_consumptions, soc):
     chunk_total_consumption = sum(chunk_consumptions)
 
     if chunk_total_consumption >= soc * np.sqrt(0.83):
@@ -80,14 +130,7 @@ def positive_consumption_scenario(obs_date, chunk_consumptions, soc):
         # price*consumption value and bring it down to the next highest price*consumption by reducing the
         # consumption at that time step. We do this consecutively until the battery has been emptied.
 
-        date = obs_date
-        prices = []
-
-        for hour in range(len(chunk_consumptions)):
-            prices.append(pricing(date[2], date[0], date[1]))
-            date = shift_date(date[0], date[1], date[2], shifts=1)
-
-        consumption_prices = [prices[i] * c for i, c in enumerate(chunk_consumptions)]
+        consumption_prices, prices = get_consumption_prices(date, chunk_consumptions)
 
         local_soc = soc * np.sqrt(0.83)
         chunk_charge_loads = [0] * len(chunk_consumptions)
@@ -146,10 +189,11 @@ def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, rema
                                                           step_predictions)
     # print("chunk_consumptions", chunk_consumptions)
 
+    date = shift_date(observation[2], observation[1], observation[0], shifts=1)
+
     if consumption_sign == -1:  # If negative consumption
-        chunk_charge_loads = negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc)
+        chunk_charge_loads = negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc)
     else:
-        date = shift_date(observation[2], observation[1], observation[0], shifts=1)
         chunk_charge_loads = positive_consumption_scenario(date, chunk_consumptions, soc)
     # print("chunk_charge_loads", chunk_charge_loads)
     return chunk_charge_loads
