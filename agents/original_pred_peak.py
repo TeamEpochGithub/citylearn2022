@@ -10,7 +10,6 @@ from agents.helper_classes.solar_learner_instances import SolarLag0Learner, Sola
     SolarLag4Learner, SolarLag5Learner, SolarLag6Learner, SolarLag1Learner
 
 from analysis import analysis_data
-from agents.helper_classes.live_learning import LiveLearner
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
 
@@ -36,27 +35,24 @@ def write_step_to_file(agent_id, timestep, action, observation):
     action_file.close()
 
 
-def get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learner, timestep, step_predictions):
+def get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learner, timestep, load_error_24hours_ago):
     max_chunk_size = 32
 
     if timestep + max_chunk_size > 8759:
         max_chunk_size = 8759 - timestep
 
-    # loads = load_learner.predict_load(max_chunk_size)
-    # solars = solar_learner.predict_solar(max_chunk_size)
-    #
-    # chunk_consumptions = [a - b for a, b in zip(loads, solars)]
+    loads = load_learner.predict_load(max_chunk_size)
+    solars = solar_learner.predict_solar(max_chunk_size)
 
-    sums = [0] * max_chunk_size
-    for i in range(5):
-        sums = [i + j for i, j in zip(sums, step_predictions[str(i)])]
+    chunk_consumptions = [a - b for a, b in zip(loads, solars)]
+    chunk_consumptions[0] += load_error_24hours_ago
 
-    for index, consumption in enumerate(sums):
+    for index, consumption in enumerate(chunk_consumptions):
         if consumption * consumption_sign < 0:
-            sums = sums[:index]
+            chunk_consumptions = chunk_consumptions[:index]
             break
 
-    return sums
+    return chunk_consumptions
 
 
 def negative_consumption_scenario(chunk_consumptions, remaining_battery_capacity, soc):
@@ -141,9 +137,8 @@ def lowering_peaks(local_soc, chunk_charge_loads, consumption_prices, prices):
 
 
 def calculate_next_chunk(observation, consumption_sign, agent_id, timestep, remaining_battery_capacity, soc,
-                         load_learner, solar_learner, step_predictions):
-    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learner, timestep,
-                                                          step_predictions)
+                         load_learner, solar_learner, load_error_24hours_ago):
+    chunk_consumptions = get_chunk_consumptions_fit_delay(consumption_sign, load_learner, solar_learner, timestep, load_error_24hours_ago)
     # print("chunk_consumptions", chunk_consumptions)
 
     if consumption_sign == -1:  # If negative consumption
@@ -162,7 +157,7 @@ def day_night_policy(hour):
     return action
 
 
-class TimeStepPredConsumptionAgentPeak:
+class OriginalPredPeakAgent:
 
     def __init__(self):
         self.action_space = {}
@@ -182,9 +177,8 @@ class TimeStepPredConsumptionAgentPeak:
         self.evaluation_left_bound = -10
         self.evaluation_right_bound = -10
 
-        self.last_step = -1
-        self.step_predictions = {}
-        self.num_buildings = -1
+        self.actual_loads = {}
+        self.predicted_loads = {}
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -196,12 +190,12 @@ class TimeStepPredConsumptionAgentPeak:
 
         if str(agent_id) not in self.load_learner_options:
             self.load_learner_options[str(agent_id)] = [LoadLag0Learner(500, 15),
-                                                        # LoadLag1Learner(500, 15),
-                                                        # LoadLag2Learner(500, 15),
-                                                        # LoadLag3Learner(500, 15),
-                                                        # LoadLag4Learner(500, 15),
-                                                        # LoadLag5Learner(500, 15),
-                                                        # LoadLag6Learner(500, 15)
+                                                        LoadLag1Learner(500, 15),
+                                                        LoadLag2Learner(500, 15),
+                                                        LoadLag3Learner(500, 15),
+                                                        LoadLag4Learner(500, 15),
+                                                        LoadLag5Learner(500, 15),
+                                                        LoadLag6Learner(500, 15)
                                                         ]
 
         if str(agent_id) not in self.solar_learner_best_ind:
@@ -209,33 +203,27 @@ class TimeStepPredConsumptionAgentPeak:
 
         if str(agent_id) not in self.solar_learner_options:
             self.solar_learner_options[str(agent_id)] = [SolarLag0Learner(500, 15),
-                                                         # SolarLag1Learner(500, 15),
-                                                         # SolarLag2Learner(500, 15),
-                                                         # SolarLag3Learner(500, 15),
-                                                         # SolarLag4Learner(500, 15),
-                                                         # SolarLag5Learner(500, 15),
-                                                         # SolarLag6Learner(500, 15)
+                                                         SolarLag1Learner(500, 15),
+                                                         SolarLag2Learner(500, 15),
+                                                         SolarLag3Learner(500, 15),
+                                                         SolarLag4Learner(500, 15),
+                                                         SolarLag5Learner(500, 15),
+                                                         SolarLag6Learner(500, 15)
                                                          ]
 
-        if str(agent_id) not in self.step_predictions:
-            self.step_predictions[str(agent_id)] = []
+        if str(agent_id) not in self.actual_loads:
+            self.actual_loads[str(agent_id)] = []
+
+        if str(agent_id) not in self.predicted_loads:
+            self.predicted_loads[str(agent_id)] = []
 
     def compute_action(self, observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
-        self.num_buildings = len(observation)
         building_timestep = self.timestep // len(observation)
-
-        if self.last_step != building_timestep:
-            for i in range(self.num_buildings):
-                self.update_load_forecasters(i, building_timestep, observation[agent_id][20])
-                self.update_solar_forecasters(i, building_timestep, observation[agent_id][21])
-            self.last_step = building_timestep
-            if building_timestep >= 72:
-                self.make_step_predictions()
-
         observation = observation[agent_id]
+
         action_out = \
             self.pred_consumption_policy(observation, building_timestep, agent_id,
                                          self.remaining_battery_capacity[agent_id],
@@ -260,10 +248,12 @@ class TimeStepPredConsumptionAgentPeak:
             return -1
 
         self.set_evaluation_bounds(timestep)
+        self.update_load_forecasters(agent_id, timestep, observation[20])
+        self.update_solar_forecasters(agent_id, timestep, observation[21])
 
         print("timestep: ", timestep)
 
-        if timestep < 72 or timestep > 8730:
+        if timestep < 72:
             return day_night_policy(observation[2])
 
         if self.evaluation_left_bound <= timestep <= self.evaluation_right_bound:
@@ -271,28 +261,36 @@ class TimeStepPredConsumptionAgentPeak:
 
         load_learner = self.load_learner_options[str(agent_id)][self.load_learner_best_ind[str(agent_id)]]
         next_load = load_learner.predict_load(1)[0]
+
+        self.update_historic_loads(agent_id, observation[20], next_load)
+
+        if agent_id == 0:
+            print("load: ", observation[20], " pred load: ", next_load)
+        load_error_24hours_ago = 0
+        if timestep > 72 + 24:
+            load_error_24hours_ago = self.calculate_historic_load_error(agent_id) / 10
+            if abs(load_error_24hours_ago) < 0.1:
+                load_error_24hours_ago = 0
+
+            if -load_error_24hours_ago > next_load:
+                load_error_24hours_ago = -next_load
+            next_load += load_error_24hours_ago
+            if agent_id == 0:
+                print("load error: ", load_error_24hours_ago)
+
         solar_learner = self.solar_learner_options[str(agent_id)][self.solar_learner_best_ind[str(agent_id)]]
         next_solar = solar_learner.predict_solar(1)[0]
-        next_consumption = next_load - next_solar
 
+        next_consumption = next_load - next_solar
         if next_consumption == 0:
             return 0
         elif next_consumption > 0:
             consumption_sign = 1
         else:
             consumption_sign = -1
-
+        # print(next_consumption, next_load, next_solar, load_error_24hours_ago)
         chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                                  remaining_battery_capacity * self.num_buildings,
-                                                  soc * self.num_buildings, load_learner, solar_learner,
-                                                  self.step_predictions)
-
-        if not chunk_charge_loads:
-            consumption_sign = -consumption_sign
-            chunk_charge_loads = calculate_next_chunk(observation, consumption_sign, agent_id, timestep,
-                                                      remaining_battery_capacity * self.num_buildings,
-                                                      soc * self.num_buildings, load_learner, solar_learner,
-                                                      self.step_predictions)
+                                                  remaining_battery_capacity, soc, load_learner, solar_learner, load_error_24hours_ago)
 
         charge_load = -consumption_sign * chunk_charge_loads[0]
         action = charge_load / remaining_battery_capacity
@@ -300,20 +298,32 @@ class TimeStepPredConsumptionAgentPeak:
         if write_to_file:
             write_step_to_file(agent_id, timestep, action, observation)
 
-        # action += self.apply_hour_nudges(observation[2])
+        action += self.apply_hour_nudges(observation[2])
 
         return action
 
-    def make_step_predictions(self):
-        for i in range(self.num_buildings):
-            max_chunk_size = 32
-            load_learner = self.load_learner_options[str(i)][self.load_learner_best_ind[str(i)]]
-            solar_learner = self.solar_learner_options[str(i)][self.solar_learner_best_ind[str(i)]]
-            loads = load_learner.predict_load(max_chunk_size)
-            solars = solar_learner.predict_solar(max_chunk_size)
+    def calculate_historic_load_error(self, agent_id):
+        while len(self.actual_loads[str(agent_id)]) > 30:
+            del self.actual_loads[str(agent_id)][0]
 
-            chunk_consumptions = [a - b for a, b in zip(loads, solars)]
-            self.step_predictions[str(i)] = chunk_consumptions
+        while len(self.predicted_loads[str(agent_id)]) > 30:
+            del self.predicted_loads[str(agent_id)][0]
+
+        error = self.actual_loads[str(agent_id)][-24] - self.predicted_loads[str(agent_id)][-25]
+
+        # predicted = self.predicted_loads[str(agent_id)]
+        #
+        # if agent_id == 0:
+        #     print(actual[0], predicted[0])
+        #
+        # errors = [a - b for a, b in zip(actual, predicted)]
+        # if agent_id == 0:
+        #     print(errors)
+        return error
+
+    def update_historic_loads(self, agent_id, actual, predicted):
+        self.actual_loads[str(agent_id)].append(actual)
+        self.predicted_loads[str(agent_id)].append(predicted)
 
     def evaluate_learners(self, timestep, actual_load, actual_solar, agent_id):
         if timestep == self.evaluation_left_bound:
@@ -338,10 +348,7 @@ class TimeStepPredConsumptionAgentPeak:
             best_load_error = 100
             best_load_ind = 0
             for ind, forecaster in enumerate(self.load_learner_options[str(agent_id)]):
-                print(ind, forecaster)
                 error = forecaster.calculate_error()
-                print("forecaster_error", error)
-                print("best_load_error", best_load_error)
                 if error < best_load_error:
                     best_load_ind = ind
                     best_load_error = error
@@ -355,8 +362,6 @@ class TimeStepPredConsumptionAgentPeak:
                     best_solar_ind = ind
                     best_solar_error = error
             self.solar_learner_best_ind[str(agent_id)] = best_solar_ind
-            print("after", self.load_learner_best_ind)
-            print("after", self.solar_learner_best_ind)
 
     def update_load_forecasters(self, agent_id, timestep, load):
         for ind, forecaster in enumerate(self.load_learner_options[str(agent_id)]):

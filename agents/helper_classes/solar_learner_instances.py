@@ -49,7 +49,7 @@ class LearnerInstance:
         return self.forecaster
 
     def get_lags(self):
-        return self.load_lags
+        return self.solar_lags
 
     def update_solars(self, solar, model_is_used):
         self.timestep += 1
@@ -83,7 +83,6 @@ class LearnerInstance:
         return mse
 
     def fit_solar(self):
-
         left_bound = max(self.timestep - self.cap_learning_data, 0)
         self.forecaster.fit(y=pd.Series(self.solar_generations),
                             exog=self.get_exogenuous_values(left_bound, self.timestep))
@@ -91,7 +90,9 @@ class LearnerInstance:
     def predict_solar(self, steps):
 
         left_bound = self.timestep - self.max_solar_lag
-        right_bound = self.timestep + steps
+        right_bound = min(self.timestep + steps, 8760)
+        if self.timestep + steps > 8760:
+            steps = 8760 - self.timestep
 
         predictions = self.forecaster.predict(steps=steps,
                                               last_window=pd.Series(self.solar_generations[-self.max_solar_lag:]),
@@ -102,7 +103,10 @@ class LearnerInstance:
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions]
+            if predictions < 0:
+                return [0]
+            else:
+                return [predictions]
 
     def get_exogenuous_values(self, left_bound, right_bound):
         return pd.concat([

@@ -4,6 +4,7 @@ import numpy as np
 import os.path as osp
 from analysis import analysis_data
 from data import citylearn_challenge_2022_phase_1 as competition_data
+import matplotlib.pyplot as plt
 
 from traineval.training.data_preprocessing import net_electricity_consumption as n
 from traineval.training.data_preprocessing.pricing_simplified import pricing, shift_date
@@ -47,12 +48,13 @@ def write_historic_consumptions_to_file(agent_id, timestep):
     action_file.close()
 
 
-def get_chunk_consumptions(agent_id, timestep, consumption_sign):
+def get_chunk_consumptions(timestep, consumption_sign, num_buildings):
     chunk_consumptions = []
     future_steps = 0
 
-    while consumptions[agent_id][timestep + future_steps] * consumption_sign > 0:  # Consumptions have the same sign
-        next_consumption = consumptions[agent_id][timestep + future_steps]
+    while sum([consumptions[b][timestep + future_steps] * consumption_sign for b in range(num_buildings)]) > 0:
+        # Consumptions have the same sign
+        next_consumption = sum([consumptions[b][timestep + future_steps] for b in range(num_buildings)])
         chunk_consumptions.append(next_consumption)
         future_steps += 1
 
@@ -188,9 +190,9 @@ def positive_consumption_scenario(date, chunk_consumptions, soc):
         return chunk_consumptions
 
 
-def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery_capacity, soc, date):
-
-    chunk_consumptions = get_chunk_consumptions(agent_id, timestep, consumption_sign)
+def calculate_next_chunk(consumption_sign, timestep, remaining_battery_capacity, soc,
+                         num_buildings, date):
+    chunk_consumptions = get_chunk_consumptions(timestep, consumption_sign, num_buildings)
 
     if consumption_sign == -1:  # If negative consumption
         chunk_charge_loads = negative_consumption_scenario(date, chunk_consumptions, remaining_battery_capacity, soc)
@@ -200,12 +202,12 @@ def calculate_next_chunk(consumption_sign, agent_id, timestep, remaining_battery
     return chunk_charge_loads
 
 
-def individual_consumption_policy(observation, timestep, agent_id, remaining_battery_capacity, soc, write_to_file):
-
+def district_consumption_policy(district_observation, timestep, agent_id, remaining_battery_capacity, soc,
+                                write_to_file):
     if timestep >= 8758:
         return -1
 
-    next_consumption = consumptions[agent_id][timestep]
+    next_consumption = sum([consumptions[b][timestep] for b in range(5)])
 
     if next_consumption == 0:
         return 0
@@ -214,22 +216,33 @@ def individual_consumption_policy(observation, timestep, agent_id, remaining_bat
     else:
         consumption_sign = -1
 
+    num_buildings = len(district_observation)
+    observation = district_observation[agent_id]
+
     date = shift_date(observation[2], observation[1], observation[0], shifts=1)
 
-    chunk_charge_loads = calculate_next_chunk(consumption_sign, agent_id, timestep,
-                                              remaining_battery_capacity, soc, date)
+    chunk_charge_loads = calculate_next_chunk(consumption_sign, timestep,
+                                              remaining_battery_capacity * num_buildings, soc * num_buildings,
+                                              num_buildings, date)
 
-    charge_load = -1 * consumption_sign * chunk_charge_loads[0]
-    action = charge_load / remaining_battery_capacity
+    district_charge_load = -1 * consumption_sign * chunk_charge_loads[0]
+    action = district_charge_load / remaining_battery_capacity / num_buildings
 
     if write_to_file:
         write_step_to_file(agent_id, timestep, action, observation)
         write_historic_consumptions_to_file(agent_id, timestep)
 
+    # plot_start = 4600
+    # plot_end = plot_start - 1 + 168
+    # if agent_id == 0 and plot_start <= timestep <= plot_end:
+    #     print(
+    #         f"Time: {timestep}, SOC: {soc * 5}, Action: {action}, Energy: {district_charge_load}, "
+    #         f"Expected consumption: {next_consumption}")
+
     return action
 
 
-class TimeStepKnownConsumptionAgentPeak:
+class DistrictKnownConsumptionAgent:
 
     def __init__(self):
         self.action_space = {}
@@ -238,22 +251,55 @@ class TimeStepKnownConsumptionAgentPeak:
         self.soc = {}
         self.write_to_file = False
 
+        self.plot = {}
+
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
         self.remaining_battery_capacity[agent_id] = 6.4
         self.soc[agent_id] = 0
 
-    def compute_action(self, observation, agent_id):
+        self.plot[agent_id] = [[], [], [], []]
+
+    def compute_action(self, district_observation, agent_id):
         """Get observation return action"""
 
         self.timestep += 1
-        building_timestep = self.timestep // len(observation)
-        observation = observation[agent_id]
+        building_timestep = self.timestep // len(district_observation)
+        observation = district_observation[agent_id]
+
+        # plot_start = 4600
+        # plot_end = plot_start - 1 + 168
+        #
+        # if building_timestep > plot_start:  # Individual plot
+        #     self.plot[agent_id][0].append(observation[23])
+        #     self.plot[agent_id][1].append(observation[20] - observation[21])
+        #     self.plot[agent_id][2].append((observation[20] - observation[21]) * observation[24])
+        #     self.plot[agent_id][3].append(observation[23] * observation[24])
+        #
+        # if building_timestep > plot_start:  # District plot
+        #     self.plot[0][0].append(sum([district_observation[a][23] for a in range(len(district_observation))]))
+        #     self.plot[0][1].append(sum([district_observation[a][20] - district_observation[a][21] for a in
+        #                                 range(len(district_observation))]))
+        #     self.plot[0][2].append(
+        #         sum([(district_observation[a][20] - district_observation[a][21]) * district_observation[a][24] for a in
+        #              range(len(district_observation))]))
+        #     self.plot[0][3].append(sum([district_observation[a][23] * district_observation[a][24] for a in
+        #                                 range(len(district_observation))]))
+        #
+        # if building_timestep == plot_end + 1 and agent_id == 0:
+        #     plt.plot(range(len(self.plot[agent_id][0])), [0] * len(self.plot[agent_id][0]), color="black")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][1], color="blue")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][2], color="green")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][3], color="yellow")
+        #     plt.plot(range(len(self.plot[agent_id][0])), self.plot[agent_id][0], color="red")
+        #     plt.legend(
+        #         [None, "Expected consumption", "Expected price", "Price after action", "Consumption after action"])
+        #     plt.show()
 
         action_out = \
-            individual_consumption_policy(observation, building_timestep, agent_id,
-                                          self.remaining_battery_capacity[agent_id],
-                                          self.soc[agent_id], self.write_to_file)
+            district_consumption_policy(district_observation, building_timestep, agent_id,
+                                        self.remaining_battery_capacity[agent_id],
+                                        self.soc[agent_id], self.write_to_file)
 
         action = float(np.array(action_out, dtype=self.action_space[agent_id].dtype))
         max_power = n.max_power(self.soc[agent_id], 5, self.remaining_battery_capacity[agent_id])

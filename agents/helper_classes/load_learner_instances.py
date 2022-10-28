@@ -91,7 +91,9 @@ class LearnerInstance:
     def predict_load(self, steps):
 
         left_bound = self.timestep - self.max_load_lag
-        right_bound = self.timestep + steps
+        right_bound = min(self.timestep + steps, 8760)
+        if self.timestep + steps > 8760:
+            steps = 8760 - self.timestep
 
         predictions = self.forecaster.predict(steps=steps,
                                               last_window=pd.Series(self.non_shiftable_loads[-self.max_load_lag:]),
@@ -102,8 +104,10 @@ class LearnerInstance:
             predictions[predictions < 0] = 0
             return list(predictions)
         else:
-            return [predictions]
-
+            if predictions < 0:
+                return [0]
+            else:
+                return [predictions]
     def get_exogenuous_values(self, left_bound, right_bound):
         return pd.concat([
             pd.Series(self.months[left_bound:right_bound]),
