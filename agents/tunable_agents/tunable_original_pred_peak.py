@@ -157,9 +157,9 @@ def day_night_policy(hour):
     return action
 
 
-class OriginalPredPeakAgent:
+class TunableOriginalPredPeakAgent:
 
-    def __init__(self):
+    def __init__(self, params):
         self.action_space = {}
         self.timestep = -1
         self.remaining_battery_capacity = {}
@@ -179,6 +179,8 @@ class OriginalPredPeakAgent:
 
         self.actual_loads = {}
         self.predicted_loads = {}
+
+        self.params = params
 
     def set_action_space(self, agent_id, action_space):
         self.action_space[agent_id] = action_space
@@ -251,7 +253,7 @@ class OriginalPredPeakAgent:
         self.update_load_forecasters(agent_id, timestep, observation[20])
         self.update_solar_forecasters(agent_id, timestep, observation[21])
 
-        print("timestep: ", timestep)
+        # print("timestep: ", timestep)
 
         if timestep < 72:
             return day_night_policy(observation[2])
@@ -268,8 +270,8 @@ class OriginalPredPeakAgent:
         #     print("load: ", observation[20], " pred load: ", next_load)
         load_error_24hours_ago = 0
         if timestep > 72 + 24:
-            load_error_24hours_ago = self.calculate_historic_load_error(agent_id) / 10
-            if abs(load_error_24hours_ago) < 0.1:
+            load_error_24hours_ago = self.calculate_historic_load_error(agent_id) / 10  # self.params["division_factor"]
+            if abs(load_error_24hours_ago) < 0.1: # self.params["threshold"]:
                 load_error_24hours_ago = 0
 
             if -load_error_24hours_ago > next_load:
@@ -309,17 +311,16 @@ class OriginalPredPeakAgent:
         while len(self.predicted_loads[str(agent_id)]) > 30:
             del self.predicted_loads[str(agent_id)][0]
 
-        error = self.actual_loads[str(agent_id)][-24] - self.predicted_loads[str(agent_id)][-25]
+        # error_hours = [[1], [24], [23, 24, 25], [1, 24], [1, 23, 24, 25], [1, 2, 23, 24, 25]]
+        error_hours = self.params["error_hours"]
 
-        # predicted = self.predicted_loads[str(agent_id)]
-        #
-        # if agent_id == 0:
-        #     print(actual[0], predicted[0])
-        #
-        # errors = [a - b for a, b in zip(actual, predicted)]
-        # if agent_id == 0:
-        #     print(errors)
-        return error
+        total_error = 0
+        for i in error_hours:
+            total_error += self.actual_loads[str(agent_id)][-i] - self.predicted_loads[str(agent_id)][-i - 1]
+        total_error = total_error / len(error_hours)
+
+        # total_error = self.actual_loads[str(agent_id)][-24] - self.predicted_loads[str(agent_id)][-25]
+        return total_error
 
     def update_historic_loads(self, agent_id, actual, predicted):
         self.actual_loads[str(agent_id)].append(actual)

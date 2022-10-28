@@ -49,7 +49,7 @@ def env_reset(env):
     return obs_dict
 
 
-def evaluate(params, verbose=False):
+def evaluate(params, verbose=True):
     if verbose:
         print("Starting local evaluation")
 
