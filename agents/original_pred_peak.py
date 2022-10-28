@@ -99,7 +99,7 @@ def negative_consumption_scenario(date, chunk_consumptions, remaining_battery_ca
     else:  # Otherwise charge with all the possible energy
         chunk_charge_loads = [-1 * i for i in chunk_consumptions]
 
-        if -chunk_total_consumption >= 0.25 * ((remaining_battery_capacity - soc) / np.sqrt(0.83)):
+        if -chunk_total_consumption >= 0.23 * ((remaining_battery_capacity - soc) / np.sqrt(0.83)):
             chunk_charge_loads = extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_charge_loads,
                                               date)
 

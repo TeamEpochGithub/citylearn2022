@@ -68,7 +68,6 @@ def extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_char
                      price_occurrences]
 
     if len(price_indexes) == 2:
-
         for i, price_occurrence_indexes in enumerate(price_indexes):
 
             if i == 0:
@@ -81,7 +80,6 @@ def extra_charge(remaining_battery_capacity, soc, chunk_consumptions, chunk_char
                                                    (len(price_occurrence_indexes) +
                                                     len(price_indexes[opposite_index]) *
                                                     (price_occurrences[i] / price_occurrences[opposite_index]))
-
     else:
         chunk_charge_loads = [c + remaining_possible_charge / len(chunk_charge_loads_in) for c in
                               chunk_charge_loads_in]
@@ -298,7 +296,7 @@ class TunableOriginalPredPeakAgent:
         self.update_load_forecasters(agent_id, timestep, observation[20])
         self.update_solar_forecasters(agent_id, timestep, observation[21])
 
-        print("timestep: ", timestep)
+        # print("timestep: ", timestep)
 
         if timestep < 72:
             return day_night_policy(observation[2])
