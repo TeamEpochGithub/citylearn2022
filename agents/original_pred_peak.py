@@ -432,6 +432,8 @@ class OriginalPredPeakAgent:
 
     def apply_hour_nudges(self, hour):
         # The best hours and nudges as calculated in 'exhaustive_hour_nudges' notebook
-        if hour == 18:  # or hour == 17 or hour == 18 or hour == 20:
+        if hour == 18 or hour == 20:  # or hour == 17 or hour == 18 or hour == 20:
             return -0.02
+        if hour == 14:
+            return 0.04
         return 0
