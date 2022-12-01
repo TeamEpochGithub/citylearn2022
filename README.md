@@ -1,4 +1,4 @@
-![Epoch Logo](https://drive.google.com/file/d/1qzSSDQv3EQnSj7afgADCV8m3e9Zh2T0i/view?usp=share_link)
+![Epoch Logo](https://drive.google.com/uc?export=view&id=1qzSSDQv3EQnSj7afgADCV8m3e9Zh2T0i)
 ![Citylearn Banner](https://images.aicrowd.com/uploads/ckeditor/pictures/906/content_Card_Banner.jpg)
 
 # Team Epoch 
