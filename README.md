@@ -3,7 +3,9 @@
 
 # Team Epoch 
 Our agent has the following policy:
+
 ![Equation](https://latex.codecogs.com/svg.image?\mathrm{pi}(O)&space;=&space;\frac{-\left(&space;\frac{\mathrm{LoadPredictor}\left(O\right)&space;-&space;\mathrm{SolarPredictor}\left(O\right)}{\left|{\mathrm{LoadPredictor}\left(O\right)&space;-&space;\mathrm{SolarPredictor}\left(O\right)}\right|}&space;\right)&space;\mathrm{PredictConsumption}\left(O\right)}{RemainingBatteryCapacity})
+
 With O being our obserrvations. As you can see our agent predicts what the consumption will be like in future timesteps to change the action. It is able to predict like this as it records all the observations and learns to predict. In actuality however it only uses this prediction to check if there is going to be positive or negative consumption in the next step. Using this it picks the corresponding positive consumption or negative consumption policy.
 
 # Table of Contents
