@@ -1,24 +1,6 @@
 ![Citylearn Banner](https://images.aicrowd.com/uploads/ckeditor/pictures/906/content_Card_Banner.jpg)
 
-# [NeurIPS 2022 Citylearn Challenge](https://www.aicrowd.com/challenges/neurips-2022-citylearn-challenge) - Starter Kit 
-[![Discord](https://img.shields.io/discord/565639094860775436.svg)](https://discord.gg/fNRrSvZkry)
-
-This repository is the NeurIPS 2022 Citylearn Challenge **Submission template and Starter kit**! Clone the repository to compete now!
-
-**This repository contains**:
-*  **Documentation** on how to submit your models to the leaderboard
-*  **The procedure** for best practices and information on how we evaluate your agent, etc.
-*  **Starter code** for you to get started!
-
-## Citylearn Environment Version
-
-Some updates are expected to the environment during the warm up round. Please install the latest version being used for the competition mentioned below.
-
-**Current version (21st July onwards)**: https://github.com/intelligent-environments-lab/CityLearn/tree/v1.3.0
-
-**Previous versions**
-
-18th July - 21st July: https://github.com/intelligent-environments-lab/CityLearn/tree/v1.3.0
+# Team Epoch 
 
 # Table of Contents
 
@@ -26,11 +8,6 @@ Some updates are expected to the environment during the warm up round. Please in
     + [Competition Phases](#competition-phases)
 - [Getting Started](#getting-started)
 - [How to write your own agent?](#how-to-write-your-own-agent)
-- [How to start participating?](#how-to-start-participating)
-  * [Setup](#setup)
-  * [How do I specify my software runtime / dependencies?](#how-do-i-specify-my-software-runtime-dependencies)
-  * [What should my code structure be like?](#what-should-my-code-structure-be-like)
-  * [How to make a submission?](#how-to-make-a-submission)
 - [Other Concepts](#other-concepts)
     + [Evaluation Metrics](#evaluation-metrics)
     + [Ranking Criteria](#ranking-criteria)
@@ -84,85 +61,6 @@ Add your agent code in a way such that the actions returned are conditioned on t
 # How to write your own reward function?
 The reward function must be defined in `get_reward()` function in the [rewards.get_reward](rewards/get_reward.py) module. See [here](rewards/README.md) for instructions on how to define a custom reward function.
 
-# How to start participating?
-
-## Setup
-
-1. **Add your SSH key** to AIcrowd GitLab
-
-You can add your SSH Keys to your GitLab account by going to your profile settings [here](https://gitlab.aicrowd.com/profile/keys). If you do not have SSH Keys, you will first need to [generate one](https://docs.gitlab.com/ee/ssh/README.html#generating-a-new-ssh-key-pair).
-
-2. **Fork the repository**. You can use [this link](https://gitlab.aicrowd.com/aicrowd/challenges/citylearn-challenge-2022/citylearn-2022-starter-kit/-/forks/new) to create a fork.
-
-2.  **Clone the repository**
-
-    ```
-    git clone git@gitlab.aicrowd.com:aicrowd/challenges/citylearn-challenge-2022/citylearn-2022-starter-kit.git
-    ```
-
-3. **Install** competition specific dependencies!
-    ```
-    cd citylearn-2022-starter-kit
-    pip install -r requirements.txt
-    ```
-
-4. Write your own agent as described in [How to write your own agent](#how-to-write-your-own-agent) section.
-
-4. Write your own reward function as described in [How to write your own reward function](#how-to-write-your-own-reward-function) section.
-
-5. Test your agent locally using `python local_evaluation.py`
-
-6. Make a submission as described in [How to make a submission](#how-to-make-a-submission) section.
-
-## How do I specify my software runtime / dependencies?
-
-We accept submissions with custom runtime, so you don't need to worry about which libraries or framework to pick from.
-
-The configuration files typically include `requirements.txt` (pypi packages), `apt.txt` (apt packages) or even your own `Dockerfile`.
-
-You can check detailed information about the same in the 👉 [runtime.md](docs/runtime.md) file.
-
-## What should my code structure be like?
-
-Please follow the example structure as it is in the starter kit for the code structure.
-The different files and directories have following meaning:
-
-```
-.
-├── aicrowd.json           # Submission meta information - like your username
-├── apt.txt                # Linux packages to be installed inside docker image
-├── requirements.txt       # Python packages to be installed
-├── local_evaluation.py    # Use this to check your agent evaluation flow locally
-├── data/                  # Contains schema files for citylearn simulator (for local testing)
-└── agents                 # Place your agents related code here
-    ├── random_agent.py            # Random agent
-    ├── rbc_agent.py               # Simple rule based agent
-    ├── orderenforcingwrapper.py   # Pettingzoo compatibilty wrapper
-    └── user_agent.py              # IMPORTANT: Add your agent name here
-└── rewards                 # Place your reward related code here
-    ├── get_reward.py               # Place your reward related code here
-    ├── user_reward.py              # Custom reward class (DO NOT EDIT!)
-```
-
-Finally, **you must specify an AIcrowd submission JSON in `aicrowd.json` to be scored!** 
-
-The `aicrowd.json` of each submission should contain the following content:
-
-```json
-{
-  "challenge_id": "neurips-2022-citylearn-challenge",
-  "authors": ["your-aicrowd-username"],
-  "description": "(optional) description about your awesome agent",
-}
-```
-
-This JSON is used to map your submission to the challenge - so please remember to use the correct `challenge_id` as specified above.
-
-## How to make a submission?
-
-👉 [submission.md](/docs/submission.md)
-
-**Best of Luck** :tada: :tada:
 
 # Other Concepts
 ### Evaluation Metrics
