@@ -2,7 +2,7 @@
 ![Citylearn Banner](https://images.aicrowd.com/uploads/ckeditor/pictures/906/content_Card_Banner.jpg)
 
 # Team Epoch 
-
+![Equation](https://latex.codecogs.com/svg.image?\mathrm{pi}(O)&space;=&space;\frac{-\left(&space;\frac{\mathrm{LoadPredictor}\left(O\right)&space;-&space;\mathrm{SolarPredictor}\left(O\right)}{\left|{\mathrm{LoadPredictor}\left(O\right)&space;-&space;\mathrm{SolarPredictor}\left(O\right)}\right|}&space;\right)&space;\mathrm{PredictConsumption}\left(O\right)}{RemainingBatteryCapacity})
 # Table of Contents
 
 - [Competition Overview](#competition-overview)
