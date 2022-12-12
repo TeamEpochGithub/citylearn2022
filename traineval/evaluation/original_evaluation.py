@@ -16,7 +16,6 @@ This is only a reference script provided to allow you
 to do local evaluation. The evaluator **DOES NOT** 
 use this script for orchestrating the evaluations. 
 """
-
 from agents.orderenforcingwrapper import OrderEnforcingAgent
 from citylearn.citylearn import CityLearnEnv
 import os.path as osp
